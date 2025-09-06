@@ -1,0 +1,65 @@
+#Procedure: <laser_setup.procedures.IV.IV>
+#Parameters:
+#	Irange: 0.0001 A
+#	NPLC: 1
+#	Burn-in time: 600 s
+#	Chip group name: Alisson
+#	Chip number: 71
+#	Information: test no light
+#	Laser voltage: 0 V
+#	Laser wavelength: 0
+#	Procedure version: 2.0.1
+#	Sample: other
+#	Step time: 0 s
+#	VG: 0 V
+#	VSD end: 0.1 V
+#	VSD start: -0.1 V
+#	VSD step: 0.01 V
+#Metadata:
+#	Start time: 1757022625.4999702
+#Data:
+Vsd (V),I (A),Plate T (degC),Ambient T (degC),Clock (ms)
+0.0,-1.173968e-08,nan,nan,nan
+-0.0005,-1.58406e-07,nan,nan,nan
+-0.0105,-3.089048e-06,nan,nan,nan
+-0.0205,-5.996119e-06,nan,nan,nan
+-0.0305,-8.879485e-06,nan,nan,nan
+-0.0405,-1.174614e-05,nan,nan,nan
+-0.0505,-1.459493e-05,nan,nan,nan
+-0.0605,-1.743532e-05,nan,nan,nan
+-0.07050000000000001,-2.025136e-05,nan,nan,nan
+-0.0805,-2.302398e-05,nan,nan,nan
+-0.0905,-2.576466e-05,nan,nan,nan
+-0.1,-2.835762e-05,nan,nan,nan
+-0.09000000000000001,-2.557651e-05,nan,nan,nan
+-0.08000000000000002,-2.280941e-05,nan,nan,nan
+-0.07000000000000002,-2.002072e-05,nan,nan,nan
+-0.060000000000000026,-1.721711e-05,nan,nan,nan
+-0.05000000000000003,-1.436694e-05,nan,nan,nan
+-0.040000000000000036,-1.152559e-05,nan,nan,nan
+-0.03000000000000004,-8.664056e-06,nan,nan,nan
+-0.020000000000000046,-5.804518e-06,nan,nan,nan
+-0.01000000000000005,-2.918304e-06,nan,nan,nan
+-0.0005,-1.569482e-07,nan,nan,nan
+0.0005,1.35225e-07,nan,nan,nan
+0.0105,3.062085e-06,nan,nan,nan
+0.0205,6.007091e-06,nan,nan,nan
+0.0305,8.980986e-06,nan,nan,nan
+0.0405,1.193925e-05,nan,nan,nan
+0.0505,1.494981e-05,nan,nan,nan
+0.0605,1.796342e-05,nan,nan,nan
+0.07050000000000001,2.096835e-05,nan,nan,nan
+0.0805,2.401067e-05,nan,nan,nan
+0.0905,2.705407e-05,nan,nan,nan
+0.1,2.99486e-05,nan,nan,nan
+0.09000000000000001,2.69144e-05,nan,nan,nan
+0.08000000000000002,2.385858e-05,nan,nan,nan
+0.07000000000000002,2.081245e-05,nan,nan,nan
+0.060000000000000026,1.778591e-05,nan,nan,nan
+0.05000000000000003,1.476821e-05,nan,nan,nan
+0.040000000000000036,1.175729e-05,nan,nan,nan
+0.03000000000000004,8.783531e-06,nan,nan,nan
+0.020000000000000046,5.839874e-06,nan,nan,nan
+0.01000000000000005,2.903638e-06,nan,nan,nan
+0.0005,1.330297e-07,nan,nan,nan
+-0.0095,-2.764728e-06,nan,nan,nan
