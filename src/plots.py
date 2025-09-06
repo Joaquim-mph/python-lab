@@ -1,7 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
 import numpy as np
-from utils import _proc_from_path, _file_index, _read_measurement
+from src.utils import _proc_from_path, _file_index, _read_measurement
 import polars as pl
 import matplotlib.pyplot as plt
 
