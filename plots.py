@@ -1,405 +1,495 @@
-# file: tools/plot_iv.py
-"""
-Plot IV and IT traces from raw experiment CSVs using a previously-built metadata.csv
-(derived from headers with `parse_iv_metadata`).
-
-Usage examples:
-
-  # Plot IV for a specific device
-  python tools/plot_iv.py iv --metadata metadata.csv \
-      --group "Chip group name" --chip 3 --legend --title "Device 3: IV sweeps"
-
-  # Plot IT for a sample filtered by text in Information
-  python tools/plot_iv.py it --metadata metadata.csv \
-      --info-contains "no light" --ylog --save it_no_light.png
-
-  # If paths in metadata are relative to a different root
-  python tools/plot_iv.py iv --root /path/to/Alisson_04_sept
-
-Notes:
-- Only uses Matplotlib (no seaborn).
-- One chart per command.
-- No explicit colors set (matplotlib defaults).
-- Heuristics try to find column names for Voltage/Current/Time/Gate Voltage.
-"""
 from __future__ import annotations
-
-import argparse
-import re
 from pathlib import Path
-from typing import Iterable, Optional
-
+import numpy as np
+from utils import _proc_from_path, _file_index, _read_measurement
 import polars as pl
-import matplotlib as mpl
 import matplotlib.pyplot as plt
-import scienceplots
-from styles import set_plot_style
-set_plot_style("super_nova")
-# ----------------------------
-# Column name heuristics
-# ----------------------------
-TIME_CANDIDATES = [
-    r"^time$",
-    r"^time\s*\(\s*s\s*\)$",
-    r"^t$",
-]
 
-VOLT_CANDIDATES = [
-    r"^v$", 
-    r"^voltage$", 
-    r"^vsd$", 
-    r"^vds$", 
-    r"^v_sd$", 
-    r"^v_ds$",
-]
+# -------------------------------
+# Config
+# -------------------------------
 
-CURR_CANDIDATES = [
-    r"^i$",
-    r"^current$",
-    r"^id$",
-    r"^isd$",
-    r"^ig$",
-    r"^i_d$",
-    r"^i_sd$",
-]
+BASE_DIR     = Path(".")
+FIG_DIR = Path("figs")
+FIG_DIR.mkdir(exist_ok=True)
 
-GATE_VOLT_CANDIDATES = [
-    r"^vg$", r"^v_g$", r"^vgate$", r"^v_gate$",
-]
+# -------------------------------
+# Make timeline + sessions
+# -------------------------------
+def load_and_prepare_metadata(meta_csv: str, chip: float) -> pl.DataFrame:
+    df = pl.read_csv(meta_csv, infer_schema_length=1000)
+    # Normalize column names we will use often
+    df = df.rename({"Chip number": "Chip number",
+                    "Laser voltage": "Laser voltage",
+                    "Laser toggle": "Laser toggle",
+                    "source_file": "source_file"})
 
-# Metadata fields we may show in legend labels if present
-LEGEND_META_FIELDS = [
-    "Information",
-    "Laser toggle",
-    "Laser voltage",
-    "Laser wavelength",
-    "VG",
-    "VDS",
-]
+    # Filter chip
+    df = df.filter(pl.col("Chip number") == chip)
 
-# ----------------------------
-# Helpers
-# ----------------------------
+    # Infer procedure and index
+    df = df.with_columns([
+        pl.col("source_file").map_elements(_proc_from_path).alias("proc"),
+        pl.col("source_file").map_elements(_file_index).alias("file_idx"),
+        pl.when(pl.col("Laser toggle").cast(pl.Utf8).str.to_lowercase() == "true")
+          .then(pl.lit(True))
+          .otherwise(pl.lit(False))
+          .alias("with_light"),
+        pl.col("Laser voltage").cast(pl.Float64).alias("VL_meta"),
+        pl.col("VG").cast(pl.Float64).alias("VG_meta").fill_null(strategy="zero")
+    ]).sort("file_idx")
 
-def normalize(name: str) -> str:
-    """Lowercase, collapse spaces/parentheses/units to underscores for matching."""
-    s = name.strip().lower()
-    # Replace common separators and remove surrounding spaces
-    s = re.sub(r"[\s\-/]+", "_", s)
-    s = s.replace("(s)", "")
-    s = s.replace("(a)", "")
-    s = s.replace("(v)", "")
-    s = s.replace("[", "").replace("]", "")
-    s = s.replace("(", "").replace(")", "")
-    s = re.sub(r"_+", "_", s)
-    return s.strip("_")
+    # Build sessions = [IVg → ITS… → IVg] blocks
+    # We'll assign the *closing* IVg to the same session as the preceding ITS.
+    session_id = 0
+    seen_any_ivg = False
+    seen_its_since_ivg = False
+    ids = []
+    roles = []
 
-
-def find_first_column(df: pl.DataFrame, patterns: list[str]) -> Optional[str]:
-    """Return the *original* column name whose normalized form matches one of patterns."""
-    norm_map = {col: normalize(col) for col in df.columns}
-    for pat in patterns:
-        rx = re.compile(pat)
-        for original, normed in norm_map.items():
-            if rx.match(normed):
-                return original
-    return None
-
-
-def detect_columns(df: pl.DataFrame, mode: str) -> tuple[Optional[str], Optional[str]]:
-    """Detect x,y columns for a given mode: 'iv', 'it', or 'ivg'."""
-    if mode == "iv":
-        x = find_first_column(df, VOLT_CANDIDATES)
-        y = find_first_column(df, CURR_CANDIDATES)
-        return x, y
-    elif mode == "it":
-        x = find_first_column(df, TIME_CANDIDATES)
-        y = find_first_column(df, CURR_CANDIDATES)
-        return x, y
-    elif mode == "ivg":
-        x = find_first_column(df, GATE_VOLT_CANDIDATES)   # no fallback to VOLT_CANDIDATES
-        y = find_first_column(df, CURR_CANDIDATES)
-        return x, y
-    else:
-        raise ValueError("mode must be 'iv', 'it', or 'ivg'")
-
-
-def count_header_rows(csv_path: Path) -> int:
-    """Count leading header lines starting with '#'."""
-    n = 0
-    with csv_path.open("r", encoding="utf-8", errors="ignore") as f:
-        for line in f:
-            if line.startswith("#"):
-                n += 1
+    for proc in df["proc"].to_list():
+        if proc == "IVg":
+            if not seen_any_ivg:
+                # first IVg starts session
+                session_id += 1
+                seen_any_ivg = True
+                seen_its_since_ivg = False
+                roles.append("pre_ivg")
+                ids.append(session_id)
             else:
-                break
-    return n
+                if seen_its_since_ivg:
+                    # this IVg closes the existing session
+                    roles.append("post_ivg")
+                    ids.append(session_id)
+                    # next block will start on the next IVg or ITS as needed
+                    seen_its_since_ivg = False
+                    seen_any_ivg = False  # force new session on next IVg/ITS
+                else:
+                    # back-to-back IVg → treat as a new session pre_ivg
+                    session_id += 1
+                    roles.append("pre_ivg")
+                    ids.append(session_id)
+                    seen_its_since_ivg = False
+        elif proc == "ITS":
+            if not seen_any_ivg:
+                # ITS without a prior IVg — start a new session
+                session_id += 1
+                seen_any_ivg = True
+            roles.append("its")
+            ids.append(session_id)
+            seen_its_since_ivg = True
+        else:
+            roles.append("other")
+            ids.append(session_id)
 
+    df = df.with_columns([
+        pl.Series("session", ids),
+        pl.Series("role", roles),
+    ])
+    return df
 
-def read_data_block(csv_path: Path) -> pl.DataFrame:
-    """Read the data portion of an IV CSV by skipping header lines that start with '#'."""
-    skip = count_header_rows(csv_path)
-    try:
-        df = pl.read_csv(
-            csv_path,
-            skip_rows=skip,
-            infer_schema_length=4096,
-            ignore_errors=True,
-            try_parse_dates=True,
-            null_values=["nan", "NaN", ""],
-            encoding="utf8-lossy",
+# -------------------------------
+# Plotting
+# -------------------------------
+def plot_ivg_sequence(df: pl.DataFrame, base_dir: Path, tag: str):
+    """Plot all IVg in chronological order (Id vs Vg)."""
+    ivg = df.filter(pl.col("proc") == "IVg").sort("file_idx")
+    if ivg.height == 0:
+        return
+    plt.figure()
+    for row in ivg.iter_rows(named=True):
+        path = base_dir / row["source_file"]
+        if not path.exists():
+            print(f"[warn] missing file: {path}")
+            continue
+        d = _read_measurement(path)
+        # Expect columns: VG, I (standardized)
+        if not {"VG", "I"} <= set(d.columns):
+            print(f"[warn] {path} lacks VG/I; got {d.columns}")
+            continue
+        lbl = f"#{int(row['file_idx'])}  {'light' if row['with_light'] else 'dark'}"
+        plt.plot(d["VG"], d["I"], label=lbl)
+    plt.xlabel("VG (V)")
+    plt.ylabel("Current (A)")
+    plt.title(f"Encap{int(df['Chip number'][0])} — IVg")
+    plt.legend(fontsize=8)
+    plt.tight_layout()
+    out = FIG_DIR / f"Encap{int(df['Chip number'][0])}_IVg_sequence_{tag}.png"
+    plt.savefig(out, dpi=200)
+    print(f"saved {out}")
+
+def plot_ivg_sessions_prepost(df: pl.DataFrame, base_dir: Path, tag: str):
+    """For each session, overlay pre_ivg vs post_ivg if both exist."""
+    sessions = sorted(set(df["session"].to_list()))
+    for s in sessions:
+        block = df.filter(pl.col("session") == s)
+        pre = block.filter(pl.col("role") == "pre_ivg")
+        post = block.filter(pl.col("role") == "post_ivg")
+        if pre.height == 0 or post.height == 0:
+            continue
+
+        paths = []
+        for sub in (pre, post):
+            row = sub.row(0, named=True)
+            p = (base_dir / row["source_file"])
+            if p.exists():
+                paths.append((row["role"], row["file_idx"], p))
+        if len(paths) < 2:
+            continue
+
+        plt.figure()
+        for role, idx, p in paths:
+            d = _read_measurement(p)
+            if not {"VG", "I"} <= set(d.columns):
+                continue
+            plt.plot(d["VG"], d["I"], label=f"{role} (#{int(idx)})")
+        plt.xlabel("VG (V)")
+        plt.ylabel("Id (A)")
+        plt.title(f"Chip {int(df['Chip number'][0])} — Session {s}: pre vs post IVg")
+        plt.legend()
+        plt.tight_layout()
+        out = FIG_DIR / f"chip{int(df['Chip number'][0])}_session{s}_pre_vs_post_{tag}.png"
+        plt.savefig(out, dpi=200)
+        print(f"saved {out}")
+        
+        
+def plot_its_overlay(df: pl.DataFrame, base_dir: Path, tag: str):
+    import numpy as np
+
+    its = df.filter(pl.col("proc") == "ITS").sort("file_idx")
+    if its.height == 0:
+        print("[warn] no ITS rows in metadata")
+        return
+
+    plt.figure()
+    curves_plotted = 0
+
+    # Collect info for automatic shading/x-limits
+    t_totals = []              # per-trace total duration (max t)
+    starts_vl, ends_vl = [], []  # ON start/end inferred from VL data
+    on_durations_meta = []     # ON duration from metadata (if present)
+
+    for row in its.iter_rows(named=True):
+        path = base_dir / row["source_file"]
+        if not path.exists():
+            print(f"[warn] missing file: {path}")
+            continue
+
+        d = _read_measurement(path)
+        if not {"t", "I"} <= set(d.columns):
+            print(f"[warn] {path} lacks t/I; got {d.columns}")
+            continue
+
+        # plot the trace
+        lbl = (
+            f"#{int(row['file_idx'])}  session {row['session']}  "
+            f"Vg={row.get('VG_meta', 0):g} V  VL={row.get('VL_meta', float('nan'))} V"
         )
-    except Exception as e:
-        raise RuntimeError(f"read_csv failed: {e}")
+        plt.plot(d["t"], d["I"], label=lbl)
+        curves_plotted += 1
 
-    if df.height == 0 or df.width == 0:
-        raise RuntimeError("empty data block")
-    return df
-
-
-# ----------------------------
-# Metadata filtering
-# ----------------------------
-
-def load_metadata(path: Path) -> pl.DataFrame:
-    if not path.exists():
-        raise FileNotFoundError(f"metadata file not found: {path}")
-    df = pl.read_csv(path, infer_schema_length=2048, encoding="utf8-lossy")
-    if "source_file" not in df.columns:
-        raise ValueError("metadata.csv must include a 'source_file' column")
-    return df
-
-
-def filter_metadata(
-    meta: pl.DataFrame,
-    *,
-    sample: Optional[str] = None,
-    group_field: Optional[str] = None,  # e.g. "Chip group name"
-    chip: Optional[str | int] = None,   # e.g. 3
-    info_contains: Optional[str] = None,
-    info_regex: Optional[str] = None,
-) -> pl.DataFrame:
-    df = meta
-    if sample and "Sample" in df.columns:
-        df = df.filter(pl.col("Sample").cast(pl.Utf8, strict=False).str.contains(sample, literal=True, strict=False))
-
-    if group_field and group_field in df.columns:
-        df = df.filter(pl.col(group_field).cast(pl.Utf8, strict=False).is_not_null())
-
-    if chip is not None and "Chip number" in df.columns:
-        chip_str = str(chip)
+        # total duration for this trace
         try:
-            chip_float = float(chip_str)
+            t_totals.append(float(d["t"].max()))
         except Exception:
-            chip_float = None
+            pass
 
-        cond = (pl.col("Chip number").cast(pl.Utf8, strict=False) == chip_str)
-        if chip_float is not None:
-            cond = cond | (pl.col("Chip number").cast(pl.Float64, strict=False) == chip_float)
-        cond = cond | (
-            pl.col("Chip number").cast(pl.Utf8, strict=False)
-            .str.replace(r"^(\d+)\.0+$", r"\1", literal=False) == chip_str
-        )
-        df = df.filter(cond)
+        # Try to infer ON window from VL if available
+        if "VL" in d.columns:
+            try:
+                vl = d["VL"].to_numpy()
+                tt = d["t"].to_numpy()
+                on_idx = np.where(vl > 0)[0]
+                if on_idx.size:
+                    starts_vl.append(float(tt[on_idx[0]]))
+                    ends_vl.append(float(tt[on_idx[-1]]))
+            except Exception:
+                pass
 
-    if info_contains and "Information" in df.columns:
-        df = df.filter(pl.col("Information").cast(pl.Utf8, strict=False).str.contains(info_contains, literal=False, strict=False))
+        # Grab ON duration from metadata if present on this row
+        if "Laser ON+OFF period" in its.columns:
+            try:
+                on_durations_meta.append(float(row["Laser ON+OFF period"]))
+            except Exception:
+                pass
 
-    if info_regex and "Information" in df.columns:
-        df = df.filter(pl.col("Information").cast(pl.Utf8, strict=False).str.contains(info_regex, literal=False))
+    if curves_plotted == 0:
+        print("[warn] no ITS traces plotted; skipping light-window shading")
+        return
 
-    return df
+    # ---- Decide x-limits from data (median of total durations)
+    if t_totals:
+        T_total = float(np.median(t_totals))
+        if np.isfinite(T_total) and T_total > 0:
+            plt.xlim(20, T_total)
 
+    # ---- Compute ON window [t0, t1]
+    t0 = t1 = None
 
-def build_label(row: dict) -> str:
-    parts: list[str] = []
-    for key in LEGEND_META_FIELDS:
-        if key in row and row[key] is not None and row[key] != "":
-            parts.append(f"{key}={row[key]}")
-    return "; ".join(parts) if parts else Path(str(row.get("source_file", ""))).name
+    # 1) Best: from VL signal (median across traces)
+    if starts_vl and ends_vl:
+        t0 = float(np.median(starts_vl))
+        t1 = float(np.median(ends_vl))
 
+    # 2) Next: from metadata (treat 'Laser ON+OFF period' as ON duration; OFF–ON–OFF centered)
+    if (t0 is None or t1 is None) and on_durations_meta and t_totals:
+        on_dur = float(np.median(on_durations_meta))
+        T_total = float(np.median(t_totals))
+        if np.isfinite(on_dur) and np.isfinite(T_total) and T_total > 0:
+            pre_off = max(0.0, (T_total - on_dur) / 2.0)
+            t0 = pre_off
+            t1 = pre_off + on_dur
 
-def resolve_source_path(src: str, root: Optional[Path]) -> Path:
-    p = Path(src)
-    if root is not None and not p.is_absolute():
-        p = root / p
-    return p
+    # 3) Fallback: middle third of the run
+    if (t0 is None or t1 is None) and t_totals:
+        T_total = float(np.median(t_totals))
+        if np.isfinite(T_total) and T_total > 0:
+            t0 = T_total / 3.0
+            t1 = 2.0 * T_total / 3.0
 
+    if (t0 is not None) and (t1 is not None) and (t1 > t0):
+        plt.axvspan(t0, t1, alpha=0.15)
 
-# ----------------------------
-# Plotters
-# ----------------------------
-
-def plot_iv(paths: list[Path], meta_rows: list[dict], *, title: Optional[str], xlog: bool, ylog: bool, legend: bool):
-    plt.figure()
-    for csv_path, meta_row in zip(paths, meta_rows):
-        try:
-            df = read_data_block(csv_path)
-            x_col, y_col = detect_columns(df, mode="iv")
-            if not x_col or not y_col:
-                print(f"[skip] {csv_path.name}: could not detect IV columns")
-                continue
-            x = df.get_column(x_col).to_numpy()
-            y = df.get_column(y_col).to_numpy()
-            lbl = build_label(meta_row)
-            plt.plot(x, y, label=lbl)
-        except Exception as e:
-            print(f"[warn] failed {csv_path}: {e}")
-            continue
-
-    plt.xlabel("Voltage (detected)")
-    plt.ylabel("Current (detected)")
-    if xlog:
-        plt.xscale("log")
-    if ylog:
-        plt.yscale("log")
-    if title:
-        plt.title(title)
-    if legend:
-        plt.legend()
+    plt.xlabel("t (s)")
+    plt.ylabel("Id (A)")
+    plt.title(f"Chip {int(df['Chip number'][0])} — ITS overlay")
+    plt.legend(fontsize=8)
     plt.tight_layout()
+    out = FIG_DIR / f"chip{int(df['Chip number'][0])}_ITS_overlay_{tag}.png"
+    plt.savefig(out, dpi=200)
+    print(f"saved {out}")
 
 
-def plot_it(paths: list[Path], meta_rows: list[dict], *, title: Optional[str], xlog: bool, ylog: bool, legend: bool):
-    plt.figure()
-    for csv_path, meta_row in zip(paths, meta_rows):
-        try:
-            df = read_data_block(csv_path)
-            x_col, y_col = detect_columns(df, mode="it")
-            if not x_col or not y_col:
-                print(f"[skip] {csv_path.name}: could not detect IT columns")
-                continue
-            x = df.get_column(x_col).to_numpy()
-            y = df.get_column(y_col).to_numpy()
-            lbl = build_label(meta_row)
-            plt.plot(x, y, label=lbl)
-        except Exception as e:
-            print(f"[warn] failed {csv_path}: {e}")
-            continue
+def plot_its_by_vg(
+    df: pl.DataFrame,
+    base_dir: Path,
+    tag: str,
+    vgs: list[float] | None = None,          # e.g., [-2.0]
+    wavelengths: list[float] | None = None,  # e.g., [455.0]
+    tol: float = 1e-6,                       # tolerance for Vg match
+    wl_tol: float = 1e-6,                    # tolerance for wavelength match
+    xlim_seconds: float | None = 180.0,      # None -> autoscale
+    vl_threshold: float = 0.0,               # VL > threshold => light ON
+):
+    """
+    Overlay ITS traces grouped by (Vg, wavelength) from metadata.
+    Uses VL>vl_threshold to detect light ON; falls back to metadata ON duration if needed.
+    """
 
-    plt.xlabel("Time (detected)")
-    plt.ylabel("Current (detected)")
-    if xlog:
-        plt.xscale("log")
-    if ylog:
-        plt.yscale("log")
-    if title:
-        plt.title(title)
-    if legend:
-        plt.legend()
-    plt.tight_layout()
+    its_all = df.filter(pl.col("proc") == "ITS").sort("file_idx")
+    if its_all.height == 0:
+        print("[warn] no ITS rows in metadata")
+        return
 
+    if "VG_meta" not in its_all.columns:
+        print("[warn] VG_meta not present in metadata; cannot group by Vg")
+        return
 
-def plot_ivg(paths: list[Path], meta_rows: list[dict], *, title: Optional[str], xlog: bool, ylog: bool, legend: bool):
-    """Plot I vs VG (gate sweep) at fixed VDS."""
-    plt.figure()
-    for csv_path, meta_row in zip(paths, meta_rows):
-        try:
-            df = read_data_block(csv_path)
-            x_col, y_col = detect_columns(df, mode="ivg")
-            if not x_col or not y_col:
-                print(f"[skip] {csv_path.name}: could not detect IVg columns")
-                continue
-            x = df.get_column(x_col).to_numpy()
-            y = df.get_column(y_col).to_numpy()
-            lbl = build_label(meta_row)
-            plt.plot(x, y, label=lbl)
-        except Exception as e:
-            print(f"[warn] failed {csv_path}: {e}")
-            continue
-
-    plt.xlabel("Gate Voltage VG (detected)")
-    plt.ylabel("Current (detected)")
-    if xlog:
-        plt.xscale("log")
-    if ylog:
-        plt.yscale("log")
-    if title:
-        plt.title(title)
-    if legend:
-        plt.legend()
-    plt.tight_layout()
-
-
-# ----------------------------
-# CLI
-# ----------------------------
-
-def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Plot IV/IT traces from metadata + raw CSVs")
-    p.add_argument("mode", choices=["iv", "it", "ivg"], help="plot type: iv, it, or ivg")
-    p.add_argument("--metadata", default="metadata.csv", type=Path, help="Path to metadata CSV")
-    p.add_argument("--root", type=Path, default=None, help="Optional root to prepend to relative source_file paths")
-    # Filters
-    p.add_argument("--sample", type=str, default=None, help="Filter by Sample contains")
-    p.add_argument("--group", dest="group_field", type=str, default=None, help="Group field to use with --chip (e.g. 'Chip group name')")
-    p.add_argument("--chip", type=str, default=None, help="Chip number to match when --group is given")
-    p.add_argument("--info-contains", type=str, default=None, help="Substring to search in Information")
-    p.add_argument("--info-regex", type=str, default=None, help="Regex to search in Information")
-    p.add_argument("--limit", type=int, default=None, help="Max number of traces")
-    # Plot opts
-    p.add_argument("--title", type=str, default=None)
-    p.add_argument("--xlog", action="store_true")
-    p.add_argument("--ylog", action="store_true")
-    p.add_argument("--legend", action="store_true")
-    p.add_argument("--save", type=Path, default=None, help="Save figure to path (png/pdf)")
-    p.add_argument("--dpi", type=int, default=150)
-    return p.parse_args()
-
-
-def main() -> None:
-    args = parse_args()
-    meta = load_metadata(args.metadata)
-
-    df_sel = filter_metadata(
-        meta,
-        sample=args.sample,
-        group_field=args.group_field,
-        chip=args.chip,
-        info_contains=args.info_contains,
-        info_regex=args.info_regex,
-    )
-
-    if df_sel.height == 0:
-        available_cols = ", ".join(meta.columns)
-        raise SystemExit(
-            "No rows matched filters. Try relaxing filters or check field names.\n"
-            f"Available metadata columns: {available_cols}"
-        )
-
-    if args.limit is not None:
-        df_sel = df_sel.head(args.limit)
-
-    rows = df_sel.to_dicts()
-    paths: list[Path] = []
-    meta_rows: list[dict] = []
-    for row in rows:
-        src = row.get("source_file")
-        if not src:
-            continue
-        p = resolve_source_path(str(src), args.root)
-        if not p.exists():
-            print(f"[skip] missing: {p}")
-            continue
-        paths.append(p)
-        meta_rows.append(row)
-
-    if not paths:
-        raise SystemExit("No existing source files to plot after filtering.")
-
-    if args.mode == "iv":
-        plot_iv(paths, meta_rows, title=args.title, xlog=args.xlog, ylog=args.ylog, legend=args.legend)
-    elif args.mode == "it":
-        plot_it(paths, meta_rows, title=args.title, xlog=args.xlog, ylog=args.ylog, legend=args.legend)
+    # Determine target Vg values
+    if vgs is None:
+        vgs = sorted(float(v) for v in its_all.get_column("VG_meta").drop_nulls().unique().to_list())
     else:
-        plot_ivg(paths, meta_rows, title=args.title, xlog=args.xlog, ylog=args.ylog, legend=args.legend)
+        vgs = list(vgs)
 
-    if args.save:
-        plt.savefig(args.save, dpi=args.dpi, bbox_inches="tight")
-        print(f"Saved figure -> {args.save}")
+    # Determine target wavelengths
+    if wavelengths is None:
+        if "Laser wavelength" in its_all.columns:
+            wavelengths = sorted(
+                float(w) for w in its_all.get_column("Laser wavelength").drop_nulls().unique().to_list()
+            )
+        else:
+            wavelengths = [float("nan")]  # no wavelength column → single pass
     else:
-        plt.show()
+        wavelengths = list(wavelengths)
+
+    for VG_target in vgs:
+        for WL_target in wavelengths:
+            # Build selection mask
+            mask = (pl.col("VG_meta") - VG_target).abs() <= tol
+            if "Laser wavelength" in its_all.columns and not np.isnan(WL_target):
+                mask = mask & ((pl.col("Laser wavelength") - WL_target).abs() <= wl_tol)
+
+            sel = its_all.filter(mask)
+            if sel.height == 0:
+                msg_wl = f", λ≈{WL_target:g} nm" if not np.isnan(WL_target) else ""
+                print(f"[info] no ITS rows for Vg≈{VG_target:g} V{msg_wl}")
+                continue
+
+            plt.figure()
+            curves_plotted = 0
+
+            # For window/x-lims
+            t_totals = []
+            starts_vl, ends_vl = [], []
+            on_durs_meta = []
+
+            for row in sel.iter_rows(named=True):
+                path = base_dir / row["source_file"]
+                if not path.exists():
+                    print(f"[warn] missing file: {path}")
+                    continue
+
+                d = _read_measurement(path)
+                if not {"t", "I"} <= set(d.columns):
+                    print(f"[warn] {path} lacks t/I; got {d.columns}")
+                    continue
+
+                lbl = f"#{int(row['file_idx'])}  VL={row.get('VL_meta', float('nan'))} V"
+                #######
+                d_clip = d.filter(pl.col("t") >= 20.0)
+                plt.plot(d_clip["t"], d_clip["I"], label=lbl)
+                #plt.plot(d["t"], d["I"], label=lbl)
+                curves_plotted += 1
+
+                # total duration
+                try:
+                    t_totals.append(float(d["t"].max()))
+                except Exception:
+                    pass
+
+                # VL-based ON detection
+                if "VL" in d.columns:
+                    try:
+                        vl = d["VL"].to_numpy()
+                        tt = d["t"].to_numpy()
+                        on_idx = np.where(vl > vl_threshold)[0]
+                        if on_idx.size:
+                            starts_vl.append(float(tt[on_idx[0]]))
+                            ends_vl.append(float(tt[on_idx[-1]]))
+                    except Exception:
+                        pass
+
+                # Metadata ON duration (treat “Laser ON+OFF period” as ON duration for OFF–ON–OFF)
+                if "Laser ON+OFF period" in sel.columns:
+                    try:
+                        on_durs_meta.append(float(row["Laser ON+OFF period"]))
+                    except Exception:
+                        pass
+
+            if curves_plotted == 0:
+                print(f"[warn] no ITS traces plotted for Vg≈{VG_target:g} V, λ≈{WL_target:g} nm; skipping")
+                plt.close()
+                continue
+
+            # X-limits
+            if xlim_seconds is not None:
+                plt.xlim(20.0, float(xlim_seconds))
+                T_total = float(xlim_seconds)
+            else:
+                T_total = float(np.median(t_totals)) if t_totals else None
+                if T_total and np.isfinite(T_total) and T_total > 0:
+                    plt.xlim(0.0, T_total)
+
+            # ON window
+            t0 = t1 = None
+            if starts_vl and ends_vl:
+                t0 = float(np.median(starts_vl))
+                t1 = float(np.median(ends_vl))
+            if (t0 is None or t1 is None) and on_durs_meta:
+                on_dur = float(np.median(on_durs_meta))
+                T_use = float(xlim_seconds) if xlim_seconds is not None else (float(np.median(t_totals)) if t_totals else None)
+                if T_use and np.isfinite(T_use) and T_use > 0:
+                    pre_off = max(0.0, (T_use - on_dur) / 2.0)
+                    t0, t1 = pre_off, pre_off + on_dur
+            if (t0 is None or t1 is None):
+                T_use = (float(xlim_seconds) if xlim_seconds is not None
+                         else (float(np.median(t_totals)) if t_totals else None))
+                if T_use and np.isfinite(T_use) and T_use > 0:
+                    t0, t1 = T_use/3.0, 2.0*T_use/3.0
+            if (t0 is not None) and (t1 is not None) and (t1 > t0):
+                plt.axvspan(t0, t1, alpha=0.15)
+
+            # Title (use median wavelength in the selection when available)
+            if "Laser wavelength" in sel.columns:
+                wl_series = sel.get_column("Laser wavelength").cast(pl.Float64, strict=False).drop_nulls()
+                if wl_series.len() > 0:
+                    wl_used = float(wl_series.median())
+                else:
+                    wl_used = float("nan")
+            else:
+                wl_used = float("nan")
+
+            wl_txt = f", λ={wl_used:.0f} nm" if np.isfinite(wl_used) else ""
+            plt.title(f"Encap{int(df['Chip number'][0])} — Vg={VG_target:g} V{wl_txt}")
+            plt.xlabel("Time (s)")
+            plt.ylabel(f"Current (A)")
+            plt.legend(fontsize=8)
+            plt.tight_layout()
+
+            safe_vg = str(VG_target).replace("-", "m").replace(".", "p")
+            safe_wl = (f"{int(round(wl_used))}nm" if np.isfinite(wl_used)
+                       else ("allwl"))
+            out = FIG_DIR / f"chip{int(df['Chip number'][0])}_ITS_overlay_Vg{safe_vg}_{safe_wl}_{tag}.png"
+            plt.savefig(out, dpi=200)
+            print(f"saved {out}")
 
 
-if __name__ == "__main__":
-    main()
+def export_timeline(df: pl.DataFrame, tag: str):
+    """Write a compact CSV showing order, session, role and key fields."""
+    out = FIG_DIR / f"chip{int(df['Chip number'][0])}_timeline_{tag}.csv"
+    keep = df.select([
+        "file_idx", "session", "role", "proc", "with_light",
+        pl.col("VL_meta").alias("VL (V)"),
+        pl.col("VG_meta").alias("VG (V)"),
+        "source_file",
+        "Information"
+    ])
+    keep.write_csv(out)
+    print(f"saved {out}")
+
+
+
+def plot_ivg_last_of_day1_vs_first_of_day2(
+    meta_day1: pl.DataFrame,
+    meta_day2: pl.DataFrame,
+    base_dir_day1: Path,
+    base_dir_day2: Path,
+    tag: str,
+):
+    # keep only IVg rows, already per-chip if you used load_and_prepare_metadata(...)
+    ivg1 = meta_day1.filter(pl.col("proc") == "IVg").sort("file_idx")
+    ivg2 = meta_day2.filter(pl.col("proc") == "IVg").sort("file_idx")
+
+    if ivg1.height == 0 or ivg2.height == 0:
+        print("[warn] one of the days has no IVg runs")
+        return
+
+    r1 = ivg1.tail(1).row(0, named=True)   # last of day 1
+    r2 = ivg2.head(1).row(0, named=True)   # first of day 2
+
+    p1 = base_dir_day1 / r1["source_file"]
+    p2 = base_dir_day2 / r2["source_file"]
+
+    d1 = _read_measurement(p1)
+    d2 = _read_measurement(p2)
+
+    if not {"VG","I"} <= set(d1.columns):
+        print(f"[warn] {p1} lacks VG/I; got {d1.columns}")
+        return
+    if not {"VG","I"} <= set(d2.columns):
+        print(f"[warn] {p2} lacks VG/I; got {d2.columns}")
+        return
+
+    plt.figure()
+    lbl1 = f"Day1 last (#{int(r1['file_idx'])})"
+    lbl2 = f"Day2 first (#{int(r2['file_idx'])})"
+    # optionally show wavelength if present in metadata
+    if "Laser wavelength" in ivg1.columns and ivg1["Laser wavelength"].drop_nulls().len() > 0:
+        lbl1 += f", λ={float(ivg1['Laser wavelength'].drop_nulls().median()):.0f} nm"
+    if "Laser wavelength" in ivg2.columns and ivg2["Laser wavelength"].drop_nulls().len() > 0:
+        lbl2 += f", λ={float(ivg2['Laser wavelength'].drop_nulls().median()):.0f} nm"
+
+    plt.plot(d1["VG"], d1["I"], label=lbl1)
+    plt.plot(d2["VG"], d2["I"], label=lbl2)
+
+    chip_txt = f"Chip {int(meta_day1['Chip number'][0])}" if 'Chip number' in meta_day1.columns else "Chip"
+    plt.xlabel("VG (V)")
+    plt.ylabel("Current (A)")
+    plt.title(f"{chip_txt} — IVg: last (day1) vs first (day2)")
+    plt.legend(fontsize=8)
+    plt.tight_layout()
+
+    out = FIG_DIR / f"{chip_txt.replace(' ','')}_IVg_last_day1_first_day2_{tag}.png"
+    plt.savefig(out, dpi=200)
+    print(f"saved {out}")
+
