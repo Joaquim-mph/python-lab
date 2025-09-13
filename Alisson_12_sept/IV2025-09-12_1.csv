@@ -1,0 +1,95 @@
+#Procedure: <laser_setup.procedures.IV.IV>
+#Parameters:
+#	Irange: 0.0001 A
+#	NPLC: 1
+#	Burn-in time: 600 s
+#	Chip group name: other
+#	Chip number: 71
+#	Information: test 71 muerto :(
+#	Laser voltage: 0 V
+#	Laser wavelength: 0
+#	Procedure version: 2.0.1
+#	Sample: other
+#	Step time: 0 s
+#	VG: 0 V
+#	VSD end: 1 V
+#	VSD start: -1 V
+#	VSD step: 0.01 V
+#Metadata:
+#	Start time: 1757686798.9217222
+#Data:
+Vsd (V),I (A),Plate T (degC),Ambient T (degC),Clock (ms)
+0.0,1.201253e-09,nan,nan,nan
+-0.0005,8.901229e-10,nan,nan,nan
+-0.0105,9.074098e-10,nan,nan,nan
+-0.0205,1.068737e-09,nan,nan,nan
+-0.0305,9.650266e-10,nan,nan,nan
+-0.0405,9.76549e-10,nan,nan,nan
+-0.0505,6.135635e-10,nan,nan,nan
+-0.0605,1.016878e-09,nan,nan,nan
+-0.07050000000000001,9.765487e-10,nan,nan,nan
+-0.0805,9.535029e-10,nan,nan,nan
+-0.0905,8.7284e-10,nan,nan,nan
+-0.1005,8.325071e-10,nan,nan,nan
+-0.1105,1.120591e-09,nan,nan,nan
+-0.1205,9.477404e-10,nan,nan,nan
+-0.1305,7.864143e-10,nan,nan,nan
+-0.1405,8.209858e-10,nan,nan,nan
+-0.1505,1.062976e-09,nan,nan,nan
+-0.1605,9.419808e-10,nan,nan,nan
+-0.1705,7.287989e-10,nan,nan,nan
+-0.1805,1.155163e-09,nan,nan,nan
+-0.1905,1.160923e-09,nan,nan,nan
+-0.2005,9.074091e-10,nan,nan,nan
+-0.2105,6.193264e-10,nan,nan,nan
+-0.2205,1.287681e-09,nan,nan,nan
+-0.2305,1.299203e-09,nan,nan,nan
+-0.2405,9.707882e-10,nan,nan,nan
+-0.2505,7.806529e-10,nan,nan,nan
+-0.2605,9.30457e-10,nan,nan,nan
+-0.2705,1.207018e-09,nan,nan,nan
+-0.2805,9.131723e-10,nan,nan,nan
+-0.2905,7.6913e-10,nan,nan,nan
+-0.3005,6.769431e-10,nan,nan,nan
+-0.3105,1.207016e-09,nan,nan,nan
+-0.3205,1.005358e-09,nan,nan,nan
+-0.3305,8.267463e-10,nan,nan,nan
+-0.3405,4.695233e-10,nan,nan,nan
+-0.35050000000000003,9.477407e-10,nan,nan,nan
+-0.3605,9.995945e-10,nan,nan,nan
+-0.3705,9.131698e-10,nan,nan,nan
+-0.3805,8.555543e-10,nan,nan,nan
+-0.3905,8.382697e-10,nan,nan,nan
+-0.4005,1.022645e-09,nan,nan,nan
+-0.41050000000000003,8.901261e-10,nan,nan,nan
+-0.4205,6.999912e-10,nan,nan,nan
+-0.4305,9.823137e-10,nan,nan,nan
+-0.4405,1.062977e-09,nan,nan,nan
+-0.4505,8.90126e-10,nan,nan,nan
+-0.4605,6.711819e-10,nan,nan,nan
+-0.47050000000000003,1.310727e-09,nan,nan,nan
+-0.4805,1.160922e-09,nan,nan,nan
+-0.4905,9.592643e-10,nan,nan,nan
+-0.5005,8.670785e-10,nan,nan,nan
+-0.5105,9.189336e-10,nan,nan,nan
+-0.5205,1.189734e-09,nan,nan,nan
+-0.5305,9.131713e-10,nan,nan,nan
+-0.5405,9.419813e-10,nan,nan,nan
+-0.5505,8.440313e-10,nan,nan,nan
+-0.5605,1.172445e-09,nan,nan,nan
+-0.5705,9.59265e-10,nan,nan,nan
+-0.5804999999999999,8.786024e-10,nan,nan,nan
+-0.5904999999999999,8.152247e-10,nan,nan,nan
+-0.6004999999999999,9.707902e-10,nan,nan,nan
+-0.6104999999999999,9.938353e-10,nan,nan,nan
+-0.6204999999999999,9.016483e-10,nan,nan,nan
+-0.6305,8.497931e-10,nan,nan,nan
+-0.6405,7.864166e-10,nan,nan,nan
+-0.6505,1.028406e-09,nan,nan,nan
+-0.6605,8.325085e-10,nan,nan,nan
+-0.6705,8.613183e-10,nan,nan,nan
+-0.6805,1.074501e-09,nan,nan,nan
+-0.6905,1.062977e-09,nan,nan,nan
+-0.7005,8.786023e-10,nan,nan,nan
+-0.7104999999999999,7.17275e-10,nan,nan,nan
+-0.7204999999999999,1.258873e-09,nan,nan,nan

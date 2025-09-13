@@ -91,6 +91,7 @@ def load_and_prepare_metadata(meta_csv: str, chip: float) -> pl.DataFrame:
 # -------------------------------
 # Plotting
 # -------------------------------
+
 def plot_ivg_sequence(df: pl.DataFrame, base_dir: Path, tag: str):
     """Plot all IVg in chronological order (Id vs Vg)."""
     ivg = df.filter(pl.col("proc") == "IVg").sort("file_idx")
@@ -108,49 +109,15 @@ def plot_ivg_sequence(df: pl.DataFrame, base_dir: Path, tag: str):
             print(f"[warn] {path} lacks VG/I; got {d.columns}")
             continue
         lbl = f"#{int(row['file_idx'])}  {'light' if row['with_light'] else 'dark'}"
-        plt.plot(d["VG"], d["I"], label=lbl)
+        plt.plot(d["VG"], d["I"]*1e6, label=lbl)
     plt.xlabel("VG (V)")
-    plt.ylabel("Current (A)")
+    plt.ylabel("Current (µA)")
     plt.title(f"Encap{int(df['Chip number'][0])} — IVg")
     plt.legend(fontsize=8)
     plt.tight_layout()
     out = FIG_DIR / f"Encap{int(df['Chip number'][0])}_IVg_sequence_{tag}.png"
     plt.savefig(out, dpi=200)
     print(f"saved {out}")
-
-def plot_ivg_sessions_prepost(df: pl.DataFrame, base_dir: Path, tag: str):
-    """For each session, overlay pre_ivg vs post_ivg if both exist."""
-    sessions = sorted(set(df["session"].to_list()))
-    for s in sessions:
-        block = df.filter(pl.col("session") == s)
-        pre = block.filter(pl.col("role") == "pre_ivg")
-        post = block.filter(pl.col("role") == "post_ivg")
-        if pre.height == 0 or post.height == 0:
-            continue
-
-        paths = []
-        for sub in (pre, post):
-            row = sub.row(0, named=True)
-            p = (base_dir / row["source_file"])
-            if p.exists():
-                paths.append((row["role"], row["file_idx"], p))
-        if len(paths) < 2:
-            continue
-
-        plt.figure()
-        for role, idx, p in paths:
-            d = _read_measurement(p)
-            if not {"VG", "I"} <= set(d.columns):
-                continue
-            plt.plot(d["VG"], d["I"], label=f"{role} (#{int(idx)})")
-        plt.xlabel("VG (V)")
-        plt.ylabel("Id (A)")
-        plt.title(f"Chip {int(df['Chip number'][0])} — Session {s}: pre vs post IVg")
-        plt.legend()
-        plt.tight_layout()
-        out = FIG_DIR / f"chip{int(df['Chip number'][0])}_session{s}_pre_vs_post_{tag}.png"
-        plt.savefig(out, dpi=200)
-        print(f"saved {out}")
         
         
 def plot_its_overlay(df: pl.DataFrame, base_dir: Path, tag: str):
@@ -337,7 +304,7 @@ def plot_its_by_vg(
                 lbl = f"#{int(row['file_idx'])}  VL={row.get('VL_meta', float('nan'))} V"
                 #######
                 d_clip = d.filter(pl.col("t") >= 20.0)
-                plt.plot(d_clip["t"], d_clip["I"], label=lbl)
+                plt.plot(d_clip["t"], d_clip["I"]*1e6, label=lbl)
                 #plt.plot(d["t"], d["I"], label=lbl)
                 curves_plotted += 1
 
@@ -412,7 +379,7 @@ def plot_its_by_vg(
             wl_txt = f", λ={wl_used:.0f} nm" if np.isfinite(wl_used) else ""
             plt.title(f"Encap{int(df['Chip number'][0])} — Vg={VG_target:g} V{wl_txt}")
             plt.xlabel("Time (s)")
-            plt.ylabel(f"Current (A)")
+            plt.ylabel(f"Current (µA)")
             plt.legend(fontsize=8)
             plt.tight_layout()
 
@@ -422,21 +389,6 @@ def plot_its_by_vg(
             out = FIG_DIR / f"chip{int(df['Chip number'][0])}_ITS_overlay_Vg{safe_vg}_{safe_wl}_{tag}.png"
             plt.savefig(out, dpi=200)
             print(f"saved {out}")
-
-
-def export_timeline(df: pl.DataFrame, tag: str):
-    """Write a compact CSV showing order, session, role and key fields."""
-    out = FIG_DIR / f"chip{int(df['Chip number'][0])}_timeline_{tag}.csv"
-    keep = df.select([
-        "file_idx", "session", "role", "proc", "with_light",
-        pl.col("VL_meta").alias("VL (V)"),
-        pl.col("VG_meta").alias("VG (V)"),
-        "source_file",
-        "Information"
-    ])
-    keep.write_csv(out)
-    print(f"saved {out}")
-
 
 
 def plot_ivg_last_of_day1_vs_first_of_day2(

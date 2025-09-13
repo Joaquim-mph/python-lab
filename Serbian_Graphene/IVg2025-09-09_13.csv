@@ -1,0 +1,52 @@
+#Procedure: <laser_setup.procedures.IVg.IVg>
+#Parameters:
+#	Irange: 0.0001 A
+#	NPLC: 1
+#	Burn-in time: 60 s
+#	Chip group name: other
+#	Chip number: 2
+#	Information: Servian Graphene 
+#	Laser voltage: 0 V
+#	Laser wavelength: 0
+#	Procedure version: 2.1.0
+#	Sample: other
+#	Step time: 0 s
+#	VDS: 0.075 V
+#	VG end: 1 V
+#	VG start: -1 V
+#	VG step: 0.2 V
+#Metadata:
+#	Start time: 1757445828.254803
+#Data:
+Vg (V),I (A),Plate T (degC),Ambient T (degC),Clock (ms)
+0.0,0.0001050008,nan,nan,nan
+-0.2,0.0001050007,nan,nan,nan
+-0.4,0.0001050007,nan,nan,nan
+-0.6000000000000001,0.0001050008,nan,nan,nan
+-0.8,0.0001050007,nan,nan,nan
+-1.0,0.0001050005,nan,nan,nan
+-0.8,0.0001050007,nan,nan,nan
+-0.6000000000000001,0.0001050007,nan,nan,nan
+-0.40000000000000013,0.0001050007,nan,nan,nan
+-0.20000000000000018,0.0001050007,nan,nan,nan
+-2.220446049250313e-16,0.0001050007,nan,nan,nan
+0.19999999999999973,0.0001050006,nan,nan,nan
+0.3999999999999997,0.0001050007,nan,nan,nan
+0.5999999999999996,0.0001050007,nan,nan,nan
+0.7999999999999996,0.0001050006,nan,nan,nan
+1.0,0.0001050007,nan,nan,nan
+0.8,0.0001050007,nan,nan,nan
+0.6000000000000001,0.0001050007,nan,nan,nan
+0.40000000000000013,0.0001050006,nan,nan,nan
+0.20000000000000018,0.0001050005,nan,nan,nan
+2.220446049250313e-16,0.0001050006,nan,nan,nan
+-0.19999999999999973,0.0001050006,nan,nan,nan
+-0.3999999999999997,0.0001050005,nan,nan,nan
+-0.5999999999999996,0.0001050007,nan,nan,nan
+-0.7999999999999996,0.0001050006,nan,nan,nan
+-0.9999999999999996,0.0001050007,nan,nan,nan
+-0.8,0.0001050007,nan,nan,nan
+-0.6000000000000001,0.0001050007,nan,nan,nan
+-0.4,0.0001050007,nan,nan,nan
+-0.2,0.0001050006,nan,nan,nan
+0.0,0.0001050006,nan,nan,nan
