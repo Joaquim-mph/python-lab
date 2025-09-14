@@ -143,132 +143,6 @@ def _day_from_df(df: pl.DataFrame) -> str | None:
 
 
 
-def run_one_day(
-    day_raw_dir: Path,
-    *,
-    schema_path: Path | None = None,
-    out_root: Path = Path("data/metadata"),
-    overwrite: bool = True,
-    make_timeline: bool = True,
-    verbose: bool = True,
-) -> dict:
-    """
-    Parse one subfolder under data/raw and write:
-      data/metadata/<same-folder-name>/metadata.csv
-      data/metadata/<same-folder-name>/timeline.csv
-    """
-    day_raw_dir = day_raw_dir.expanduser().resolve()
-    if verbose:
-        print(f"[run_one_day] raw={day_raw_dir}")
-
-    df_meta = parse_folder_metadata(
-        base_dir=day_raw_dir,
-        schema_yaml=schema_path,
-        save_csv=False,           # we control the output path
-        out_name="metadata.csv",
-        only_procs=None,
-        verbose=verbose,
-    )
-    if df_meta.height == 0:
-        if verbose:
-            print(f"[run_one_day] no csvs parsed in {day_raw_dir}")
-        return {"raw": str(day_raw_dir), "written": False, "rows": 0}
-
-    # ✅ Use the raw folder name verbatim
-    day_id = day_raw_dir.name
-
-    out_dir = (out_root / day_id).resolve()
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    meta_out = out_dir / "metadata.csv"
-    if meta_out.exists() and not overwrite:
-        if verbose:
-            print(f"[run_one_day] exists, skip: {meta_out}")
-    else:
-        df_meta.write_csv(meta_out)
-        if verbose:
-            print(f"[ok] wrote {meta_out}")
-
-    tl_out = out_dir / "timeline.csv"
-    if make_timeline:
-        try:
-            # reuse your printer (it writes <stem>_timeline.csv next to meta_out)
-            print_day_timeline(str(meta_out), day_raw_dir, save_csv=True)
-            generated = meta_out.with_name(meta_out.stem + "_timeline.csv")
-            if generated.exists():
-                if tl_out.exists() and overwrite:
-                    tl_out.unlink()
-                generated.replace(tl_out)
-                if verbose:
-                    print(f"[ok] wrote {tl_out}")
-        except Exception as e:
-            if verbose:
-                print(f"[warn] timeline generation failed for {day_raw_dir}: {e}")
-
-    return {
-        "raw": str(day_raw_dir),
-        "day_id": day_id,
-        "metadata_csv": str(meta_out),
-        "timeline_csv": str(tl_out if tl_out.exists() else ""),
-        "rows": df_meta.height,
-        "written": True,
-    }
-
-def run_all_days(
-    raw_root: str | Path = "data/raw",
-    *,
-    schema: str | Path = "configs/procedures.yml",
-    out_root: str | Path = "data/metadata",
-    overwrite: bool = True,
-    make_timeline: bool = True,
-    verbose: bool = True,
-) -> pl.DataFrame:
-    """
-    For each first-level subfolder in raw_root, create a mirrored folder in data/metadata/<same-name>/.
-    Also writes data/metadata/_index.csv.
-    """
-    raw_root = Path(raw_root).expanduser().resolve()
-    out_root = Path(out_root).expanduser().resolve()
-    schema_path = Path(schema).expanduser().resolve() if schema else None
-
-    if verbose:
-        print(f"[run_all_days] raw_root={raw_root} out_root={out_root} schema={schema_path}")
-
-    day_dirs = sorted([p for p in raw_root.iterdir() if p.is_dir()])
-    if verbose:
-        print(f"[run_all_days] found {len(day_dirs)} candidate folders")
-
-    records = []
-    for d in day_dirs:
-        if not any(d.rglob("*.csv")):
-            if verbose:
-                print(f"[skip] {d} (no CSVs)")
-            continue
-        info = run_one_day(
-            d,
-            schema_path=schema_path,
-            out_root=out_root,
-            overwrite=overwrite,
-            make_timeline=make_timeline,
-            verbose=verbose,
-        )
-        if info.get("written"):
-            records.append(info)
-
-    if not records:
-        if verbose:
-            print("[run_all_days] nothing written")
-        return pl.DataFrame()
-
-    idx = pl.DataFrame(records).select("day_id", "raw", "metadata_csv", "timeline_csv", "rows").sort("day_id")
-    out_root.mkdir(parents=True, exist_ok=True)
-    idx_path = out_root / "_index.csv"
-    idx.write_csv(idx_path)
-    if verbose:
-        print(f"[ok] wrote {idx_path}")
-
-    return idx
-
 def parse_header(path: Path, schema: dict[str, Any], *, verbose: bool=False) -> dict[str, Any]:
     proc_full = None
     section = None
@@ -405,43 +279,252 @@ def parse_folder_metadata(
 
 
 
-def run(
-    folder: str | Path = "data/raw/Alisson_12_sept",
-    schema: str | Path = "configs/procedures.yml",
-    out_name: str = "Alisson_12_sept_metadata.csv",
-    make_timeline: bool = True,
-    verbose: bool = False,
-):
-    base = Path(folder).expanduser().resolve()
-    schema_path = Path(schema).expanduser().resolve() if schema else None
 
+
+def run_one_day(
+    day_raw_dir: Path,
+    *,
+    schema_path: Path | None = None,
+    out_root: Path = Path("data/metadata"),
+    overwrite: bool = True,
+    make_timeline: bool = True,
+    verbose: bool = True,
+) -> dict:
+    """
+    Parse one subfolder under data/raw and write:
+      data/metadata/<same-folder-name>/metadata.csv
+      data/metadata/<same-folder-name>/timeline.csv
+    """
+    day_raw_dir = day_raw_dir.expanduser().resolve()
     if verbose:
-        print(f"[run] base={base} exists={base.exists()} schema={schema_path}")
+        print(f"[run_one_day] raw={day_raw_dir}")
 
     df_meta = parse_folder_metadata(
-        base_dir=base,
+        base_dir=day_raw_dir,
         schema_yaml=schema_path,
-        save_csv=True,
-        out_name=out_name,
+        save_csv=False,           # we control the output path
+        out_name="metadata.csv",
         only_procs=None,
         verbose=verbose,
     )
-
     if df_meta.height == 0:
-        print("[warn] no CSVs parsed")
-        return df_meta
+        if verbose:
+            print(f"[run_one_day] no csvs parsed in {day_raw_dir}")
+        return {"raw": str(day_raw_dir), "written": False, "rows": 0}
 
+    # ✅ Use the raw folder name verbatim
+    day_id = day_raw_dir.name
+
+    out_dir = (out_root / day_id).resolve()
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    meta_out = out_dir / "metadata.csv"
+    if meta_out.exists() and not overwrite:
+        if verbose:
+            print(f"[run_one_day] exists, skip: {meta_out}")
+    else:
+        df_meta.write_csv(meta_out)
+        if verbose:
+            print(f"[ok] wrote {meta_out}")
+
+    tl_out = out_dir / "timeline.csv"
     if make_timeline:
-        meta_csv_path = base / out_name
-        print_day_timeline(str(meta_csv_path), base)
+        try:
+            # reuse your printer (it writes <stem>_timeline.csv next to meta_out)
+            print_day_timeline(str(meta_out), day_raw_dir, save_csv=True)
+            generated = meta_out.with_name(meta_out.stem + "_timeline.csv")
+            if generated.exists():
+                if tl_out.exists() and overwrite:
+                    tl_out.unlink()
+                generated.replace(tl_out)
+                if verbose:
+                    print(f"[ok] wrote {tl_out}")
+        except Exception as e:
+            if verbose:
+                print(f"[warn] timeline generation failed for {day_raw_dir}: {e}")
 
-    return df_meta
+    return {
+        "raw": str(day_raw_dir),
+        "day_id": day_id,
+        "metadata_csv": str(meta_out),
+        "timeline_csv": str(tl_out if tl_out.exists() else ""),
+        "rows": df_meta.height,
+        "written": True,
+    }
+
+def run_all_days(
+    raw_root: str | Path = "data/raw",
+    *,
+    schema: str | Path = "configs/procedures.yml",
+    out_root: str | Path = "data/metadata",
+    overwrite: bool = True,
+    make_timeline: bool = True,
+    verbose: bool = True,
+) -> pl.DataFrame:
+    """
+    For each first-level subfolder in raw_root, create a mirrored folder in data/metadata/<same-name>/.
+    Also writes data/metadata/_index.csv.
+    """
+    raw_root = Path(raw_root).expanduser().resolve()
+    out_root = Path(out_root).expanduser().resolve()
+    schema_path = Path(schema).expanduser().resolve() if schema else None
+
+    if verbose:
+        print(f"[run_all_days] raw_root={raw_root} out_root={out_root} schema={schema_path}")
+
+    day_dirs = sorted([p for p in raw_root.iterdir() if p.is_dir()])
+    if verbose:
+        print(f"[run_all_days] found {len(day_dirs)} candidate folders")
+
+    records = []
+    for d in day_dirs:
+        if not any(d.rglob("*.csv")):
+            if verbose:
+                print(f"[skip] {d} (no CSVs)")
+            continue
+        info = run_one_day(
+            d,
+            schema_path=schema_path,
+            out_root=out_root,
+            overwrite=overwrite,
+            make_timeline=make_timeline,
+            verbose=verbose,
+        )
+        if info.get("written"):
+            records.append(info)
+
+    if not records:
+        if verbose:
+            print("[run_all_days] nothing written")
+        return pl.DataFrame()
+
+    idx = pl.DataFrame(records).select("day_id", "raw", "metadata_csv", "timeline_csv", "rows").sort("day_id")
+    out_root.mkdir(parents=True, exist_ok=True)
+    idx_path = out_root / "_index.csv"
+    idx.write_csv(idx_path)
+    if verbose:
+        print(f"[ok] wrote {idx_path}")
+
+    return idx
 
 
 
+EXCLUDE_DIRS = {".git", ".venv", "__pycache__", ".ipynb_checkpoints"}
 
+def find_csv_dirs(raw_root: Path) -> list[Path]:
+    """Return all directories under raw_root that contain at least one .csv."""
+    raw_root = raw_root.expanduser().resolve()
+    dirs = set()
+    for p in raw_root.rglob("*.csv"):
+        try:
+            rel = p.relative_to(raw_root)
+        except Exception:
+            continue
+        # skip virtual envs / hidden libs if somehow under raw_root
+        if any(part in EXCLUDE_DIRS for part in rel.parts):
+            continue
+        dirs.add(p.parent)
+    return sorted(dirs)
 
+def process_one_dir_mirroring(
+    raw_dir: Path,
+    *,
+    raw_root: Path = Path("data/raw"),
+    meta_root: Path = Path("data/metadata"),
+    schema_path: Path | None = Path("configs/procedures.yml"),
+    overwrite: bool = True,
+    make_timeline: bool = True,
+    verbose: bool = True,
+) -> dict:
+    """
+    Parse one raw_dir and write outputs mirroring the relative path:
+      data/metadata/<rel_path>/metadata.csv
+      data/metadata/<rel_path>/timeline.csv
+    """
+    raw_dir = raw_dir.expanduser().resolve()
+    raw_root = raw_root.expanduser().resolve()
+    meta_root = meta_root.expanduser().resolve()
+    if verbose:
+        print(f"[process] {raw_dir}")
 
-if __name__ == "__main__":
-    # one-liner to process everything
-    run_all_days()
+    # relative path to mirror
+    rel_path = raw_dir.relative_to(raw_root)
+    out_dir = (meta_root / rel_path).resolve()
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # parse headers (no auto-save)
+    df_meta = parse_folder_metadata(
+        base_dir=raw_dir,
+        schema_yaml=schema_path,
+        save_csv=False,
+        out_name="metadata.csv",
+        only_procs=None,
+        verbose=verbose,
+    )
+    if df_meta.height == 0:
+        if verbose:
+            print(f"[process] no csvs parsed in {raw_dir}")
+        return {"raw_dir": str(raw_dir), "written": False, "rows": 0, "rel_path": str(rel_path)}
+
+    # write metadata.csv
+    meta_out = out_dir / "metadata.csv"
+    if meta_out.exists() and not overwrite:
+        if verbose: print(f"[keep] {meta_out}")
+    else:
+        df_meta.write_csv(meta_out)
+        if verbose: print(f"[ok] wrote {meta_out} rows={df_meta.height}")
+
+    # write timeline.csv using your printer
+    tl_out = out_dir / "timeline.csv"
+    if make_timeline:
+        try:
+            print_day_timeline(str(meta_out), raw_dir, save_csv=True)
+            generated = meta_out.with_name(meta_out.stem + "_timeline.csv")
+            if generated.exists():
+                if tl_out.exists() and overwrite:
+                    tl_out.unlink()
+                generated.replace(tl_out)
+                if verbose: print(f"[ok] wrote {tl_out}")
+        except Exception as e:
+            if verbose: print(f"[warn] timeline generation failed for {raw_dir}: {e}")
+
+    return {
+        "raw_dir": str(raw_dir),
+        "rel_path": str(rel_path),
+        "metadata_csv": str(meta_out),
+        "timeline_csv": str(tl_out) if tl_out.exists() else "",
+        "rows": df_meta.height,
+        "written": True,
+    }
+
+def process_all_raw_recursive(
+    raw_root: str | Path = "data/raw",
+    *,
+    meta_root: str | Path = "data/metadata",
+    schema: str | Path = "configs/procedures.yml",
+    overwrite: bool = True,
+    make_timeline: bool = True,
+    verbose: bool = True,
+) -> pl.DataFrame:
+    """
+    Walk the entire raw_root recursively and mirror outputs in meta_root.
+    """
+    raw_root = Path(raw_root).expanduser().resolve()
+    meta_root = Path(meta_root).expanduser().resolve()
+    schema_path = Path(schema).expanduser().resolve() if schema else None
+
+    csv_dirs = find_csv_dirs(raw_root)
+    if verbose:
+        print(f"[discover] raw_root={raw_root} dirs_with_csv={len(csv_dirs)}")
+
+    records = []
+    for d in csv_dirs:
+        info = process_one_dir_mirroring(
+            d, raw_root=raw_root, meta_root=meta_root,
+            schema_path=schema_path, overwrite=overwrite,
+            make_timeline=make_timeline, verbose=verbose
+        )
+        if info.get("written"):
+            records.append(info)
+
+    return pl.DataFrame(records) if records else pl.DataFrame()

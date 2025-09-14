@@ -1,6 +1,0 @@
-day_id,raw,metadata_csv,timeline_csv,rows
-Alisson_04_sept,/home/mphstphls/python-lab/data/raw/Alisson_04_sept,/home/mphstphls/python-lab/data/metadata/Alisson_04_sept/metadata.csv,"",46
-Alisson_05_sept,/home/mphstphls/python-lab/data/raw/Alisson_05_sept,/home/mphstphls/python-lab/data/metadata/Alisson_05_sept/metadata.csv,"",52
-Alisson_08_sept,/home/mphstphls/python-lab/data/raw/Alisson_08_sept,/home/mphstphls/python-lab/data/metadata/Alisson_08_sept/metadata.csv,"",19
-Alisson_12_sept,/home/mphstphls/python-lab/data/raw/Alisson_12_sept,/home/mphstphls/python-lab/data/metadata/Alisson_12_sept/metadata.csv,"",60
-Serbian_Graphene,/home/mphstphls/python-lab/data/raw/Serbian_Graphene,/home/mphstphls/python-lab/data/metadata/Serbian_Graphene/metadata.csv,"",27
