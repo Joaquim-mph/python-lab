@@ -109,10 +109,10 @@ __marimo__/
 # ================================
 
 # Data trees (raw/derived)
-data/raw/**
-data/metadata/**
-data/processed/**
-data/warehouse/**
+data/00_raw/**
+data/01_metadata/**
+data/03_processed/**
+data/02_warehouse/**
 warehouse/**
 tools/warehouse/**
 
