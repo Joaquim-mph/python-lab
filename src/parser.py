@@ -67,7 +67,7 @@ def parse_iv_metadata(csv_path: Path) -> dict:
 
 
 # 1) find all IV csv files
-folder_name = "Alisson_12_sept"
+folder_name = "Alisson_15_sept"
 raw = Path(folder_name)
 all_csvs = list(raw.rglob("*.csv"))
 # drop any file whose name starts with "._"

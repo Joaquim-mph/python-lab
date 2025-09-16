@@ -1,0 +1,63 @@
+seq,time_hms,proc,chip,summary,source_file,file_idx,start_time
+1,11:38:10,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #1,Alisson_15_sept/IVg2025-09-15_1.csv,1,1757947090.3839564
+2,11:39:13,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #2,Alisson_15_sept/IVg2025-09-15_2.csv,2,1757947153.8131576
+3,11:40:21,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #3,Alisson_15_sept/IVg2025-09-15_3.csv,3,1757947221.1129608
+4,11:49:24,LaserCalibration,,LaserCalibration λ=850.0 nm  #1,Alisson_15_sept/LaserCalibration2025-09-15_1.csv,1,1757947764.5884311
+5,11:59:57,LaserCalibration,,LaserCalibration λ=850.0 nm  #2,Alisson_15_sept/LaserCalibration2025-09-15_2.csv,2,1757948397.5672348
+6,12:16:01,LaserCalibration,,LaserCalibration λ=850.0 nm  #3,Alisson_15_sept/LaserCalibration2025-09-15_3.csv,3,1757949361.1438391
+7,12:20:05,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #4,Alisson_15_sept/IVg2025-09-15_4.csv,4,1757949605.8868084
+8,12:34:15,It,68.0,It  chip 68  VG=-5.04 V  VDS=0.1 V  VL=1.93 V  λ=850.0 nm  period=120.0 s  #1,Alisson_15_sept/It2025-09-15_1.csv,1,1757950455.4362183
+9,13:13:21,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #5,Alisson_15_sept/IVg2025-09-15_5.csv,5,1757952801.6121247
+10,13:16:29,LaserCalibration,,LaserCalibration λ=680.0 nm  #4,Alisson_15_sept/LaserCalibration2025-09-15_4.csv,4,1757952989.2989554
+11,13:34:18,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #6,Alisson_15_sept/IVg2025-09-15_6.csv,6,1757954058.594838
+12,13:37:13,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #7,Alisson_15_sept/IVg2025-09-15_7.csv,7,1757954233.8515642
+13,13:38:44,It,68.0,It  chip 68  VG=-4.81 V  VDS=0.1 V  VL=2.86 V  λ=680.0 nm  period=120.0 s  #2,Alisson_15_sept/It2025-09-15_2.csv,2,1757954324.3573768
+14,13:43:03,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #8,Alisson_15_sept/IVg2025-09-15_8.csv,8,1757954583.3371472
+15,13:47:40,LaserCalibration,,LaserCalibration λ=625.0 nm  #5,Alisson_15_sept/LaserCalibration2025-09-15_5.csv,5,1757954860.1961498
+16,13:51:34,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #9,Alisson_15_sept/IVg2025-09-15_9.csv,9,1757955094.9742436
+17,13:55:00,It,68.0,It  chip 68  VG=-4.7 V  VDS=0.1 V  VL=1.39 V  λ=625.0 nm  period=120.0 s  #3,Alisson_15_sept/It2025-09-15_3.csv,3,1757955300.2463036
+18,13:58:12,It,68.0,It  chip 68  VG=-4.7 V  VDS=0.1 V  VL=1.39 V  λ=625.0 nm  period=120.0 s  #4,Alisson_15_sept/It2025-09-15_4.csv,4,1757955492.854784
+19,14:01:36,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #10,Alisson_15_sept/IVg2025-09-15_10.csv,10,1757955696.969313
+20,14:06:01,LaserCalibration,,LaserCalibration λ=590.0 nm  #6,Alisson_15_sept/LaserCalibration2025-09-15_6.csv,6,1757955961.603112
+21,14:10:50,It,68.0,It  chip 68  VG=-4.41 V  VDS=0.1 V  VL=3.76 V  λ=590.0 nm  period=120.0 s  #5,Alisson_15_sept/It2025-09-15_5.csv,5,1757956250.487168
+22,14:14:41,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #11,Alisson_15_sept/IVg2025-09-15_11.csv,11,1757956481.476865
+23,14:17:56,LaserCalibration,,LaserCalibration λ=565.0 nm  #7,Alisson_15_sept/LaserCalibration2025-09-15_7.csv,7,1757956676.2436721
+24,14:21:45,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #12,Alisson_15_sept/IVg2025-09-15_12.csv,12,1757956905.998305
+25,14:23:45,It,68.0,It  chip 68  VG=-5.7 V  VDS=0.1 V  VL=1.53 V  λ=565.0 nm  period=120.0 s  #6,Alisson_15_sept/It2025-09-15_6.csv,6,1757957025.8528507
+26,14:26:58,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #13,Alisson_15_sept/IVg2025-09-15_13.csv,13,1757957218.0216484
+27,14:29:29,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #14,Alisson_15_sept/IVg2025-09-15_14.csv,14,1757957369.3596709
+28,14:33:50,LaserCalibration,,LaserCalibration λ=505.0 nm  #8,Alisson_15_sept/LaserCalibration2025-09-15_8.csv,8,1757957630.3230805
+29,14:39:31,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #15,Alisson_15_sept/IVg2025-09-15_15.csv,15,1757957971.1545193
+30,14:42:16,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #16,Alisson_15_sept/IVg2025-09-15_16.csv,16,1757958136.2084782
+31,14:43:21,It,68.0,It  chip 68  VG=-5.77 V  VDS=0.1 V  VL=1.18 V  λ=505.0 nm  period=120.0 s  #7,Alisson_15_sept/It2025-09-15_7.csv,7,1757958201.047669
+32,14:47:16,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #17,Alisson_15_sept/IVg2025-09-15_17.csv,17,1757958436.745772
+33,14:52:02,LaserCalibration,,LaserCalibration λ=455.0 nm  #9,Alisson_15_sept/LaserCalibration2025-09-15_9.csv,9,1757958722.5841124
+34,14:55:15,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #18,Alisson_15_sept/IVg2025-09-15_18.csv,18,1757958915.3701465
+35,14:56:31,It,68.0,It  chip 68  VG=-4.85 V  VDS=0.1 V  VL=1.29 V  λ=455.0 nm  period=120.0 s  #8,Alisson_15_sept/It2025-09-15_8.csv,8,1757958991.0223148
+36,15:02:42,LaserCalibration,,LaserCalibration λ=405.0 nm  #10,Alisson_15_sept/LaserCalibration2025-09-15_10.csv,10,1757959362.2753851
+37,15:06:18,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #19,Alisson_15_sept/IVg2025-09-15_19.csv,19,1757959578.2541063
+38,15:08:39,It,68.0,It  chip 68  VG=-4.02 V  VDS=0.1 V  VL=2.92 V  λ=405.0 nm  period=120.0 s  #9,Alisson_15_sept/It2025-09-15_9.csv,9,1757959719.9738104
+39,15:14:50,LaserCalibration,,LaserCalibration λ=385.0 nm  #11,Alisson_15_sept/LaserCalibration2025-09-15_11.csv,11,1757960090.4217587
+40,15:18:46,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #20,Alisson_15_sept/IVg2025-09-15_20.csv,20,1757960326.9357219
+41,15:20:08,It,68.0,It  chip 68  VG=-6.02 V  VDS=0.1 V  VL=2.21 V  λ=385.0 nm  period=120.0 s  #10,Alisson_15_sept/It2025-09-15_10.csv,10,1757960408.6895308
+42,15:24:26,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #21,Alisson_15_sept/IVg2025-09-15_21.csv,21,1757960666.3245084
+43,15:25:40,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #22,Alisson_15_sept/IVg2025-09-15_22.csv,22,1757960740.6311085
+44,15:29:59,LaserCalibration,,LaserCalibration λ=365.0 nm  #12,Alisson_15_sept/LaserCalibration2025-09-15_12.csv,12,1757960999.583164
+45,15:33:51,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #23,Alisson_15_sept/IVg2025-09-15_23.csv,23,1757961231.3276796
+46,15:35:24,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #24,Alisson_15_sept/IVg2025-09-15_24.csv,24,1757961324.360304
+47,15:37:36,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #25,Alisson_15_sept/IVg2025-09-15_25.csv,25,1757961456.7296672
+48,15:40:00,It,68.0,It  chip 68  VG=-5.81 V  VDS=0.1 V  VL=3.52 V  λ=365.0 nm  period=120.0 s  #11,Alisson_15_sept/It2025-09-15_11.csv,11,1757961600.7136936
+49,15:43:28,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #26,Alisson_15_sept/IVg2025-09-15_26.csv,26,1757961808.0605562
+50,15:45:43,IVg,68.0,IVg chip 68  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #27,Alisson_15_sept/IVg2025-09-15_27.csv,27,1757961943.8743017
+51,15:54:47,IVg,75.0,IVg chip 75  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #28,Alisson_15_sept/IVg2025-09-15_28.csv,28,1757962487.8643982
+52,15:55:44,IVg,75.0,IVg chip 75  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #29,Alisson_15_sept/IVg2025-09-15_29.csv,29,1757962544.5664575
+53,16:07:36,LaserCalibration,,LaserCalibration λ=365.0 nm  #13,Alisson_15_sept/LaserCalibration2025-09-15_13.csv,13,1757963256.2235758
+54,16:13:12,IVg,75.0,IVg chip 75  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #30,Alisson_15_sept/IVg2025-09-15_30.csv,30,1757963592.6023374
+55,16:16:04,It,75.0,It  chip 75  VG=-3.87 V  VDS=0.1 V  VL=0.86 V  λ=365.0 nm  period=120.0 s  #12,Alisson_15_sept/It2025-09-15_12.csv,12,1757963764.9523258
+56,16:19:07,It,75.0,It  chip 75  VG=-3.87 V  VDS=0.1 V  VL=1.74 V  λ=365.0 nm  period=120.0 s  #13,Alisson_15_sept/It2025-09-15_13.csv,13,1757963947.0672176
+57,16:22:07,It,75.0,It  chip 75  VG=-3.87 V  VDS=0.1 V  VL=2.68 V  λ=365.0 nm  period=120.0 s  #14,Alisson_15_sept/It2025-09-15_14.csv,14,1757964127.2804635
+58,16:25:07,It,75.0,It  chip 75  VG=-3.87 V  VDS=0.1 V  VL=3.63 V  λ=365.0 nm  period=120.0 s  #15,Alisson_15_sept/It2025-09-15_15.csv,15,1757964307.496363
+59,16:28:07,It,75.0,It  chip 75  VG=-3.87 V  VDS=0.1 V  VL=4.61 V  λ=365.0 nm  period=120.0 s  #16,Alisson_15_sept/It2025-09-15_16.csv,16,1757964487.7145894
+60,16:31:37,IVg,75.0,IVg chip 75  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #31,Alisson_15_sept/IVg2025-09-15_31.csv,31,1757964697.5940256
+61,16:34:42,IVg,75.0,IVg chip 75  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #32,Alisson_15_sept/IVg2025-09-15_32.csv,32,1757964882.0416515
+62,16:36:44,IVg,75.0,IVg chip 75  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #33,Alisson_15_sept/IVg2025-09-15_33.csv,33,1757965004.2608135

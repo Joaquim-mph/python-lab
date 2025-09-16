@@ -390,7 +390,6 @@ def plot_its_by_vg(
             plt.savefig(out, dpi=200)
             print(f"saved {out}")
 
-
 def plot_ivg_last_of_day1_vs_first_of_day2(
     meta_day1: pl.DataFrame,
     meta_day2: pl.DataFrame,
@@ -398,7 +397,6 @@ def plot_ivg_last_of_day1_vs_first_of_day2(
     base_dir_day2: Path,
     tag: str,
 ):
-    # keep only IVg rows, already per-chip if you used load_and_prepare_metadata(...)
     ivg1 = meta_day1.filter(pl.col("proc") == "IVg").sort("file_idx")
     ivg2 = meta_day2.filter(pl.col("proc") == "IVg").sort("file_idx")
 
@@ -425,18 +423,24 @@ def plot_ivg_last_of_day1_vs_first_of_day2(
     plt.figure()
     lbl1 = f"Day1 last (#{int(r1['file_idx'])})"
     lbl2 = f"Day2 first (#{int(r2['file_idx'])})"
-    # optionally show wavelength if present in metadata
-    if "Laser wavelength" in ivg1.columns and ivg1["Laser wavelength"].drop_nulls().len() > 0:
-        lbl1 += f", λ={float(ivg1['Laser wavelength'].drop_nulls().median()):.0f} nm"
-    if "Laser wavelength" in ivg2.columns and ivg2["Laser wavelength"].drop_nulls().len() > 0:
-        lbl2 += f", λ={float(ivg2['Laser wavelength'].drop_nulls().median()):.0f} nm"
 
-    plt.plot(d1["VG"], d1["I"], label=lbl1)
-    plt.plot(d2["VG"], d2["I"], label=lbl2)
+    # Show wavelength only if Laser toggle is true
+    if "Laser toggle" in ivg1.columns and bool(r1.get("Laser toggle", False)):
+        if "Laser wavelength" in ivg1.columns and not ivg1["Laser wavelength"].drop_nulls().is_empty():
+            wl1 = float(ivg1["Laser wavelength"].drop_nulls().median())
+            lbl1 += f", λ={wl1:.0f} nm"
+
+    if "Laser toggle" in ivg2.columns and bool(r2.get("Laser toggle", False)):
+        if "Laser wavelength" in ivg2.columns and not ivg2["Laser wavelength"].drop_nulls().is_empty():
+            wl2 = float(ivg2["Laser wavelength"].drop_nulls().median())
+            lbl2 += f", λ={wl2:.0f} nm"
+
+    plt.plot(d1["VG"], d1["I"]*1e6, label=lbl1)
+    plt.plot(d2["VG"], d2["I"]*1e6, label=lbl2)
 
     chip_txt = f"Chip {int(meta_day1['Chip number'][0])}" if 'Chip number' in meta_day1.columns else "Chip"
     plt.xlabel("VG (V)")
-    plt.ylabel("Current (A)")
+    plt.ylabel("Current (µA)")
     plt.title(f"{chip_txt} — IVg: last (day1) vs first (day2)")
     plt.legend(fontsize=8)
     plt.tight_layout()
@@ -444,4 +448,3 @@ def plot_ivg_last_of_day1_vs_first_of_day2(
     out = FIG_DIR / f"{chip_txt.replace(' ','')}_IVg_last_day1_first_day2_{tag}.png"
     plt.savefig(out, dpi=200)
     print(f"saved {out}")
-
