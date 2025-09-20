@@ -1,0 +1,47 @@
+Irange,NPLC,Burn-in time,Chip group name,Chip number,Information,Laser voltage,Laser wavelength,Procedure version,Sample,Step time,VDS,VG end,VG start,VG step,Laser toggle,source_file,VG,VSD end,VSD start,VSD step,T step start time,Initial (current) T,Laser ON+OFF period,Sampling time (excluding Keithley),Target T
+0.001,1.0,0.0,Alisson,79.0,without light,0.0,455.0,2.1.0,D,0.0,0.1,20.0,-20.0,0.1,false,raw_data/Alisson_04_sept/IVg2025-09-04_8.csv,,,,,,,,,
+0.001,1.0,0.0,Alisson,79.0,with light,0.2,455.0,2.1.0,D,0.0,0.1,20.0,-20.0,0.1,true,raw_data/Alisson_04_sept/IVg2025-09-04_9.csv,,,,,,,,,
+0.001,1.0,60.0,Alisson,71.0,test biotite,0.0,0.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/Alisson_04_sept/IVg2025-09-04_19.csv,,,,,,,,,
+0.001,1.0,0.0,Alisson,71.0,test biotite,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/Alisson_04_sept/IVg2025-09-04_31.csv,,,,,,,,,
+0.001,1.0,0.0,Alisson,71.0,test biotite,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/Alisson_04_sept/IVg2025-09-04_25.csv,,,,,,,,,
+0.0001,1.0,600.0,Alisson,71.0,test no light,0.0,0.0,2.0.1,other,0.0,,,,,false,raw_data/Alisson_04_sept/IV2025-09-04_2.csv,0.0,0.1,-0.1,0.01,,,,,
+0.001,1.0,0.0,Alisson,71.0,test biotite,0.2,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,true,raw_data/Alisson_04_sept/IVg2025-09-04_24.csv,,,,,,,,,
+0.001,1.0,0.0,Alisson,71.0,test biotite,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/Alisson_04_sept/IVg2025-09-04_30.csv,,,,,,,,,
+0.001,1.0,60.0,Alisson,71.0,test biotite,0.0,0.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/Alisson_04_sept/IVg2025-09-04_18.csv,,,,,,,,,
+0.001,1.0,,Alisson,71.0,test biotite,4.0,455.0,2.2.0,other,,0.1,,,,true,raw_data/Alisson_04_sept/It2025-09-04_9.csv,1.0,,,,120.0,0.0,120.0,0.0,25.0
+0.001,1.0,0.0,Alisson,71.0,test biotite,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/Alisson_04_sept/IVg2025-09-04_26.csv,,,,,,,,,
+0.001,1.0,0.0,Alisson,71.0,test biotite,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/Alisson_04_sept/IVg2025-09-04_32.csv,,,,,,,,,
+0.0001,1.0,600.0,Alisson,79.0,iv test,0.0,0.0,2.0.1,D,0.0,,,,,false,raw_data/Alisson_04_sept/IV2025-09-04_1.csv,0.0,0.1,-0.1,0.01,,,,,
+0.001,1.0,0.0,Alisson,71.0,test biotite,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/Alisson_04_sept/IVg2025-09-04_33.csv,,,,,,,,,
+0.001,1.0,0.0,Alisson,71.0,test biotite,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/Alisson_04_sept/IVg2025-09-04_27.csv,,,,,,,,,
+0.001,1.0,,Alisson,71.0,test biotite,2.0,455.0,2.2.0,other,,0.1,,,,true,raw_data/Alisson_04_sept/It2025-09-04_8.csv,1.0,,,,120.0,0.0,120.0,0.0,25.0
+0.001,1.0,,Alisson,71.0,test biotite,4.0,455.0,2.2.0,other,,0.1,,,,true,raw_data/Alisson_04_sept/It2025-09-04_10.csv,-2.0,,,,120.0,0.0,120.0,0.0,25.0
+0.001,1.0,0.0,Alisson,71.0,test biotite,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/Alisson_04_sept/IVg2025-09-04_23.csv,,,,,,,,,
+0.001,1.0,0.0,Alisson,71.0,test biotite,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/Alisson_04_sept/IVg2025-09-04_22.csv,,,,,,,,,
+0.001,1.0,,Alisson,71.0,test biotite,4.0,455.0,2.2.0,other,,0.1,,,,true,raw_data/Alisson_04_sept/It2025-09-04_11.csv,-4.0,,,,120.0,0.0,120.0,0.0,25.0
+0.001,1.0,0.0,Alisson,71.0,test biotite,0.2,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,true,raw_data/Alisson_04_sept/IVg2025-09-04_20.csv,,,,,,,,,
+0.001,1.0,0.0,Alisson,71.0,test biotite,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/Alisson_04_sept/IVg2025-09-04_21.csv,,,,,,,,,
+0.001,1.0,,Alisson,71.0,test biotite,0.2,455.0,2.2.0,other,,0.1,,,,true,raw_data/Alisson_04_sept/It2025-09-04_3.csv,-2.0,,,,120.0,0.0,120.0,0.0,25.0
+0.001,1.0,0.0,Alisson,79.0,after light,0.0,455.0,2.1.0,D,0.0,0.1,20.0,-20.0,0.1,false,raw_data/Alisson_04_sept/IVg2025-09-04_10.csv,,,,,,,,,
+0.001,1.0,0.0,Alisson,79.0,after light,0.0,455.0,2.1.0,D,0.0,0.1,20.0,-20.0,0.1,false,raw_data/Alisson_04_sept/IVg2025-09-04_11.csv,,,,,,,,,
+0.001,1.0,,Alisson,71.0,test biotite,0.2,455.0,2.2.0,other,,0.1,,,,true,raw_data/Alisson_04_sept/It2025-09-04_2.csv,-1.0,,,,120.0,0.0,120.0,0.0,25.0
+0.001,1.0,60.0,Alisson,71.0,test biotite,0.0,0.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.2,false,raw_data/Alisson_04_sept/IVg2025-09-04_13.csv,,,,,,,,,
+0.001,1.0,0.0,Alisson,79.0,after light,0.0,455.0,2.1.0,D,0.0,0.1,5.0,-5.0,0.1,false,raw_data/Alisson_04_sept/IVg2025-09-04_12.csv,,,,,,,,,
+0.0001,1.0,,Alisson,79.0,first it alisson,0.2,455.0,2.2.0,D,,0.1,,,,true,raw_data/Alisson_04_sept/It2025-09-04_1.csv,-1.0,,,,120.0,0.0,120.0,0.0,25.0
+0.001,1.0,,Alisson,71.0,test biotite,2.0,455.0,2.2.0,other,,0.1,,,,true,raw_data/Alisson_04_sept/It2025-09-04_5.csv,-2.0,,,,120.0,0.0,120.0,0.0,25.0
+0.0001,1.0,60.0,Alisson,79.0,other gate pad,0.0,0.0,2.1.0,D,0.0,0.1,5.0,-5.0,0.1,false,raw_data/Alisson_04_sept/IVg2025-09-04_16.csv,,,,,,,,,
+0.0001,1.0,60.0,Alisson,79.0,other gate pad,0.0,0.0,2.1.0,D,0.0,0.1,5.0,-5.0,0.1,false,raw_data/Alisson_04_sept/IVg2025-09-04_17.csv,,,,,,,,,
+0.001,1.0,,Alisson,71.0,test biotite,1.0,455.0,2.2.0,other,,0.1,,,,true,raw_data/Alisson_04_sept/It2025-09-04_4.csv,-2.0,,,,120.0,0.0,120.0,0.0,25.0
+0.001,1.0,,Alisson,71.0,test biotite,3.0,455.0,2.2.0,other,,0.1,,,,true,raw_data/Alisson_04_sept/It2025-09-04_6.csv,-2.0,,,,120.0,0.0,120.0,0.0,25.0
+0.0001,1.0,60.0,Alisson,79.0,after repositioning needles,0.0,0.0,2.1.0,D,0.0,0.1,5.0,-5.0,0.1,false,raw_data/Alisson_04_sept/IVg2025-09-04_15.csv,,,,,,,,,
+0.001,1.0,0.0,Alisson,71.0,test biotite,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/Alisson_04_sept/IVg2025-09-04_29.csv,,,,,,,,,
+0.001,1.0,0.0,Alisson,71.0,test biotite,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/Alisson_04_sept/IVg2025-09-04_28.csv,,,,,,,,,
+0.001,1.0,60.0,Alisson,71.0,test biotite,0.0,0.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.2,false,raw_data/Alisson_04_sept/IVg2025-09-04_14.csv,,,,,,,,,
+0.001,1.0,,Alisson,71.0,test biotite,4.0,455.0,2.2.0,other,,0.1,,,,true,raw_data/Alisson_04_sept/It2025-09-04_7.csv,-2.0,,,,120.0,0.0,120.0,0.0,25.0
+0.001,1.0,60.0,Alisson,79.0,after collimating,0.0,0.0,2.1.0,D,0.0,0.1,20.0,-20.0,0.1,false,raw_data/Alisson_04_sept/IVg2025-09-04_7.csv,,,,,,,,,
+0.001,1.0,60.0,Alisson,79.0,first measurement,0.0,0.0,2.1.0,D,0.0,0.1,20.0,-20.0,0.1,false,raw_data/Alisson_04_sept/IVg2025-09-04_6.csv,,,,,,,,,
+0.001,1.0,60.0,Alisson,79.0,first measurement,0.0,0.0,2.1.0,D,0.0,0.1,10.0,-10.0,0.1,false,raw_data/Alisson_04_sept/IVg2025-09-04_4.csv,,,,,,,,,
+0.001,1.0,60.0,Alisson,79.0,first measurement,0.0,0.0,2.1.0,D,0.0,0.1,15.0,-15.0,0.1,false,raw_data/Alisson_04_sept/IVg2025-09-04_5.csv,,,,,,,,,
+0.0001,1.0,60.0,Alisson,79.0,first measurement,0.0,0.0,2.1.0,D,0.0,0.1,5.0,-5.0,0.2,false,raw_data/Alisson_04_sept/IVg2025-09-04_1.csv,,,,,,,,,
+0.001,1.0,60.0,Alisson,79.0,first measurement,0.0,0.0,2.1.0,D,0.0,0.1,5.0,-5.0,0.2,false,raw_data/Alisson_04_sept/IVg2025-09-04_2.csv,,,,,,,,,
+0.001,1.0,60.0,Alisson,79.0,first measurement,0.0,0.0,2.1.0,D,0.0,0.1,5.0,-5.0,0.1,false,raw_data/Alisson_04_sept/IVg2025-09-04_3.csv,,,,,,,,,

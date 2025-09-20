@@ -1,313 +1,321 @@
+# file: src/process_day.py
 #!/usr/bin/env python3
 """
 process_day.py
 
-Automated processing script for a full day's experimental data.
-Generates all requested plots based on the timeline and available measurements.
+Generates the SAME figures as the original process_day but organized into
+per-chip/day subfolders, AND adds chip-level ITS overlays that IGNORE VG,
+grouped by wavelength buckets:
+  - uv_blue (λ ≤ 455 nm)
+  - green (505–565 nm)
+  - red_orange (λ ≥ 590 nm)
+  - all_wavelengths (all available λ)
+Overlays go to: figs/ChipXX_YYYY_MM_DD/ITS/overlays/
 """
 
+from __future__ import annotations
+
 from pathlib import Path
-import numpy as np
+import re
+import logging
+from typing import Iterable, List, Optional
 import polars as pl
-from plots import (
-    load_and_prepare_metadata, plot_ivg_sequence, plot_its_by_vg,
-    plot_its_by_vg_delta, plot_its_wavelength_overlay_delta_for_chip,
-    ivg_sequence_gif
-)
 from timeline import print_day_timeline
 from styles import set_plot_style
 import scienceplots
 set_plot_style('prism_rain')
 
-def process_day_experiments(
-    metadata_csv: str,
-    base_dir: Path = Path("."),
-    chips_to_process: list = None,
-    generate_gifs: bool = True,
-    generate_wavelength_overlays: bool = True
-):
-    """
-    Process a full day's experiments and generate all requested plots.
-    
-    Parameters:
-    -----------
-    metadata_csv : str
-        Path to the metadata CSV file
-    base_dir : Path
-        Base directory where the raw CSV files are located
-    chips_to_process : list, optional
-        List of chip numbers to process. If None, processes all chips found.
-    generate_gifs : bool
-        Whether to generate animated GIFs of IVg sequences
-    generate_wavelength_overlays : bool
-        Whether to generate wavelength overlay plots
-    """
-    
-    print(f"Processing day experiments from: {metadata_csv}")
-    print(f"Base directory: {base_dir}")
-    
-    # Print the day timeline first
-    print("\n" + "="*50)
-    print("GENERATING DAY TIMELINE")
-    print("="*50)
-    timeline = print_day_timeline(metadata_csv, base_dir)
-    
-    # Load full metadata to determine available chips
-    full_meta = pl.read_csv(metadata_csv, infer_schema_length=1000)
-    available_chips = sorted([float(x) for x in full_meta.get_column("Chip number").unique().to_list() 
-                             if x is not None])
-    
-    if chips_to_process is None:
-        chips_to_process = available_chips
-    
-    print(f"\nAvailable chips: {available_chips}")
-    print(f"Processing chips: {chips_to_process}")
-    
-    tag = Path(metadata_csv).stem
-    
-    # Process each chip
-    for chip_num in chips_to_process:
-        if chip_num not in available_chips:
-            print(f"\nWarning: Chip {chip_num} not found in data, skipping...")
-            continue
-            
-        print(f"\n" + "="*50)
-        print(f"PROCESSING CHIP {chip_num}")
-        print("="*50)
-        
-        # Load and prepare metadata for this chip
-        meta = load_and_prepare_metadata(metadata_csv, chip_num)
-        
-        if meta.height == 0:
-            print(f"No data found for chip {chip_num}, skipping...")
-            continue
-            
-        # Check what types of measurements we have
-        procs = set(meta.get_column("proc").to_list())
-        print(f"Available procedures for chip {chip_num}: {procs}")
-        
-        # 1. Process IVg measurements
-        if "IVg" in procs:
-            print(f"\nGenerating IVg plots for chip {chip_num}...")
-            
-            # Plot all IVg in sequence
-            plot_ivg_sequence(meta, base_dir, tag)
-            
-            # Generate IVg sequence groups (consecutive IVgs as requested)
-            ivg_data = meta.filter(pl.col("proc") == "IVg").sort("file_idx")
-            if ivg_data.height > 1:
-                file_indices = ivg_data.get_column("file_idx").to_list()
-                
-                # Generate plots for consecutive IVg groups
-                consecutive_groups = find_consecutive_groups(file_indices)
-                
-                for group in consecutive_groups:
-                    if len(group) >= 2:  # Only plot if we have at least 2 consecutive IVgs
-                        print(f"Plotting IVg group: {group}")
-                        meta_subset = meta.filter(
-                            (pl.col("proc") == "IVg") & pl.col("file_idx").is_in(group)
-                        )
-                        plot_ivg_sequence(meta_subset, base_dir, f"{tag}_group_{group[0]}_{group[-1]}")
-            
-            # Generate GIF if requested
-            if generate_gifs:
-                print(f"Generating IVg sequence GIF for chip {chip_num}...")
-                ivg_sequence_gif(meta, base_dir, tag, fps=2, cumulative=True)
-        
-        # 2. Process ITS measurements  
-        if "ITS" in procs:
-            print(f"\nGenerating ITS plots for chip {chip_num}...")
-            
-            # Get unique VG values and wavelengths from the data
-            its_data = meta.filter(pl.col("proc") == "ITS")
-            
-            if "VG_meta" in its_data.columns:
-                unique_vgs = sorted([float(x) for x in its_data.get_column("VG_meta").drop_nulls().unique().to_list()])
-            else:
-                unique_vgs = []
-                
-            unique_wavelengths = []
-            if "Laser wavelength" in its_data.columns:
-                unique_wavelengths = sorted([float(x) for x in its_data.get_column("Laser wavelength").drop_nulls().unique().to_list()])
-            
-            print(f"Found VG values: {unique_vgs}")
-            print(f"Found wavelengths: {unique_wavelengths}")
-            
-            # Generate ITS plots by VG and wavelength (regular current)
-            for vg in unique_vgs:
-                for wl in unique_wavelengths:
-                    print(f"Plotting ITS for Vg={vg}V, Î»={wl}nm...")
-                    plot_its_by_vg(meta, base_dir, tag, vgs=[vg], wavelengths=[wl])
-            
-            # Generate ITS delta plots (baseline subtracted)
-            for vg in unique_vgs:
-                for wl in unique_wavelengths:
-                    print(f"Plotting ITS delta for Vg={vg}V, Î»={wl}nm...")
-                    plot_its_by_vg_delta(
-                        meta, base_dir, tag,
-                        vgs=[vg], wavelengths=[wl],
-                        baseline_t=60.0, clip_t_min=20.0
-                    )
-            
-            # Generate wavelength overlay plots if requested
-            if generate_wavelength_overlays and unique_vgs:
-                print(f"Generating wavelength overlay plots for chip {chip_num}...")
-                
-                for vg in unique_vgs:
-                    # All wavelengths overlay
-                    plot_its_wavelength_overlay_delta_for_chip(
-                        meta, base_dir, tag,
-                        chip=chip_num,
-                        vg_center=vg, vg_window=1.5,
-                        wavelengths=None,  # All wavelengths
-                        baseline_t=60.0, clip_t_min=40.0
-                    )
-                    
-                    # Split wavelengths into groups for better visualization
-                    if len(unique_wavelengths) > 4:
-                        # Group 1: UV-Blue range
-                        uv_blue = [wl for wl in unique_wavelengths if wl <= 455.0]
-                        if uv_blue:
-                            plot_its_wavelength_overlay_delta_for_chip(
-                                meta, base_dir, f"{tag}_UV_blue",
-                                chip=chip_num,
-                                vg_center=vg, vg_window=1.5,
-                                wavelengths=uv_blue,
-                                baseline_t=60.0, clip_t_min=40.0
-                            )
-                        
-                        # Group 2: Green-Red range  
-                        green_red = [wl for wl in unique_wavelengths if wl > 455.0]
-                        if green_red:
-                            plot_its_wavelength_overlay_delta_for_chip(
-                                meta, base_dir, f"{tag}_green_red",
-                                chip=chip_num,
-                                vg_center=vg, vg_window=1.5,
-                                wavelengths=green_red,
-                                baseline_t=60.0, clip_t_min=40.0
-                            )
-    
-    print(f"\n" + "="*50)
-    print("PROCESSING COMPLETE")
-    print("="*50)
-    print(f"All plots saved to: {Path('figs').absolute()}")
+# Your plotting utilities
+from plots import (
+    load_and_prepare_metadata,
+    plot_ivg_sequence,
+    plot_its_by_vg,
+    plot_its_by_vg_delta,
+    plot_its_wavelength_overlay_delta_for_chip,
+    ivg_sequence_gif,
+)
+
+try:
+    from plots import print_day_timeline  # optional
+except Exception:
+    print_day_timeline = None  # type: ignore
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Config
+# ─────────────────────────────────────────────────────────────────────────────
+log = logging.getLogger("process_day")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+
+METADATA_CSV: str = "Alisson_15_sept_metadata.csv"
+BASE_DIR: Path = Path("raw_data")
+CHIPS_TO_PROCESS: Optional[List[float]] = None
+GENERATE_GIFS: bool = True
+GENERATE_WAVELENGTH_OVERLAYS: bool = True  # includes grouped overlays below
 
 
-def find_consecutive_groups(numbers: list) -> list:
-    """
-    Find groups of consecutive numbers in a list.
-    
-    Returns:
-    --------
-    list of lists: Each sublist contains consecutive numbers
-    """
-    if not numbers:
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+def extract_date_from_filename(filename: str) -> str:
+    match = re.search(r'(\d+)_([a-zA-Z]+)', filename)
+    if match:
+        day, month = match.groups()
+        month_map = {
+            'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04',
+            'may': '05', 'jun': '06', 'jul': '07', 'aug': '08',
+            'sep': '09', 'sept': '09', 'oct': '10', 'nov': '11', 'dec': '12'
+        }
+        month_num = month_map.get(month.lower())
+        if month_num:
+            return f"2024_{month_num}_{day.zfill(2)}"
+    return "unknown_date"
+
+def setup_chip_output_dir(chip_num: int, metadata_csv: str) -> Path:
+    date_str = extract_date_from_filename(metadata_csv)
+    chip_dir = Path("figs") / f"Chip{chip_num:02d}_{date_str}"
+    for sub in [
+        "IVg/sequence",
+        "IVg/pairs",
+        "IVg/triplets",
+        "IVg/gif",
+        "ITS/regular",
+        "ITS/delta",
+        "ITS/overlays",
+    ]:
+        (chip_dir / sub).mkdir(parents=True, exist_ok=True)
+    return chip_dir
+
+def find_consecutive_groups(numbers: Iterable[int]) -> List[List[int]]:
+    uniq = sorted(set(int(n) for n in numbers))
+    if not uniq:
         return []
-    
-    numbers = sorted(set(numbers))  # Remove duplicates and sort
-    groups = []
-    current_group = [numbers[0]]
-    
-    for i in range(1, len(numbers)):
-        if numbers[i] == numbers[i-1] + 1:  # Consecutive
-            current_group.append(numbers[i])
-        else:  # Gap found, start new group
-            if len(current_group) > 1:  # Only keep groups with multiple elements
-                groups.append(current_group)
-            current_group = [numbers[i]]
-    
-    # Don't forget the last group
-    if len(current_group) > 1:
-        groups.append(current_group)
-    
+    groups: List[List[int]] = []
+    cur = [uniq[0]]
+    for i in range(1, len(uniq)):
+        if uniq[i] == uniq[i - 1] + 1:
+            cur.append(uniq[i])
+        else:
+            if len(cur) > 1:
+                groups.append(cur)
+            cur = [uniq[i]]
+    if len(cur) > 1:
+        groups.append(cur)
     return groups
 
+def _set_plots_fig_dir(tmp_dir: Path) -> None:
+    # WHY: redirect plots output to our structured folders
+    try:
+        import plots
+        if hasattr(plots, "FIG_DIR"):
+            plots.FIG_DIR = tmp_dir
+    except Exception:
+        pass
 
-def process_specific_chip_day(metadata_csv: str, chip_number: float, base_dir: Path = Path(".")):
-    """
-    Process a specific chip following the exact pattern from your examples.
-    This replicates the manual workflow you showed.
-    """
-    
-    tag = Path(metadata_csv).stem
-    meta = load_and_prepare_metadata(metadata_csv, chip_number)
-    
-    if meta.height == 0:
-        print(f"No data found for chip {chip_number}")
+# ─────────────────────────────────────────────────────────────────────────────
+# IVg
+# ─────────────────────────────────────────────────────────────────────────────
+
+def process_chip_ivg(meta: pl.DataFrame, base_dir: Path, tag: str, output_dir: Path, generate_gifs: bool) -> None:
+    import plots
+
+    ivg_data = meta.filter(pl.col("proc") == "IVg")
+    if ivg_data.height == 0:
+        log.info("No IVg data found for this chip.")
         return
-    
-    print(f"Processing chip {chip_number} with {meta.height} measurements")
-    
-    # Print timeline for this chip
-    timeline = print_day_timeline(metadata_csv, base_dir)
-    chip_timeline = timeline.filter(pl.col("chip") == chip_number)
-    print(f"Timeline for chip {chip_number}:")
-    for row in chip_timeline.iter_rows(named=True):
-        print(f"  {row['seq']:>3d}  {row['time_hms']:>8}  {row['summary']}")
-    
-    # Main sequence plot
-    plot_ivg_sequence(meta, base_dir, tag)
-    
-    # Get the IVg file indices for manual grouping
-    ivg_data = meta.filter(pl.col("proc") == "IVg").sort("file_idx")
-    ivg_indices = ivg_data.get_column("file_idx").to_list()
-    print(f"Available IVg indices: {ivg_indices}")
-    
-    # Generate consecutive IVg plots (as in your examples)
-    consecutive_groups = find_consecutive_groups(ivg_indices)
-    for group in consecutive_groups:
-        print(f"Plotting consecutive IVg group: {group}")
-        meta_subset = meta.filter(
-            (pl.col("proc") == "IVg") & pl.col("file_idx").is_in(group)
-        )
-        plot_ivg_sequence(meta_subset, base_dir, f"{tag}_consecutive_{group[0]}_{group[-1]}")
-    
-    # Process ITS measurements by VG and wavelength
-    its_data = meta.filter(pl.col("proc") == "ITS")
-    if its_data.height > 0:
-        vgs = sorted(set(its_data.get_column("VG_meta").drop_nulls().to_list()))
-        wavelengths = []
-        if "Laser wavelength" in its_data.columns:
-            wavelengths = sorted(set(its_data.get_column("Laser wavelength").drop_nulls().to_list()))
-        
-        # Regular ITS plots
-        for vg in vgs:
-            for wl in wavelengths:
-                plot_its_by_vg(meta, base_dir, tag, vgs=[vg], wavelengths=[wl])
-        
-        # Delta ITS plots  
-        for vg in vgs:
-            for wl in wavelengths:
-                plot_its_by_vg_delta(
-                    meta, base_dir, tag,
-                    vgs=[vg], wavelengths=[wl],
-                    baseline_t=60.0, clip_t_min=20.0
-                )
-    
-    print(f"Completed processing chip {chip_number}")
 
+    seq_dir = output_dir / "IVg" / "sequence"
+    pairs_dir = output_dir / "IVg" / "pairs"
+    trips_dir = output_dir / "IVg" / "triplets"
+    gif_dir = output_dir / "IVg" / "gif"
+
+    original_fig_dir = getattr(plots, "FIG_DIR", None)
+    try:
+        _set_plots_fig_dir(seq_dir)
+        plot_ivg_sequence(ivg_data, base_dir, tag)
+
+        file_indices = []
+        if "file_idx" in ivg_data.columns:
+            file_indices = sorted(set(ivg_data.get_column("file_idx").drop_nulls().to_list()))
+
+        if len(file_indices) >= 2:
+            _set_plots_fig_dir(pairs_dir)
+            for i in range(len(file_indices) - 1):
+                pair = (file_indices[i], file_indices[i + 1])
+                meta_subset = ivg_data.filter(pl.col("file_idx").is_in(pair))
+                plot_ivg_sequence(meta_subset, base_dir, f"{tag}_pair_{pair[0]}_{pair[1]}")
+
+        if len(file_indices) >= 3:
+            _set_plots_fig_dir(trips_dir)
+            for i in range(len(file_indices) - 2):
+                triplet = (file_indices[i], file_indices[i + 1], file_indices[i + 2])
+                meta_subset = ivg_data.filter(pl.col("file_idx").is_in(triplet))
+                plot_ivg_sequence(meta_subset, base_dir, f"{tag}_triplet_{triplet[0]}_{triplet[-1]}")
+
+        if generate_gifs:
+            _set_plots_fig_dir(gif_dir)
+            try:
+                ivg_sequence_gif(ivg_data, base_dir, tag, fps=2, cumulative=True)
+            except Exception as e:
+                log.warning(f"IVg GIF generation failed: {e}")
+    finally:
+        if original_fig_dir is not None:
+            try:
+                plots.FIG_DIR = original_fig_dir
+            except Exception:
+                pass
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ITS (regular/delta) + explicit overlays (VG-windowed as requested)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def process_chip_its(
+    meta: pl.DataFrame, base_dir: Path, tag: str, output_dir: Path, chip_num: int, generate_wavelength_overlays: bool
+) -> None:
+    import plots
+    its_data = meta.filter(pl.col("proc") == "ITS")
+    if its_data.height == 0:
+        log.info("No ITS data found for this chip.")
+        return
+
+    reg_dir = output_dir / "ITS" / "regular"
+    delta_dir = output_dir / "ITS" / "delta"
+    overlay_dir = output_dir / "ITS" / "overlays"
+
+    original_fig_dir = getattr(plots, "FIG_DIR", None)
+    try:
+        # Regular & delta (kept)
+        _set_plots_fig_dir(reg_dir)
+        vgs = its_data["VG_meta"].drop_nulls().unique().to_list() if "VG_meta" in its_data.columns else []
+        wls_present = (
+            sorted(float(w) for w in its_data["Laser wavelength"].drop_nulls().unique().to_list())
+            if "Laser wavelength" in its_data.columns else []
+        )
+        for vg in (sorted(vgs) if vgs else [None]):
+            for wl in (wls_present if wls_present else [None]):
+                try:
+                    plot_its_by_vg(meta, base_dir, tag, vgs=[vg] if vg is not None else None, wavelengths=[wl] if wl is not None else None)
+                except Exception as e:
+                    log.warning(f"ITS regular plot failed (VG={vg}, WL={wl}): {e}")
+
+        _set_plots_fig_dir(delta_dir)
+        for vg in (sorted(vgs) if vgs else [None]):
+            for wl in (wls_present if wls_present else [None]):
+                try:
+                    plot_its_by_vg_delta(meta, base_dir, tag, vgs=[vg] if vg is not None else None, wavelengths=[wl] if wl is not None else None, baseline_t=60.0, clip_t_min=20.0)
+                except Exception as e:
+                    log.warning(f"ITS delta plot failed (VG={vg}, WL={wl}): {e}")
+
+        # ── Explicit overlays with UNIQUE filenames (prevents overwrite) ──
+        if generate_wavelength_overlays:
+            _set_plots_fig_dir(overlay_dir)
+            vg_center, vg_window = -5.0, 1.5
+            baseline_t, clip_t_min = 60.0, 40.0
+
+            # a) ALL wavelengths
+            try:
+                log.info(f"[overlays] chip {chip_num:02d} — all wavelengths {wls_present}")
+                plot_its_wavelength_overlay_delta_for_chip(
+                    meta, BASE_DIR, tag,
+                    chip=int(chip_num),
+                    vg_center=vg_center, vg_window=vg_window,  # respect VG window
+                    wavelengths=None,                           # ALL present
+                    baseline_t=baseline_t, clip_t_min=clip_t_min,
+                    # ↓↓↓ give each overlay a unique name/title
+                    title_suffix=" (all wavelengths)", filename_suffix="_all",
+                )
+            except Exception as e:
+                log.warning(f"Overlay (all wavelengths) failed: {e}")
+
+            # b) UV/blue group
+            uv_blue_wish = [365.0, 385.0, 405.0, 455.0]
+            uv_blue = [w for w in uv_blue_wish if w in wls_present]
+            if len(uv_blue) >= 2:
+                try:
+                    log.info(f"[overlays] chip {chip_num:02d} — uv/blue {uv_blue}")
+                    plot_its_wavelength_overlay_delta_for_chip(
+                        meta, BASE_DIR, tag,
+                        chip=int(chip_num),
+                        vg_center=vg_center, vg_window=vg_window,
+                        wavelengths=uv_blue,
+                        baseline_t=baseline_t, clip_t_min=clip_t_min,
+                        title_suffix=" (uv-blue)", filename_suffix="_uvblue",
+                    )
+                except Exception as e:
+                    log.warning(f"Overlay (uv_blue) failed: {e}")
+            else:
+                log.info(f"[overlays] uv/blue insufficient for chip {chip_num:02d}: {uv_blue}")
+
+            # c) Longer wavelengths group
+            longer_wish = [505.0, 565.0, 590.0, 625.0, 680.0, 850.0]
+            longer = [w for w in longer_wish if w in wls_present]
+            if len(longer) >= 2:
+                try:
+                    log.info(f"[overlays] chip {chip_num:02d} — longer {longer}")
+                    plot_its_wavelength_overlay_delta_for_chip(
+                        meta, BASE_DIR, tag,
+                        chip=int(chip_num),
+                        vg_center=vg_center, vg_window=vg_window,
+                        wavelengths=longer,
+                        baseline_t=baseline_t, clip_t_min=clip_t_min,
+                        title_suffix=" (longer)", filename_suffix="_long",
+                    )
+                except Exception as e:
+                    log.warning(f"Overlay (longer) failed: {e}")
+            else:
+                log.info(f"[overlays] longer insufficient for chip {chip_num:02d}: {longer}")
+
+    finally:
+        if original_fig_dir is not None:
+            try:
+                plots.FIG_DIR = original_fig_dir
+            except Exception:
+                pass
+
+def process_single_chip(metadata_csv: str, chip_num: float, base_dir: Path = Path("."), generate_gifs: bool = True, generate_wavelength_overlays: bool = True) -> None:
+    chip_i = int(chip_num)
+    log.info(f"\n{'='*64}\nPROCESSING CHIP {chip_i:02d}\n{'='*64}")
+    out_dir = setup_chip_output_dir(chip_i, metadata_csv)
+    meta = load_and_prepare_metadata(metadata_csv, chip_num)
+    if meta.height == 0:
+        log.info(f"No data found for chip {chip_num}, skipping."); return
+    tag = Path(metadata_csv).stem
+    #a=print_day_timeline(metadata_csv, base_dir, save_csv=False)
+    procs = set(meta.get_column("proc").to_list())
+    if "IVg" in procs:
+        process_chip_its(meta, base_dir, tag, out_dir, chip_num=chip_i, generate_wavelength_overlays=generate_wavelength_overlays)  # ensure ITS runs first if order matters
+        process_chip_ivg(meta, base_dir, tag, out_dir, generate_gifs=generate_gifs)
+    else:
+        process_chip_its(meta, base_dir, tag, out_dir, chip_num=chip_i, generate_wavelength_overlays=generate_wavelength_overlays)
+
+def _infer_chips_from_metadata(metadata_csv: str) -> List[float]:
+    try:
+        df = pl.read_csv(metadata_csv, infer_schema_length=1000)
+    except Exception as e:
+        raise RuntimeError(f"Failed to read metadata CSV '{metadata_csv}': {e}")
+    candidates = ["Chip number", "chip", "Chip", "CHIP", "Chip_number", "chip_number"]
+    chip_col = next((c for c in candidates if c in df.columns), None)
+    if chip_col is None:
+        raise RuntimeError(f"Could not find a chip column in {metadata_csv}. Tried: {', '.join(candidates)}. Columns: {list(df.columns)}")
+    chips_series = df.get_column(chip_col).drop_nulls()
+    try:
+        chips = sorted({float(x) for x in chips_series.to_list()})
+    except Exception:
+        chips = sorted({float(str(x).strip()) for x in chips_series.to_list() if str(x).strip()})
+    return chips
+
+def process_day_experiments(metadata_csv: str, base_dir: Path = Path("."), chips_to_process: Optional[List[float]] = None, generate_gifs: bool = True, generate_wavelength_overlays: bool = True) -> None:
+    chips = chips_to_process or _infer_chips_from_metadata(metadata_csv)
+    if not chips:
+        log.warning("No chips found to process."); return
+    log.info(f"Chips to process: {chips}")
+    for chip in chips:
+        try:
+            process_single_chip(metadata_csv, chip, base_dir=base_dir, generate_gifs=generate_gifs, generate_wavelength_overlays=generate_wavelength_overlays)
+        except Exception as e:
+            log.error(f"Chip {chip}: processing failed: {e}")
 
 if __name__ == "__main__":
-    # Example usage - modify these parameters for your specific day
-    
-    # For the Sept 12 example from your timeline:
-    METADATA_CSV = "Alisson_12_sept_metadata.csv"
-    BASE_DIR = Path("raw_data")
-    CHIPS_TO_PROCESS = [75.0]  # Based on your timeline showing chip 75
-    
-    # Process the full day
-    process_day_experiments(
-        METADATA_CSV,
-        BASE_DIR,
-        chips_to_process=CHIPS_TO_PROCESS,
-        generate_gifs=True,
-        generate_wavelength_overlays=True
-    )
-    
-    # Or process a specific chip with the exact workflow pattern:
-    process_specific_chip_day(METADATA_CSV, 75.0, BASE_DIR)
-    
-    # For other days, just change the parameters:
-    METADATA_CSV = "Alisson_15_sept_metadata.csv"  
-    CHIPS_TO_PROCESS = [68.0]
-    process_day_experiments(METADATA_CSV, BASE_DIR, CHIPS_TO_PROCESS)
+    process_day_experiments(METADATA_CSV, BASE_DIR, chips_to_process=CHIPS_TO_PROCESS, generate_gifs=GENERATE_GIFS, generate_wavelength_overlays=GENERATE_WAVELENGTH_OVERLAYS)
