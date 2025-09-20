@@ -1,9 +1,15 @@
 from __future__ import annotations
 from pathlib import Path
 import numpy as np
-from src.utils import _proc_from_path, _file_index, _read_measurement
+from utils import _proc_from_path, _file_index, _read_measurement
 import polars as pl
 import matplotlib.pyplot as plt
+
+import io
+try:
+    import imageio.v3 as iio  # imageio >= 2.28
+except Exception:
+    import imageio as iio     # older imageio fallback
 
 # -------------------------------
 # Config
@@ -118,8 +124,7 @@ def plot_ivg_sequence(df: pl.DataFrame, base_dir: Path, tag: str):
     out = FIG_DIR / f"Encap{int(df['Chip number'][0])}_IVg_sequence_{tag}.png"
     plt.savefig(out, dpi=200)
     print(f"saved {out}")
-        
-        
+           
 def plot_its_overlay(df: pl.DataFrame, base_dir: Path, tag: str):
     import numpy as np
 
@@ -225,7 +230,6 @@ def plot_its_overlay(df: pl.DataFrame, base_dir: Path, tag: str):
     out = FIG_DIR / f"chip{int(df['Chip number'][0])}_ITS_overlay_{tag}.png"
     plt.savefig(out, dpi=200)
     print(f"saved {out}")
-
 
 def plot_its_by_vg(
     df: pl.DataFrame,
@@ -448,3 +452,830 @@ def plot_ivg_last_of_day1_vs_first_of_day2(
     out = FIG_DIR / f"{chip_txt.replace(' ','')}_IVg_last_day1_first_day2_{tag}.png"
     plt.savefig(out, dpi=200)
     print(f"saved {out}")
+
+def plot_its_by_vg_delta(
+    df: pl.DataFrame,
+    base_dir: Path,
+    tag: str,
+    vgs: list[float] | None = None,          # e.g., [-3.0, +3.0]
+    wavelengths: list[float] | None = None,  # e.g., [455.0]
+    tol: float = 1e-6,                       # Vg match tolerance
+    wl_tol: float = 1e-6,                    # wavelength match tolerance
+    xlim_seconds: float | None = 180.0,      # None -> autoscale
+    vl_threshold: float = 0.0,               # VL > threshold => light ON
+    baseline_t: float = 60.0,                # interpolate I at this t0
+    clip_t_min: float = 20.0,                # start plotting from here
+):
+    """
+    Overlay ITS traces grouped by (Vg, wavelength) with baseline subtraction:
+    plot t vs (I(t) - I(baseline_t)), in microamps. Baseline is linearly
+    interpolated per trace. VL>vl_threshold detects light ON for shading.
+    """
+    import numpy as np
+
+    its_all = df.filter(pl.col("proc") == "ITS").sort("file_idx")
+    if its_all.height == 0:
+        print("[warn] no ITS rows in metadata")
+        return
+    if "VG_meta" not in its_all.columns:
+        print("[warn] VG_meta not present in metadata; cannot group by Vg")
+        return
+
+    # Target Vg list
+    if vgs is None:
+        vgs = sorted(float(v) for v in its_all.get_column("VG_meta").drop_nulls().unique().to_list())
+    else:
+        vgs = list(vgs)
+
+    # Target wavelength list
+    if wavelengths is None:
+        if "Laser wavelength" in its_all.columns:
+            wavelengths = sorted(float(w) for w in its_all.get_column("Laser wavelength").drop_nulls().unique().to_list())
+        else:
+            wavelengths = [float("nan")]
+    else:
+        wavelengths = list(wavelengths)
+
+    for VG_target in vgs:
+        for WL_target in wavelengths:
+            # selection mask
+            mask = (pl.col("VG_meta") - VG_target).abs() <= tol
+            if "Laser wavelength" in its_all.columns and not np.isnan(WL_target):
+                mask = mask & ((pl.col("Laser wavelength") - WL_target).abs() <= wl_tol)
+            sel = its_all.filter(mask)
+            if sel.height == 0:
+                msg_wl = f", λ≈{WL_target:g} nm" if not np.isnan(WL_target) else ""
+                print(f"[info] no ITS rows for Vg≈{VG_target:g} V{msg_wl}")
+                continue
+
+            plt.figure()
+            curves_plotted = 0
+
+            # For window/x-lims and shading
+            t_totals = []
+            starts_vl, ends_vl = [], []
+            on_durs_meta = []
+
+            for row in sel.iter_rows(named=True):
+                path = base_dir / row["source_file"]
+                if not path.exists():
+                    print(f"[warn] missing file: {path}")
+                    continue
+
+                d = _read_measurement(path)
+                if not {"t", "I"} <= set(d.columns):
+                    print(f"[warn] {path} lacks t/I; got {d.columns}")
+                    continue
+
+                # Convert to numpy and ensure monotonic t
+                t_all = d["t"].to_numpy()
+                i_all = d["I"].to_numpy()
+                if t_all.size < 2:
+                    continue
+                order = np.argsort(t_all)
+                t_all = t_all[order]
+                i_all = i_all[order]
+
+                # Interpolate baseline at baseline_t (if inside range)
+                if baseline_t < t_all[0] or baseline_t > t_all[-1]:
+                    # Not in range → use nearest-value fallback (or skip)
+                    # Here: fallback to nearest
+                    idx_near = np.argmin(np.abs(t_all - baseline_t))
+                    i0 = float(i_all[idx_near])
+                else:
+                    i0 = float(np.interp(baseline_t, t_all, i_all))
+
+                # Clip time window for plotting (affects y autoscale)
+                m = t_all >= float(clip_t_min)
+                t = t_all[m]
+                i = i_all[m]
+                if t.size == 0:
+                    continue
+
+                # Baseline subtraction, then to microamps
+                i_delta_uA = (i - i0) * 1e6
+
+                # Label (laser voltage only, like you asked previously)
+                lbl = f"VL={row.get('VL_meta', float('nan'))} V"
+                plt.plot(t, i_delta_uA, label=lbl)
+                curves_plotted += 1
+
+                # Track total (unclipped) duration for axis decisions
+                try:
+                    t_totals.append(float(t_all[-1]))
+                except Exception:
+                    pass
+
+                # VL-based ON detection (use full arrays)
+                if "VL" in d.columns:
+                    try:
+                        vl = d["VL"].to_numpy()
+                        vl = vl[order] if vl.size == order.size else vl  # best effort align
+                        on_idx = np.where(vl > vl_threshold)[0]
+                        if on_idx.size:
+                            starts_vl.append(float(t_all[on_idx[0]]))
+                            ends_vl.append(float(t_all[on_idx[-1]]))
+                    except Exception:
+                        pass
+
+                # Metadata ON duration
+                if "Laser ON+OFF period" in sel.columns:
+                    try:
+                        on_durs_meta.append(float(row["Laser ON+OFF period"]))
+                    except Exception:
+                        pass
+
+            if curves_plotted == 0:
+                print(f"[warn] no ITS traces plotted for Vg≈{VG_target:g} V; skipping")
+                plt.close()
+                continue
+
+            # X-limits (start at clip_t_min)
+            if xlim_seconds is not None:
+                plt.xlim(float(clip_t_min), float(xlim_seconds))
+                T_total = float(xlim_seconds)
+            else:
+                T_total = float(np.median(t_totals)) if t_totals else None
+                if T_total and np.isfinite(T_total) and T_total > 0:
+                    plt.xlim(float(clip_t_min), T_total)
+
+            # Light ON window shading
+            t0 = t1 = None
+            if starts_vl and ends_vl:
+                t0 = float(np.median(starts_vl))
+                t1 = float(np.median(ends_vl))
+            if (t0 is None or t1 is None) and on_durs_meta:
+                on_dur = float(np.median(on_durs_meta))
+                T_use = float(xlim_seconds) if xlim_seconds is not None else (float(np.median(t_totals)) if t_totals else None)
+                if T_use and np.isfinite(T_use) and T_use > 0:
+                    pre_off = max(0.0, (T_use - on_dur) / 2.0)
+                    t0, t1 = pre_off, pre_off + on_dur
+            if (t0 is None or t1 is None):
+                T_use = (float(xlim_seconds) if xlim_seconds is not None
+                         else (float(np.median(t_totals)) if t_totals else None))
+                if T_use and np.isfinite(T_use) and T_use > 0:
+                    t0, t1 = T_use/3.0, 2.0*T_use/3.0
+            if (t0 is not None) and (t1 is not None) and (t1 > t0):
+                plt.axvspan(t0, t1, alpha=0.15)
+
+            # Title (median wavelength text)
+            if "Laser wavelength" in sel.columns:
+                wl_series = sel.get_column("Laser wavelength").cast(pl.Float64, strict=False).drop_nulls()
+                wl_used = float(wl_series.median()) if wl_series.len() > 0 else float("nan")
+            else:
+                wl_used = float("nan")
+            wl_txt = f", λ={wl_used:.0f} nm" if np.isfinite(wl_used) else ""
+
+            plt.title(f"Encap{int(df['Chip number'][0])} — ΔI(t) @ Vg={VG_target:g} V{wl_txt} (baseline {baseline_t:g}s)")
+            plt.xlabel("Time (s)")
+            plt.ylabel("ΔCurrent (µA)")
+            plt.legend(fontsize=8)
+            plt.tight_layout()
+
+            safe_vg = str(VG_target).replace("-", "m").replace(".", "p")
+            safe_wl = (f"{int(round(wl_used))}nm" if np.isfinite(wl_used) else "allwl")
+            out = FIG_DIR / f"chip{int(df['Chip number'][0])}_ITS_dI_Vg{safe_vg}_{safe_wl}_{tag}.png"
+            plt.savefig(out, dpi=200)
+            print(f"saved {out}")
+
+def plot_its_wavelength_overlay_delta(
+    df: pl.DataFrame,
+    base_dir: Path,
+    tag: str,
+    *,
+    vg_center: float = -3.0,              # target Vg (e.g., -3 V)
+    vg_window: float = 0.25,              # accept |VG_meta - vg_center| <= vg_window
+    wavelengths: list[float] | None = None,  # e.g., [365.0, 455.0, 565.0]; None = all present
+    wl_tol: float = 1e-6,                 # wavelength match tolerance
+    baseline_t: float = 60.0,             # I(t) - I(baseline_t), per-trace
+    clip_t_min: float = 20.0,             # start plotting here
+    xlim_seconds: float | None = 180.0,   # None -> autoscale end
+    vl_threshold: float = 0.0,            # light ON detection from VL (if available)
+    include_idx: list[int] | None = None, # optional: hand-pick file_idx to include
+    exclude_idx: list[int] | None = None, # optional: file_idx to exclude
+    dedup_labels: bool = True,            # only one legend entry per wavelength
+):
+    """
+    Overlay ITS traces for one chip at ~fixed Vg, colored by wavelength, plotting
+    t vs ΔI(t) = I(t) - I(baseline_t). Currents shown in µA. Legend shows λ only.
+    """
+    import numpy as np
+
+    its = df.filter(pl.col("proc") == "ITS").sort("file_idx")
+    if its.height == 0:
+        print("[warn] no ITS rows in metadata")
+        return
+    if "VG_meta" not in its.columns:
+        print("[warn] VG_meta not present; cannot select around vg_center")
+        return
+
+    # Vg window around the chosen center (to tolerate your Δp shifts)
+    mask = (pl.col("VG_meta") - float(vg_center)).abs() <= float(vg_window)
+
+    # Optional include/exclude by file_idx
+    if include_idx:
+        mask = mask & pl.col("file_idx").is_in(include_idx)
+    if exclude_idx:
+        mask = mask & (~pl.col("file_idx").is_in(exclude_idx))
+
+    # Optional wavelength selection
+    if wavelengths is not None and "Laser wavelength" in its.columns:
+        wl_set = [float(w) for w in wavelengths]
+        mask = mask & pl.any_horizontal(
+            [(pl.col("Laser wavelength") - w).abs() <= wl_tol for w in wl_set]
+        )
+
+    sel = its.filter(mask)
+    if sel.height == 0:
+        print("[info] no ITS rows matched vg window / wavelength filters")
+        return
+
+    # Determine which wavelengths to show (and order them)
+    if wavelengths is None:
+        if "Laser wavelength" in sel.columns:
+            wls = sorted(float(w) for w in sel.get_column("Laser wavelength").drop_nulls().unique().to_list())
+        else:
+            wls = [float("nan")]
+    else:
+        wls = [float(w) for w in wavelengths]
+
+    plt.figure()
+    curves_plotted = 0
+    seen_labels = set()
+
+    # Track duration & light window across everything for consistent axes/shading
+    t_totals = []
+    starts_vl, ends_vl = [], []
+    for WL_target in wls:
+        # select rows for this wavelength
+        if "Laser wavelength" in sel.columns and not np.isnan(WL_target):
+            sub = sel.filter((pl.col("Laser wavelength") - WL_target).abs() <= wl_tol)
+            if sub.height == 0:
+                continue
+        else:
+            sub = sel
+
+        for row in sub.iter_rows(named=True):
+            path = base_dir / row["source_file"]
+            if not path.exists():
+                print(f"[warn] missing file: {path}")
+                continue
+
+            d = _read_measurement(path)
+            if not {"t", "I"} <= set(d.columns):
+                print(f"[warn] {path} lacks t/I; got {d.columns}")
+                continue
+
+            # to numpy, monotonic t
+            t_all = d["t"].to_numpy()
+            i_all = d["I"].to_numpy()
+            if t_all.size < 2:
+                continue
+            order = np.argsort(t_all)
+            t_all = t_all[order]
+            i_all = i_all[order]
+
+            # baseline at baseline_t (interp; nearest if out of range)
+            if baseline_t < t_all[0] or baseline_t > t_all[-1]:
+                idx_near = np.argmin(np.abs(t_all - baseline_t))
+                i0 = float(i_all[idx_near])
+            else:
+                i0 = float(np.interp(baseline_t, t_all, i_all))
+
+            # clip early time for plotting & autoscale
+            m = t_all >= float(clip_t_min)
+            t = t_all[m]
+            i = i_all[m]
+            if t.size == 0:
+                continue
+
+            di_uA = (i - i0) * 1e6
+
+            # legend = wavelength only; dedupe repeated entries
+            if "Laser wavelength" in sub.columns and not np.isnan(WL_target):
+                lbl_full = f"λ={WL_target:.0f} nm"
+            else:
+                lbl_full = "λ=?"
+            label = "_" + lbl_full if (dedup_labels and lbl_full in seen_labels) else lbl_full
+            seen_labels.add(lbl_full)
+
+            plt.plot(t, di_uA, label=label)
+            curves_plotted += 1
+
+            # totals for axis / shading decisions
+            try:
+                t_totals.append(float(t_all[-1]))
+            except Exception:
+                pass
+
+            # try light ON window (using VL if present)
+            if "VL" in d.columns:
+                try:
+                    vl = d["VL"].to_numpy()
+                    if vl.size == order.size:
+                        vl = vl[order]
+                    on_idx = np.where(vl > vl_threshold)[0]
+                    if on_idx.size:
+                        starts_vl.append(float(t_all[on_idx[0]]))
+                        ends_vl.append(float(t_all[on_idx[-1]]))
+                except Exception:
+                    pass
+
+    if curves_plotted == 0:
+        print("[warn] nothing plotted (check filters)")
+        plt.close()
+        return
+
+    # Axes
+    if xlim_seconds is not None:
+        plt.xlim(float(clip_t_min), float(xlim_seconds))
+        T_total = float(xlim_seconds)
+    else:
+        T_total = float(np.median(t_totals)) if t_totals else None
+        if T_total and np.isfinite(T_total) and T_total > 0:
+            plt.xlim(float(clip_t_min), T_total)
+
+    # Shade light ON
+    t0 = t1 = None
+    if starts_vl and ends_vl:
+        t0 = float(np.median(starts_vl))
+        t1 = float(np.median(ends_vl))
+    if (t0 is not None) and (t1 is not None) and (t1 > t0):
+        plt.axvspan(t0, t1, alpha=0.15)
+
+    # Title
+    chip_txt = f"Encap{int(df['Chip number'][0])}" if 'Chip number' in df.columns else "Chip"
+    plt.title(f"{chip_txt} — ΔI(t) vs wavelength")
+    plt.xlabel("Time (s)")
+    plt.ylabel("ΔCurrent (µA)")
+    plt.legend(fontsize=8, title="Wavelength", loc='best')
+    plt.tight_layout()
+
+    out = FIG_DIR / f"{chip_txt}_ITS_dI_vs_wavelength_{tag}.png"
+    plt.savefig(out, dpi=200)
+    print(f"saved {out}")
+
+
+
+def plot_its_wavelength_overlay_delta_for_chip(
+    df: pl.DataFrame,
+    base_dir: Path,
+    tag: str,
+    *,
+    chip: int | float,
+    vg_center: float = -3.0,
+    vg_window: float = 0.3,
+    wavelengths: list[float] | None = None,
+    wl_tol: float = 1e-6,
+    baseline_t: float = 60.0,
+    clip_t_min: float = 20.0,
+    xlim_seconds: float | None = 180.0,
+    vl_threshold: float = 0.0,
+    include_idx: list[int] | None = None,
+    exclude_idx: list[int] | None = None,
+    dedup_labels: bool = True,
+):
+    # keep only ITS for this chip
+    df_chip = df.filter(
+        (pl.col("proc") == "ITS") &
+        (pl.col("Chip number").cast(pl.Float64, strict=False) == float(chip))
+    )
+    if df_chip.height == 0:
+        print(f"[info] no ITS rows for chip {chip}")
+        return
+
+    # Call your existing plotter
+    plot_its_wavelength_overlay_delta(
+        df_chip,
+        base_dir,
+        tag,
+        vg_center=vg_center,
+        vg_window=vg_window,
+        wavelengths=wavelengths,
+        wl_tol=wl_tol,
+        baseline_t=baseline_t,
+        clip_t_min=clip_t_min,
+        xlim_seconds=xlim_seconds,
+        vl_threshold=vl_threshold,
+        include_idx=include_idx,
+        exclude_idx=exclude_idx,
+        dedup_labels=dedup_labels,
+    )
+
+
+
+def ivg_sequence_gif(
+    df: pl.DataFrame,
+    base_dir: Path,
+    tag: str,
+    *,
+    fps: float = 2.0,            # frames per second
+    cumulative: bool = False,    # False = one curve per frame; True = overlay grows
+    y_unit_uA: bool = True,      # plot in µA
+    show_grid: bool = True
+):
+    """Create an animated GIF from all IVg curves in the DataFrame."""
+    ivg = df.filter(pl.col("proc") == "IVg").sort("file_idx")
+    if ivg.height == 0:
+        print("[warn] no IVg rows to animate")
+        return
+
+    # -------- load & cache all curves; compute global limits --------
+    curves = []
+    xs_min, xs_max = +np.inf, -np.inf
+    ys_min, ys_max = +np.inf, -np.inf
+
+    for row in ivg.iter_rows(named=True):
+        p = base_dir / row["source_file"]
+        if not p.exists():
+            print(f"[warn] missing file: {p}")
+            continue
+        d = _read_measurement(p)
+        if not {"VG", "I"} <= set(d.columns):
+            print(f"[warn] {p} lacks VG/I; got {d.columns}")
+            continue
+
+        x = d["VG"].to_numpy()
+        y = d["I"].to_numpy()
+        if y_unit_uA:
+            y = y * 1e6
+
+        # legend label: "#idx  light/dark  [λ=… nm]"
+        label = f"#{int(row['file_idx'])}  {'light' if row.get('with_light', False) else 'dark'}"
+        # show λ only if Laser toggle is true
+        if bool(row.get("Laser toggle", False)):
+            wl = row.get("Laser wavelength", None)
+            if wl is not None and str(wl) != "nan":
+                try:
+                    label += f"  λ={float(wl):.0f} nm"
+                except Exception:
+                    pass
+
+        curves.append({"x": x, "y": y, "label": label})
+
+        # update global limits
+        if x.size and y.size:
+            xs_min = min(xs_min, np.nanmin(x))
+            xs_max = max(xs_max, np.nanmax(x))
+            ys_min = min(ys_min, np.nanmin(y))
+            ys_max = max(ys_max, np.nanmax(y))
+
+    if not curves:
+        print("[warn] nothing loadable to animate")
+        return
+
+    # pad y limits a bit to avoid touching edges
+    yr = ys_max - ys_min if np.isfinite(ys_max - ys_min) else 1.0
+    ys_min_pad = ys_min - 0.05 * yr
+    ys_max_pad = ys_max + 0.05 * yr
+
+    # -------- render frames to memory --------
+    frames = []
+    chip_txt = f"Encap{int(df['Chip number'][0])}" if "Chip number" in df.columns else "Chip"
+
+    for i in range(len(curves)):
+        plt.close("all")
+        fig, ax = plt.subplots(figsize=(6, 4), dpi=150)
+
+        if cumulative:
+            rng = range(0, i + 1)
+        else:
+            rng = [i]
+
+        for j in rng:
+            style = dict(linewidth=2.0, alpha=1.0) if j == i else dict(linewidth=1.0, alpha=0.6)
+            ax.plot(curves[j]["x"], curves[j]["y"], label=curves[j]["label"], **style)
+
+        ax.set_xlim(xs_min, xs_max)
+        ax.set_ylim(ys_min_pad, ys_max_pad)
+        ax.set_xlabel("VG (V)")
+        ax.set_ylabel("Current (µA)" if y_unit_uA else "Current (A)")
+        ax.set_title(f"{chip_txt} — IVg sequence ({i+1}/{len(curves)})")
+        if show_grid:
+            ax.grid(True, alpha=0.3)
+        #ax.legend(fontsize=4, loc="best")
+
+        # grab RGBA buffer from canvas (no temp files)
+        fig.canvas.draw()
+        w, h = fig.canvas.get_width_height()
+        buf = np.frombuffer(fig.canvas.tostring_argb(), dtype=np.uint8).reshape(h, w, 4)
+        # convert ARGB -> RGBA
+        buf = buf[:, :, [1, 2, 3, 0]]
+        frames.append(buf)
+        plt.close(fig)
+
+    # -------- write GIF --------
+    out = FIG_DIR / f"{chip_txt}_IVg_sequence_{tag}.gif"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    # imageio expects duration per frame in seconds -> 1/fps
+    iio.imwrite(out, frames, duration=1.0 / fps, loop=0)  # loop=0 infinite
+    print(f"saved {out}")
+
+def ivg_sequence_gif(
+    df: pl.DataFrame,
+    base_dir: Path,
+    tag: str,
+    *,
+    fps: float = 2.0,            # frames per second
+    cumulative: bool = False,    # False = one curve per frame; True = overlay grows
+    y_unit_uA: bool = True,      # plot in µA
+    show_grid: bool = True
+):
+    """Create an animated GIF from all IVg curves in the DataFrame (fixed version)."""
+    import matplotlib
+    matplotlib.use('Agg')  # Use non-interactive backend
+    import matplotlib.pyplot as plt
+    
+    ivg = df.filter(pl.col("proc") == "IVg").sort("file_idx")
+    if ivg.height == 0:
+        print("[warn] no IVg rows to animate")
+        return
+
+    # -------- load & cache all curves; compute global limits --------
+    curves = []
+    xs_min, xs_max = +np.inf, -np.inf
+    ys_min, ys_max = +np.inf, -np.inf
+
+    for row in ivg.iter_rows(named=True):
+        p = base_dir / row["source_file"]
+        if not p.exists():
+            print(f"[warn] missing file: {p}")
+            continue
+        d = _read_measurement(p)
+        if not {"VG", "I"} <= set(d.columns):
+            print(f"[warn] {p} lacks VG/I; got {d.columns}")
+            continue
+
+        x = d["VG"].to_numpy()
+        y = d["I"].to_numpy()
+        if y_unit_uA:
+            y = y * 1e6
+
+        # legend label: "#idx  light/dark  [λ=… nm]"
+        label = f"#{int(row['file_idx'])}  {'light' if row.get('with_light', False) else 'dark'}"
+        # show λ only if Laser toggle is true
+        if bool(row.get("Laser toggle", False)):
+            wl = row.get("Laser wavelength", None)
+            if wl is not None and str(wl) != "nan":
+                try:
+                    label += f"  λ={float(wl):.0f} nm"
+                except Exception:
+                    pass
+
+        curves.append({"x": x, "y": y, "label": label})
+
+        # update global limits
+        if x.size and y.size:
+            xs_min = min(xs_min, np.nanmin(x))
+            xs_max = max(xs_max, np.nanmax(x))
+            ys_min = min(ys_min, np.nanmin(y))
+            ys_max = max(ys_max, np.nanmax(y))
+
+    if not curves:
+        print("[warn] nothing loadable to animate")
+        return
+
+    # pad y limits a bit to avoid touching edges
+    yr = ys_max - ys_min if np.isfinite(ys_max - ys_min) else 1.0
+    ys_min_pad = ys_min - 0.05 * yr
+    ys_max_pad = ys_max + 0.05 * yr
+
+    # -------- render frames to memory using PIL instead of matplotlib canvas --------
+    frames = []
+    chip_txt = f"Encap{int(df['Chip number'][0])}" if "Chip number" in df.columns else "Chip"
+
+    for i in range(len(curves)):
+        plt.close("all")
+        fig, ax = plt.subplots(figsize=(8, 6), dpi=100)
+
+        if cumulative:
+            rng = range(0, i + 1)
+        else:
+            rng = [i]
+
+        for j in rng:
+            style = dict(linewidth=2.0, alpha=1.0) if j == i else dict(linewidth=1.0, alpha=0.6)
+            ax.plot(curves[j]["x"], curves[j]["y"], label=curves[j]["label"], **style)
+
+        ax.set_xlim(xs_min, xs_max)
+        ax.set_ylim(ys_min_pad, ys_max_pad)
+        ax.set_xlabel("VG (V)")
+        ax.set_ylabel("Current (µA)" if y_unit_uA else "Current (A)")
+        ax.set_title(f"{chip_txt} — IVg sequence ({i+1}/{len(curves)})")
+        if show_grid:
+            ax.grid(True, alpha=0.3)
+
+        # Save to temporary buffer and convert to PIL Image
+        import io
+        from PIL import Image
+        
+        buf = io.BytesIO()
+        fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+        buf.seek(0)
+        img = Image.open(buf)
+        frames.append(np.array(img))
+        buf.close()
+        plt.close(fig)
+
+    # -------- write GIF --------
+    out = FIG_DIR / f"{chip_txt}_IVg_sequence_{tag}.gif"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    
+    try:
+        # Try with imageio
+        iio.imwrite(out, frames, duration=1.0 / fps, loop=0)
+        print(f"saved {out}")
+    except Exception as e:
+        print(f"[warn] GIF save failed with imageio: {e}")
+        # Fallback: save individual frames as PNGs
+        for i, frame in enumerate(frames):
+            frame_out = FIG_DIR / f"{chip_txt}_IVg_sequence_{tag}_frame_{i:03d}.png"
+            iio.imwrite(frame_out, frame)
+        print(f"[info] saved {len(frames)} individual frames instead")
+
+def plot_its_by_vg_delta(
+    df: pl.DataFrame,
+    base_dir: Path,
+    tag: str,
+    vgs: list[float] | None = None,          # e.g., [-3.0, +3.0]
+    wavelengths: list[float] | None = None,  # e.g., [455.0]
+    tol: float = 1e-6,                       # Vg match tolerance
+    wl_tol: float = 1e-6,                    # wavelength match tolerance
+    xlim_seconds: float | None = 180.0,      # None -> autoscale
+    vl_threshold: float = 0.0,               # VL > threshold => light ON
+    baseline_t: float = 60.0,                # interpolate I at this t0
+    clip_t_min: float = 20.0,                # start plotting from here
+):
+    """
+    Overlay ITS traces grouped by (Vg, wavelength) with baseline subtraction:
+    plot t vs (I(t) - I(baseline_t)), in microamps. Baseline is linearly
+    interpolated per trace. VL>vl_threshold detects light ON for shading.
+    """
+    import numpy as np
+
+    its_all = df.filter(pl.col("proc") == "ITS").sort("file_idx")
+    if its_all.height == 0:
+        print("[warn] no ITS rows in metadata")
+        return
+    if "VG_meta" not in its_all.columns:
+        print("[warn] VG_meta not present in metadata; cannot group by Vg")
+        return
+
+    # Target Vg list
+    if vgs is None:
+        vgs = sorted(float(v) for v in its_all.get_column("VG_meta").drop_nulls().unique().to_list())
+    else:
+        vgs = list(vgs)
+
+    # Target wavelength list
+    if wavelengths is None:
+        if "Laser wavelength" in its_all.columns:
+            wavelengths = sorted(float(w) for w in its_all.get_column("Laser wavelength").drop_nulls().unique().to_list())
+        else:
+            wavelengths = [float("nan")]
+    else:
+        wavelengths = list(wavelengths)
+
+    for VG_target in vgs:
+        for WL_target in wavelengths:
+            # selection mask
+            mask = (pl.col("VG_meta") - VG_target).abs() <= tol
+            if "Laser wavelength" in its_all.columns and not np.isnan(WL_target):
+                mask = mask & ((pl.col("Laser wavelength") - WL_target).abs() <= wl_tol)
+            sel = its_all.filter(mask)
+            if sel.height == 0:
+                msg_wl = f", λ≈{WL_target:g} nm" if not np.isnan(WL_target) else ""
+                print(f"[info] no ITS rows for Vg≈{VG_target:g} V{msg_wl}")
+                continue
+
+            plt.figure()
+            curves_plotted = 0
+
+            # For window/x-lims and shading
+            t_totals = []
+            starts_vl, ends_vl = [], []
+            on_durs_meta = []
+
+            for row in sel.iter_rows(named=True):
+                path = base_dir / row["source_file"]
+                if not path.exists():
+                    print(f"[warn] missing file: {path}")
+                    continue
+
+                d = _read_measurement(path)
+                if not {"t", "I"} <= set(d.columns):
+                    print(f"[warn] {path} lacks t/I; got {d.columns}")
+                    continue
+
+                # Convert to numpy and ensure monotonic t
+                t_all = d["t"].to_numpy()
+                i_all = d["I"].to_numpy()
+                if t_all.size < 2:
+                    continue
+                order = np.argsort(t_all)
+                t_all = t_all[order]
+                i_all = i_all[order]
+
+                # Interpolate baseline at baseline_t (if inside range)
+                if baseline_t < t_all[0] or baseline_t > t_all[-1]:
+                    # Not in range → use nearest-value fallback (or skip)
+                    # Here: fallback to nearest
+                    idx_near = np.argmin(np.abs(t_all - baseline_t))
+                    i0 = float(i_all[idx_near])
+                else:
+                    i0 = float(np.interp(baseline_t, t_all, i_all))
+
+                # Clip time window for plotting (affects y autoscale)
+                m = t_all >= float(clip_t_min)
+                t = t_all[m]
+                i = i_all[m]
+                if t.size == 0:
+                    continue
+
+                # Baseline subtraction, then to microamps
+                i_delta_uA = (i - i0) * 1e6
+
+                # Label (laser voltage only, like you asked previously)
+                lbl = f"VL={row.get('VL_meta', float('nan'))} V"
+                plt.plot(t, i_delta_uA, label=lbl)
+                curves_plotted += 1
+
+                # Track total (unclipped) duration for axis decisions
+                try:
+                    t_totals.append(float(t_all[-1]))
+                except Exception:
+                    pass
+
+                # VL-based ON detection (use full arrays)
+                if "VL" in d.columns:
+                    try:
+                        vl = d["VL"].to_numpy()
+                        vl = vl[order] if vl.size == order.size else vl  # best effort align
+                        on_idx = np.where(vl > vl_threshold)[0]
+                        if on_idx.size:
+                            starts_vl.append(float(t_all[on_idx[0]]))
+                            ends_vl.append(float(t_all[on_idx[-1]]))
+                    except Exception:
+                        pass
+
+                # Metadata ON duration
+                if "Laser ON+OFF period" in sel.columns:
+                    try:
+                        on_durs_meta.append(float(row["Laser ON+OFF period"]))
+                    except Exception:
+                        pass
+
+            if curves_plotted == 0:
+                print(f"[warn] no ITS traces plotted for Vg≈{VG_target:g} V; skipping")
+                plt.close()
+                continue
+
+            # X-limits (start at clip_t_min)
+            if xlim_seconds is not None:
+                plt.xlim(float(clip_t_min), float(xlim_seconds))
+                T_total = float(xlim_seconds)
+            else:
+                T_total = float(np.median(t_totals)) if t_totals else None
+                if T_total and np.isfinite(T_total) and T_total > 0:
+                    plt.xlim(float(clip_t_min), T_total)
+
+            # Light ON window shading
+            t0 = t1 = None
+            if starts_vl and ends_vl:
+                t0 = float(np.median(starts_vl))
+                t1 = float(np.median(ends_vl))
+            if (t0 is None or t1 is None) and on_durs_meta:
+                on_dur = float(np.median(on_durs_meta))
+                T_use = float(xlim_seconds) if xlim_seconds is not None else (float(np.median(t_totals)) if t_totals else None)
+                if T_use and np.isfinite(T_use) and T_use > 0:
+                    pre_off = max(0.0, (T_use - on_dur) / 2.0)
+                    t0, t1 = pre_off, pre_off + on_dur
+            if (t0 is None or t1 is None):
+                T_use = (float(xlim_seconds) if xlim_seconds is not None
+                         else (float(np.median(t_totals)) if t_totals else None))
+                if T_use and np.isfinite(T_use) and T_use > 0:
+                    t0, t1 = T_use/3.0, 2.0*T_use/3.0
+            if (t0 is not None) and (t1 is not None) and (t1 > t0):
+                plt.axvspan(t0, t1, alpha=0.15)
+
+            # Title (median wavelength text)
+            if "Laser wavelength" in sel.columns:
+                wl_series = sel.get_column("Laser wavelength").cast(pl.Float64, strict=False).drop_nulls()
+                wl_used = float(wl_series.median()) if wl_series.len() > 0 else float("nan")
+            else:
+                wl_used = float("nan")
+            wl_txt = f", λ={wl_used:.0f} nm" if np.isfinite(wl_used) else ""
+
+            plt.title(f"Encap{int(df['Chip number'][0])} — ΔI(t) @ Vg={VG_target:g} V{wl_txt} (baseline {baseline_t:g}s)")
+            plt.xlabel("Time (s)")
+            plt.ylabel("ΔCurrent (µA)")
+            plt.legend(fontsize=8)
+            plt.tight_layout()
+
+            safe_vg = str(VG_target).replace("-", "m").replace(".", "p")
+            safe_wl = (f"{int(round(wl_used))}nm" if np.isfinite(wl_used) else "allwl")
+            out = FIG_DIR / f"chip{int(df['Chip number'][0])}_ITS_dI_Vg{safe_vg}_{safe_wl}_{tag}.png"
+            plt.savefig(out, dpi=200)
+            print(f"saved {out}")
+
+

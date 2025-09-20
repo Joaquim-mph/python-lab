@@ -1,0 +1,242 @@
+{
+  "role": "user",
+  "task": "Produce a professional technical report of one or more scientific papers in applied physics/engineering (theory and/or experiment).",
+  "audience": [
+    "domain experts in applied physics/EE",
+    "interdisciplinary engineers",
+    "graduate students"
+  ],
+  "inputs": {
+    "papers": [
+      {
+        "id": "paper_1",
+        "source_type": "doi|arxiv|url|pdf_text",
+        "source_value": "<INSERT_DOI_OR_ARXIV_ID_OR_URL_OR_LEGAL_FULLTEXT>",
+        "provided_text": "<OPTIONAL_FULL_TEXT_IF_AVAILABLE>",
+        "notes": "<OPTIONAL_NOTES_OR_IMPORTANT_PAGES>"
+      }
+    ],
+    "optional_comparators": [
+      {
+        "id": "baseline_1",
+        "source_type": "doi|arxiv|url|pdf_text",
+        "source_value": "<INSERT_COMPARATOR>",
+        "provided_text": ""
+      }
+    ],
+    "scope_preferences": {
+      "focus_subfields": [
+        "nanoelectronics",
+        "photonics",
+        "spintronics",
+        "materials for energy",
+        "quantum devices",
+        "control/robotics",
+        "signals & systems"
+      ],
+      "emphasis": [
+        "methods",
+        "reproducibility",
+        "limitations",
+        "theory–experiment alignment",
+        "engineering relevance"
+      ]
+    },
+    "output_format": "markdown",
+    "citation_style": "IEEE",
+    "math_mode": "LaTeX",
+    "figure_mode": "describe_if_no_images",
+    "length_targets": {
+      "executive_summary_words": 200,
+      "full_report_words": 2000
+    }
+  },
+  "style": {
+    "tone": "scholarly, precise, neutral",
+    "readability": "expert_with_plain_language_sidebars",
+    "use_lists_tables": true,
+    "equation_rendering": "LaTeX fenced blocks where needed",
+    "units": "SI throughout"
+  },
+  "deliverables": {
+    "report_sections": [
+      {
+        "name": "Executive Summary",
+        "requirements": [
+          "One-paragraph overview of problem, approach, main results, and significance",
+          "State whether contribution is theoretical, experimental, computational, or mixed"
+        ]
+      },
+      {
+        "name": "Context & Prior Work",
+        "requirements": [
+          "Define the problem and why it matters in applied physics/engineering",
+          "Situate paper vs. 3–7 prior works; cite explicitly",
+          "Identify what gap the paper claims to fill"
+        ]
+      },
+      {
+        "name": "Contributions (Bulleted)",
+        "requirements": [
+          "List 3–6 concrete contributions in order of importance",
+          "Label each as novelty type: method|theory|system|dataset|evaluation|application"
+        ]
+      },
+      {
+        "name": "Methods & Theory",
+        "requirements": [
+          "Present core equations with variables table and SI units",
+          "State assumptions, approximations, and boundary conditions",
+          "If algorithms are used, provide clean pseudocode and complexity",
+          "Map theory variables to experimentally measurable quantities"
+        ]
+      },
+      {
+        "name": "Experimental Setup / System Design",
+        "requirements": [
+          "Instrumentation, materials, fabrication steps, calibration, environmental controls",
+          "Sampling, data acquisition, pre-processing, uncertainty sources",
+          "Diagrams described textually if figures unavailable"
+        ]
+      },
+      {
+        "name": "Datasets & Parameters",
+        "requirements": [
+          "Table of datasets, sample sizes, device counts, repetitions",
+          "Key hyperparameters or process parameters with ranges and nominal values",
+          "Report all units and tolerances"
+        ]
+      },
+      {
+        "name": "Results",
+        "requirements": [
+          "Primary quantitative findings with effect sizes and confidence intervals when available",
+          "Recreate key tables as Markdown; describe important figures",
+          "Provide equations for fitted models and quality metrics (R², RMSE, etc.)"
+        ]
+      },
+      {
+        "name": "Comparative Analysis",
+        "requirements": [
+          "Benchmark against baselines or prior art; normalize metrics if needed",
+          "State fairness of comparisons (same protocol? same data? same conditions?)",
+          "Include an ablation/what-if summary if reported"
+        ]
+      },
+      {
+        "name": "Engineering Implications",
+        "requirements": [
+          "Translate results into practical design guidance, back-of-the-envelope calculations, and constraints",
+          "Reliability, scalability, cost, safety, manufacturability considerations"
+        ]
+      },
+      {
+        "name": "Limitations & Threats to Validity",
+        "requirements": [
+          "Internal validity (measurement, confounders), external validity (generalization), statistical power",
+          "Sensitivity of conclusions to key assumptions"
+        ]
+      },
+      {
+        "name": "Reproducibility Checklist",
+        "requirements": [
+          "Data/code availability; exact versions; bill of materials; parameter seeds",
+          "Steps another lab/engineer would follow to replicate"
+        ]
+      },
+      {
+        "name": "Future Work & Open Questions",
+        "requirements": [
+          "Specific experiments, theory extensions, or engineering tests",
+          "Risks and decision points for real-world adoption"
+        ]
+      },
+      {
+        "name": "Plain-Language Summary (150–200 words)",
+        "requirements": [
+          "Explain to a senior undergraduate or non-specialist",
+          "Avoid jargon where possible"
+        ]
+      },
+      {
+        "name": "Key Terms & Symbols",
+        "requirements": [
+          "Glossary of 10–25 domain terms with concise definitions",
+          "Variables/symbols table with units and typical values"
+        ]
+      },
+      {
+        "name": "Bibliography",
+        "requirements": [
+          "IEEE style; include DOIs/arXiv IDs; provide BibTeX if available"
+        ]
+      }
+    ],
+    "tables_to_include": [
+      "Table: Variables, Symbols, Units, Typical Values",
+      "Table: Datasets/Devices/Samples with Counts and Conditions",
+      "Table: Parameter Settings (nominal, range)",
+      "Table: Results vs Baselines with metrics and confidence intervals"
+    ],
+    "checklists": {
+      "rigor": [
+        "All equations defined and units consistent",
+        "Assumptions explicit; boundary conditions stated",
+        "Uncertainties quantified or discussed",
+        "Comparisons methodologically fair"
+      ],
+      "ethics_safety": [
+        "Safety considerations for materials/lasers/high voltage/cryogenics addressed",
+        "Environmental and data ethics noted if applicable"
+      ]
+    }
+  },
+  "extraction_targets": {
+    "metadata": [
+      "title",
+      "authors",
+      "affiliations",
+      "venue",
+      "year",
+      "DOI_or_arXiv",
+      "keywords",
+      "funding",
+      "materials/devices/models"
+    ],
+    "numerical_results": [
+      "headline metrics with units",
+      "best-case/median performance",
+      "reliability stats (retention, endurance, MTBF, etc.)",
+      "energy/power/area/latency where applicable"
+    ],
+    "reproducibility_assets": [
+      "code_repos",
+      "data_links",
+      "CAD/layout/files",
+      "instrument configs",
+      "simulation inputs"
+    ]
+  },
+  "constraints": {
+    "factuality": "Do not hallucinate unavailable content; if a detail is missing, say so explicitly.",
+    "citations": "Cite exact page/figure/equation numbers when possible.",
+    "original_text": "Do not reproduce large verbatim passages; summarize in your own words.",
+    "units": "Report all quantities in SI; convert if needed and note conversions."
+  },
+  "optional_enhancements": {
+    "design_rules_of_thumb": true,
+    "order_of_magnitude_checks": true,
+    "dimensionless_numbers": true,
+    "scaling_laws": true,
+    "sensitivity_analysis": true
+  },
+  "expected_output": {
+    "type": "markdown_document",
+    "structure": "Follow deliverables.report_sections order.",
+    "appendices": [
+      "Appendix A: Extended Math Derivations",
+      "Appendix B: Experimental Bill of Materials",
+      "Appendix C: Additional Plots/Tables (described textually if necessary)"
+    ]
+  }
+}
