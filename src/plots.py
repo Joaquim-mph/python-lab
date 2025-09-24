@@ -1,7 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
 import numpy as np
-from utils import _proc_from_path, _file_index, _read_measurement
+from src.utils import _proc_from_path, _file_index, _read_measurement
 import polars as pl
 import matplotlib.pyplot as plt
 
@@ -997,7 +997,7 @@ def plot_its_by_vg_delta(
     wavelengths: list[float] | None = None,  # e.g., [455.0]
     tol: float = 1e-6,                       # Vg match tolerance
     wl_tol: float = 1e-6,                    # wavelength match tolerance
-    xlim_seconds: float | None = 180.0,      # None -> autoscale
+    xlim_seconds: float | None = None,      # None -> autoscale
     vl_threshold: float = 0.0,               # VL > threshold => light ON
     baseline_t: float = 60.0,                # interpolate I at this t0
     clip_t_min: float = 20.0,                # start plotting from here

@@ -5,6 +5,8 @@ import polars as pl
 # ---------- tiny header parsers ----------
 _start_pat = re.compile(r"^\s*#\s*Start time:\s*([0-9]+(?:\.[0-9]+)?)\s*$", re.I)
 _proc_pat  = re.compile(r"^\s*#\s*Procedure:\s*<([^>]+)>\s*$", re.I)
+_num_part = re.compile(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?")
+
 
 def _read_header_info(path: Path) -> dict:
     try:
@@ -34,6 +36,21 @@ def _proc_short(proc_str: str | None) -> str:
     p = proc_str.split(".")
     return p[-1] if p else proc_str
 
+
+
+
+def _coerce_float(x):
+    if isinstance(x, (int, float)):
+        return float(x)
+    if isinstance(x, str):
+        m = _num_part.search(x)
+        if m:
+            try:
+                return float(m.group())
+            except ValueError:
+                return None
+    return None
+
 def build_day_timeline(meta_csv: str, base_dir: Path) -> pl.DataFrame:
     # load the day metadata as-is (no chip filter)
     meta = pl.read_csv(meta_csv, ignore_errors=True)
@@ -41,7 +58,8 @@ def build_day_timeline(meta_csv: str, base_dir: Path) -> pl.DataFrame:
     # Ensure columns we’ll reference exist
     for c in ["source_file","Chip number","VG","VDS","Laser voltage",
               "Laser wavelength","Laser ON+OFF period","Information",
-              "VSD start","VSD end","VSD step","VG start","VG end","VG step"]:
+              "VSD start","VSD end","VSD step","VG start","VG end","VG step",
+              "start_time","Start time"]:
         if c not in meta.columns:
             meta = meta.with_columns(pl.lit(None).alias(c))
 
@@ -53,13 +71,26 @@ def build_day_timeline(meta_csv: str, base_dir: Path) -> pl.DataFrame:
         if not src or (isinstance(src, float) and math.isnan(src)):
             continue
         path = base_dir / str(src)
-        head = _read_header_info(path)
-        start_time = head.get("start_time")
-        proc_full  = head.get("procedure")
 
+        # --- NEW: prefer start_time from the metadata row itself ---
+        start_time = _coerce_float(row.get("start_time"))
+        if start_time is None:
+            start_time = _coerce_float(row.get("Start time"))
+
+        proc_full = None
+
+        # If missing, try header scan
+        if start_time is None or proc_full is None:
+            head = _read_header_info(path)
+            if start_time is None:
+                st = head.get("start_time")
+                start_time = float(st) if isinstance(st, (int, float)) else None
+            proc_full = head.get("procedure") or proc_full
+
+        # Last resort: file mtime
         if start_time is None:
             try:
-                start_time = path.stat().st_mtime  # fallback
+                start_time = path.stat().st_mtime
             except Exception:
                 start_time = None
 
@@ -126,27 +157,98 @@ def build_day_timeline(meta_csv: str, base_dir: Path) -> pl.DataFrame:
             return f"LaserCalibration λ={r.get('wl','?')} nm  #{r.get('file_idx','?')}"
         return f"{p} #{r.get('file_idx','?')}"
 
-    summaries = []
-    for r in df.iter_rows(named=True):
-        summaries.append(_mk_summary(r))
+    summaries = [_mk_summary(r) for r in df.iter_rows(named=True)]
     df = df.with_columns(pl.Series("summary", summaries))
-
-    # Sequence number in day
     df = df.with_columns(pl.arange(1, df.height + 1).alias("seq"))
 
     return df.select(
         "seq","time_hms","proc","chip","summary","source_file","file_idx","start_time"
     )
 
-def print_day_timeline(meta_csv: str, base_dir: Path, *, save_csv: bool = True) -> pl.DataFrame:
+
+
+def print_day_timeline(
+    meta_csv: str,
+    base_dir: Path,
+    *,
+    save_csv: bool = True,
+    chip_filter: int | None = None,
+    proc_filter: str | None = None,
+    show_elapsed: bool = True,
+) -> pl.DataFrame:
+    """
+    Build and print a chronological timeline for a day's experiments.
+
+    Parameters
+    ----------
+    meta_csv : str
+        Path to the per-folder metadata.csv
+    base_dir : Path
+        Root that, combined with 'source_file', points to raw CSVs
+    save_csv : bool
+        If True, writes a sibling '<stem>_timeline.csv'
+    chip_filter : int | None
+        If set, only show this chip number
+    proc_filter : str | None
+        If set, only show this short procedure (e.g., "IV", "IVg", "It")
+    show_elapsed : bool
+        If True, prints cumulative elapsed time and gap since previous run
+
+    Returns
+    -------
+    pl.DataFrame
+        Columns: seq, time_hms, proc, chip, summary, source_file, file_idx, start_time
+    """
     tl = build_day_timeline(meta_csv, base_dir)
     if tl.height == 0:
         print("[warn] no experiments found")
         return tl
 
+    # Optional filters
+    if chip_filter is not None:
+        tl = tl.filter(pl.col("chip") == chip_filter)
+    if proc_filter is not None:
+        tl = tl.filter(pl.col("proc") == proc_filter)
+
+    if tl.height == 0:
+        print("[warn] timeline is empty after filters")
+        return tl
+
+    # Compute elapsed / gap if requested (safe on missing times)
+    if show_elapsed and "start_time" in tl.columns:
+        st = tl["start_time"].to_list()
+        gaps = []
+        elapsed = []
+        t0 = None
+        prev = None
+        for t in st:
+            if t is None:
+                gaps.append(None)
+                elapsed.append(None)
+                continue
+            if t0 is None:
+                t0 = t
+            gaps.append(None if prev is None or prev is None else t - prev)
+            elapsed.append(t - t0 if t0 is not None else None)
+            prev = t
+        tl = tl.with_columns(
+            pl.Series("gap_s", gaps),
+            pl.Series("elapsed_s", elapsed),
+        )
+
+    # Pretty print
     print("\n=== Day timeline (chronological) ===")
-    for r in tl.iter_rows(named=True):
-        print(f"{r['seq']:>3d}  {r['time_hms']:>8}  {r['summary']}")
+    if show_elapsed and "elapsed_s" in tl.columns:
+        # header with extra columns
+        for r in tl.iter_rows(named=True):
+            gap = r.get("gap_s")
+            elp = r.get("elapsed_s")
+            #gap_str = f"  +{gap:6.1f}s" if isinstance(gap, (int, float)) else "         "
+            #elp_str = f"  t={elp:7.1f}s" if isinstance(elp, (int, float)) else "          "
+            print(f"{r['seq']:>3d}  {r['time_hms']:>8}  {r['summary']}")
+    else:
+        for r in tl.iter_rows(named=True):
+            print(f"{r['seq']:>3d}  {r['time_hms']:>8}  {r['summary']}")
     print("====================================\n")
 
     if save_csv:
@@ -154,4 +256,4 @@ def print_day_timeline(meta_csv: str, base_dir: Path, *, save_csv: bool = True) 
         tl.write_csv(out)
         print(f"saved {out}")
 
-    return tl
+    #return tl

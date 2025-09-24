@@ -14,7 +14,7 @@ import argparse
 import re
 import sys
 from typing import Dict, List
-
+import datetime as dt
 import polars as pl
 
 # ── Parsing helpers (why: robust numeric extraction from header values) ──
@@ -28,53 +28,88 @@ NUMERIC_FULL = re.compile(
     re.VERBOSE,
 )
 NUMERIC_PART = re.compile(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?")
-
 def parse_iv_metadata(csv_path: Path) -> Dict[str, object]:
     """
-    Read only the '#Parameters' header block of a .csv and return a flat dict.
-    WHY: we want fast, uniform metadata without loading big arrays.
+    Read the '#Parameters' and '#Metadata' header blocks of a .csv and return a flat dict.
+    Adds:
+      - start_time: float seconds since epoch (if found)
+      - time_hms: 'HH:MM:SS' derived from start_time (local naive time)
     """
     params: Dict[str, object] = {}
+    meta: Dict[str, object] = {}
+
+    def _coerce(raw_val: str) -> object:
+        if NUMERIC_FULL.match(raw_val):
+            m = NUMERIC_PART.search(raw_val)
+            if m:
+                try:
+                    return float(m.group())
+                except ValueError:
+                    return raw_val
+        if raw_val.lower() in ("true", "false"):
+            return raw_val.lower() == "true"
+        return raw_val
+
     with csv_path.open(encoding="utf-8", errors="ignore") as f:
-        in_params = False
+        section: str | None = None
         for line in f:
             if line.startswith("#Parameters:"):
-                in_params = True
+                section = "params"
                 continue
-            if not in_params:
-                # stop early when we reach non-header content
-                if not line.startswith("#"):
-                    break
+            if line.startswith("#Metadata:"):
+                section = "meta"
                 continue
-            if not line.startswith("#\t"):
+
+            # stop once we hit non-header content
+            if not line.startswith("#"):
                 break
 
-            # "#\tKey: value"
-            try:
-                key, raw_val = line[2:].split(":", 1)
-            except ValueError:
-                # malformed header line: skip
-                continue
-            key = key.strip()
-            raw_val = raw_val.strip()
-
-            if NUMERIC_FULL.match(raw_val):
-                num_str = NUMERIC_PART.search(raw_val).group()
+            # only parse indented header lines like "#\tKey: value"
+            if section in ("params", "meta") and line.startswith("#\t"):
                 try:
-                    params[key] = float(num_str)
+                    key, raw_val = line[2:].split(":", 1)
                 except ValueError:
-                    params[key] = raw_val  # fallback
-            elif raw_val.lower() in ("true", "false"):
-                params[key] = (raw_val.lower() == "true")
-            else:
-                params[key] = raw_val
+                    continue  # malformed line; skip
+                key = key.strip()
+                raw_val = raw_val.strip()
+                val = _coerce(raw_val)
+                if section == "params":
+                    params[key] = val
+                else:
+                    meta[key] = val
 
-    # Derive optional fields
+    # Derive optional fields (existing logic)
     lv = params.get("Laser voltage")
     if isinstance(lv, (int, float)):
         params["Laser toggle"] = (lv != 0.0)
 
+    # Add file path always
     params["source_file"] = str(csv_path)
+
+    # --- New: derive start_time (float) and time_hms ---
+    start_ts: float | None = None
+    # Prefer metadata block, but fall back to parameters if present there
+    start_raw = meta.get("Start time", params.get("Start time"))
+    if isinstance(start_raw, (int, float)):
+        start_ts = float(start_raw)
+    elif isinstance(start_raw, str):
+        m = NUMERIC_PART.search(start_raw)
+        if m:
+            try:
+                start_ts = float(m.group())
+            except ValueError:
+                pass
+
+    if start_ts is not None:
+        params["start_time"] = start_ts
+        # naive local time; if you want a specific TZ, convert here
+        t = dt.datetime.fromtimestamp(start_ts)
+        params["time_hms"] = t.strftime("%H:%M:%S")
+    else:
+        # keep keys present for schema stability
+        params["start_time"] = None
+        params["time_hms"] = None
+
     return params
 
 # ── Core build ──
