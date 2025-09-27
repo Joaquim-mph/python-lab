@@ -1,0 +1,67 @@
+Irange,NPLC,T step start time,Chip group name,Chip number,Information,Initial (current) T,Laser ON+OFF period,Laser voltage,Laser wavelength,Procedure version,Sample,Sampling time (excluding Keithley),Target T,VDS,VG,Laser toggle,source_file,Burn-in time,Step time,VG end,VG start,VG step,N_avg,Optical fiber,Laser voltage end,Laser voltage start,Laser voltage step
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,4.53,365.0,2.2.0,other,0.0,25.0,0.1,1.2,true,raw_data/Alisson_23_sept/It2025-09-23_19.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,2.78,365.0,2.2.0,other,0.0,25.0,0.1,-3.0,true,raw_data/Alisson_23_sept/It2025-09-23_25.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,3.81,365.0,2.2.0,other,0.0,25.0,0.1,3.0,true,raw_data/Alisson_23_sept/It2025-09-23_31.csv,,,,,,,,,,
+0.001,1.0,,Alisson,72.0,after 365 nm,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_16.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+0.001,1.0,,Alisson,72.0,monitoring,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_17.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,2.78,365.0,2.2.0,other,0.0,25.0,0.1,3.0,true,raw_data/Alisson_23_sept/It2025-09-23_30.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,1.79,365.0,2.2.0,other,0.0,25.0,0.1,-3.0,true,raw_data/Alisson_23_sept/It2025-09-23_24.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,4.53,365.0,2.2.0,other,0.0,25.0,0.1,0.8,true,raw_data/Alisson_23_sept/It2025-09-23_18.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,2.31,625.0,2.2.0,other,0.0,25.0,0.1,-0.62,true,raw_data/Alisson_23_sept/It2025-09-23_9.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,4.89,365.0,2.2.0,other,0.0,25.0,0.1,3.0,true,raw_data/Alisson_23_sept/It2025-09-23_32.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,3.81,365.0,2.2.0,other,0.0,25.0,0.1,-3.0,true,raw_data/Alisson_23_sept/It2025-09-23_26.csv,,,,,,,,,,
+,,,,,None,,,,365.0,1.1.1,,,,,,,raw_data/Alisson_23_sept/LaserCalibration2025-09-23_14.csv,,0.1,,,,2.0,F1 (M92L02),5.0,0.0,0.1
+0.001,1.0,,Alisson,72.0,after 365 nm,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_15.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+0.001,1.0,,Alisson,72.0,after 365 nm,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_14.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,4.89,365.0,2.2.0,other,0.0,25.0,0.1,-3.0,true,raw_data/Alisson_23_sept/It2025-09-23_27.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,2.31,625.0,2.2.0,other,0.0,25.0,0.1,-2.62,true,raw_data/Alisson_23_sept/It2025-09-23_8.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,0.88,365.0,2.2.0,other,0.0,25.0,0.1,-3.0,true,raw_data/Alisson_23_sept/It2025-09-23_23.csv,,,,,,,,,,
+,,,,,None,,,,405.0,1.1.1,,,,,,,raw_data/Alisson_23_sept/LaserCalibration2025-09-23_11.csv,,0.1,,,,2.0,F1 (M92L02),5.0,0.0,0.1
+0.001,1.0,,Alisson,72.0,after 455 nm,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_10.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+0.001,1.0,,Alisson,72.0,after 405 nm,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_11.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+,,,,,None,,,,455.0,1.1.1,,,,,,,raw_data/Alisson_23_sept/LaserCalibration2025-09-23_10.csv,,0.1,,,,2.0,F1 (M92L02),5.0,0.0,0.1
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,4.53,365.0,2.2.0,other,0.0,25.0,0.1,3.15,true,raw_data/Alisson_23_sept/It2025-09-23_22.csv,,,,,,,,,,
+,,,,,None,,,,505.0,1.1.1,,,,,,,raw_data/Alisson_23_sept/LaserCalibration2025-09-23_9.csv,,0.1,,,,2.0,F1 (M92L02),5.0,0.0,0.1
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,4.53,365.0,2.2.0,other,0.0,25.0,0.1,0.75,true,raw_data/Alisson_23_sept/It2025-09-23_20.csv,,,,,,,,,,
+,,,,,None,,,,385.0,1.1.1,,,,,,,raw_data/Alisson_23_sept/LaserCalibration2025-09-23_12.csv,,0.1,,,,2.0,F1 (M92L02),5.0,0.0,0.1
+0.001,1.0,,Alisson,72.0,after 365 nm,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_13.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+0.001,1.0,,Alisson,72.0,after 385 nm,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_12.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+,,,,,None,,,,365.0,1.1.1,,,,,,,raw_data/Alisson_23_sept/LaserCalibration2025-09-23_13.csv,,0.1,,,,2.0,F1 (M92L02),5.0,0.0,0.1
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,4.53,365.0,2.2.0,other,0.0,25.0,0.1,1.15,true,raw_data/Alisson_23_sept/It2025-09-23_21.csv,,,,,,,,,,
+,,,,,None,,,,505.0,1.1.1,,,,,,,raw_data/Alisson_23_sept/LaserCalibration2025-09-23_8.csv,,0.5,,,,2.0,F1 (M92L02),5.0,0.0,0.1
+0.001,1.0,,Alisson,72.0,after 565 nm,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_8.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+0.001,1.0,,Alisson,72.0,after 505 nm,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_9.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+0.001,1.0,,Alisson,72.0,after 590 nm,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_7.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+0.001,1.0,,Alisson,72.0,after 625 nm,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_6.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+0.001,1.0,,Alisson,72.0,after calibration 680 nm,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_4.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+0.001,1.0,,Alisson,72.0,after 680 nm,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_5.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+0.001,1.0,,Alisson,72.0,monitoring,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_1.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+0.001,1.0,,Alisson,72.0,after calibration,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_2.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+0.001,1.0,,Alisson,72.0,after 850 nm,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_3.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+,,,,,None,,,,625.0,1.1.1,,,,,,,raw_data/Alisson_23_sept/LaserCalibration2025-09-23_5.csv,,0.5,,,,2.0,F1 (M92L02),5.0,0.0,0.1
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,1.4,850.0,2.2.0,other,0.0,25.0,0.1,-0.62,true,raw_data/Alisson_23_sept/It2025-09-23_3.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,2.31,625.0,2.2.0,other,0.0,25.0,0.1,1.38,true,raw_data/Alisson_23_sept/It2025-09-23_10.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,3.23,590.0,2.2.0,other,0.0,25.0,0.1,-2.62,true,raw_data/Alisson_23_sept/It2025-09-23_11.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,1.4,850.0,2.2.0,other,0.0,25.0,0.1,-2.62,true,raw_data/Alisson_23_sept/It2025-09-23_2.csv,,,,,,,,,,
+,,,,,None,,,,680.0,1.1.1,,,,,,,raw_data/Alisson_23_sept/LaserCalibration2025-09-23_4.csv,,0.5,,,,2.0,F1 (M92L02),5.0,0.0,0.1
+,,,,,None,,,,590.0,1.1.1,,,,,,,raw_data/Alisson_23_sept/LaserCalibration2025-09-23_6.csv,,0.5,,,,2.0,F1 (M92L02),5.0,0.0,0.1
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,1.7,505.0,2.2.0,other,0.0,25.0,0.1,-2.62,true,raw_data/Alisson_23_sept/It2025-09-23_13.csv,,,,,,,,,,
+0.001,1.0,,Alisson,72.0,monitoring,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_20.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,1.4,850.0,2.2.0,other,0.0,25.0,0.1,-5.19,true,raw_data/Alisson_23_sept/It2025-09-23_1.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,0.77,565.0,2.2.0,other,0.0,25.0,0.1,-2.62,true,raw_data/Alisson_23_sept/It2025-09-23_12.csv,,,,,,,,,,
+,,,,,None,,,,565.0,1.1.1,,,,,,,raw_data/Alisson_23_sept/LaserCalibration2025-09-23_7.csv,,0.5,,,,2.0,F1 (M92L02),5.0,0.0,0.1
+,,,,,None,,,,680.0,1.1.1,,,,,,,raw_data/Alisson_23_sept/LaserCalibration2025-09-23_3.csv,,0.5,,,,2.0,F1 (M92L02),5.0,0.0,0.1
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,2.11,385.0,2.2.0,other,0.0,25.0,0.1,-2.68,true,raw_data/Alisson_23_sept/It2025-09-23_16.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,4.53,680.0,2.2.0,other,0.0,25.0,0.1,-2.62,true,raw_data/Alisson_23_sept/It2025-09-23_5.csv,,,,,,,,,,
+0.001,1.0,,Alisson,72.0,monitoring,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_19.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+0.001,1.0,,Alisson,72.0,monitoring,,,0.0,455.0,2.1.0,other,,,0.1,,false,raw_data/Alisson_23_sept/IVg2025-09-23_18.csv,0.0,0.0,5.0,-5.0,0.05,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,1.4,850.0,2.2.0,other,0.0,25.0,0.1,1.38,true,raw_data/Alisson_23_sept/It2025-09-23_4.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,4.53,365.0,2.2.0,other,0.0,25.0,0.1,-2.8,true,raw_data/Alisson_23_sept/It2025-09-23_17.csv,,,,,,,,,,
+,,,,,None,,,,680.0,1.1.1,,,,,,,raw_data/Alisson_23_sept/LaserCalibration2025-09-23_2.csv,,2.0,,,,2.0,F1 (M92L02),5.0,0.0,0.1
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,4.53,680.0,2.2.0,other,0.0,25.0,0.1,-0.62,true,raw_data/Alisson_23_sept/It2025-09-23_6.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,3.12,405.0,2.2.0,other,0.0,25.0,0.1,-2.68,true,raw_data/Alisson_23_sept/It2025-09-23_15.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,1.79,365.0,2.2.0,other,0.0,25.0,0.1,3.0,true,raw_data/Alisson_23_sept/It2025-09-23_29.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,0.88,365.0,2.2.0,other,0.0,25.0,0.1,3.0,true,raw_data/Alisson_23_sept/It2025-09-23_28.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,1.31,455.0,2.2.0,other,0.0,25.0,0.1,-2.68,true,raw_data/Alisson_23_sept/It2025-09-23_14.csv,,,,,,,,,,
+0.001,1.0,120.0,Alisson,72.0,Light testing,0.0,120.0,4.53,680.0,2.2.0,other,0.0,25.0,0.1,1.38,true,raw_data/Alisson_23_sept/It2025-09-23_7.csv,,,,,,,,,,
+,,,,,None,,,,850.0,1.1.1,,,,,,,raw_data/Alisson_23_sept/LaserCalibration2025-09-23_1.csv,,2.0,,,,2.0,F1 (M92L02),5.0,0.0,0.1

@@ -1,0 +1,20 @@
+#Procedure: <laser_setup.procedures.It.It>
+#Parameters:
+#	Irange: 0.001 A
+#	NPLC: 1
+#	T step start time: 120 s
+#	Chip group name: Alisson
+#	Chip number: 81
+#	Information: Light testing
+#	Initial (current) T: 0 C
+#	Laser ON+OFF period: 120 s
+#	Laser voltage: 3.09 V
+#	Laser wavelength: 405
+#	Procedure version: 2.2.0
+#	Sample: other
+#	Sampling time (excluding Keithley): 0 s
+#	Target T: 25 C
+#	VDS: 0.1 V
+#	VG: -1.5 V
+#Data:
+t (s),I (A),VL (V),Plate T (degC),Ambient T (degC),Clock (ms)
