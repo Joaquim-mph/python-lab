@@ -124,112 +124,6 @@ def plot_ivg_sequence(df: pl.DataFrame, base_dir: Path, tag: str):
     out = FIG_DIR / f"Encap{int(df['Chip number'][0])}_IVg_sequence_{tag}.png"
     plt.savefig(out, dpi=200)
     print(f"saved {out}")
-           
-def plot_its_overlay(df: pl.DataFrame, base_dir: Path, tag: str):
-    import numpy as np
-
-    its = df.filter(pl.col("proc") == "ITS").sort("file_idx")
-    if its.height == 0:
-        print("[warn] no ITS rows in metadata")
-        return
-
-    plt.figure()
-    curves_plotted = 0
-
-    # Collect info for automatic shading/x-limits
-    t_totals = []              # per-trace total duration (max t)
-    starts_vl, ends_vl = [], []  # ON start/end inferred from VL data
-    on_durations_meta = []     # ON duration from metadata (if present)
-
-    for row in its.iter_rows(named=True):
-        path = base_dir / row["source_file"]
-        if not path.exists():
-            print(f"[warn] missing file: {path}")
-            continue
-
-        d = _read_measurement(path)
-        if not {"t", "I"} <= set(d.columns):
-            print(f"[warn] {path} lacks t/I; got {d.columns}")
-            continue
-
-        # plot the trace
-        lbl = (
-            f"#{int(row['file_idx'])}  session {row['session']}  "
-            f"Vg={row.get('VG_meta', 0):g} V  VL={row.get('VL_meta', float('nan'))} V"
-        )
-        plt.plot(d["t"], d["I"], label=lbl)
-        curves_plotted += 1
-
-        # total duration for this trace
-        try:
-            t_totals.append(float(d["t"].max()))
-        except Exception:
-            pass
-
-        # Try to infer ON window from VL if available
-        if "VL" in d.columns:
-            try:
-                vl = d["VL"].to_numpy()
-                tt = d["t"].to_numpy()
-                on_idx = np.where(vl > 0)[0]
-                if on_idx.size:
-                    starts_vl.append(float(tt[on_idx[0]]))
-                    ends_vl.append(float(tt[on_idx[-1]]))
-            except Exception:
-                pass
-
-        # Grab ON duration from metadata if present on this row
-        if "Laser ON+OFF period" in its.columns:
-            try:
-                on_durations_meta.append(float(row["Laser ON+OFF period"]))
-            except Exception:
-                pass
-
-    if curves_plotted == 0:
-        print("[warn] no ITS traces plotted; skipping light-window shading")
-        return
-
-    # ---- Decide x-limits from data (median of total durations)
-    if t_totals:
-        T_total = float(np.median(t_totals))
-        if np.isfinite(T_total) and T_total > 0:
-            plt.xlim(20, T_total)
-
-    # ---- Compute ON window [t0, t1]
-    t0 = t1 = None
-
-    # 1) Best: from VL signal (median across traces)
-    if starts_vl and ends_vl:
-        t0 = float(np.median(starts_vl))
-        t1 = float(np.median(ends_vl))
-
-    # 2) Next: from metadata (treat 'Laser ON+OFF period' as ON duration; OFF–ON–OFF centered)
-    if (t0 is None or t1 is None) and on_durations_meta and t_totals:
-        on_dur = float(np.median(on_durations_meta))
-        T_total = float(np.median(t_totals))
-        if np.isfinite(on_dur) and np.isfinite(T_total) and T_total > 0:
-            pre_off = max(0.0, (T_total - on_dur) / 2.0)
-            t0 = pre_off
-            t1 = pre_off + on_dur
-
-    # 3) Fallback: middle third of the run
-    if (t0 is None or t1 is None) and t_totals:
-        T_total = float(np.median(t_totals))
-        if np.isfinite(T_total) and T_total > 0:
-            t0 = T_total / 3.0
-            t1 = 2.0 * T_total / 3.0
-
-    if (t0 is not None) and (t1 is not None) and (t1 > t0):
-        plt.axvspan(t0, t1, alpha=0.15)
-
-    plt.xlabel("t (s)")
-    plt.ylabel("Id (A)")
-    plt.title(f"Chip {int(df['Chip number'][0])} — ITS overlay")
-    plt.legend(fontsize=8)
-    plt.tight_layout()
-    out = FIG_DIR / f"chip{int(df['Chip number'][0])}_ITS_overlay_{tag}.png"
-    plt.savefig(out, dpi=200)
-    print(f"saved {out}")
 
 def plot_its_by_vg(
     df: pl.DataFrame,
@@ -1173,3 +1067,223 @@ def plot_its_by_vg_delta(
             out = FIG_DIR / f"chip{int(df['Chip number'][0])}_ITS_dI_Vg{safe_vg}_{safe_wl}_{tag}.png"
             plt.savefig(out, dpi=200)
             print(f"saved {out}")
+
+def plot_its_overlay(
+    df: pl.DataFrame,
+    base_dir: Path,
+    tag: str,
+    baseline_t: float = 60.0,
+    *,
+    legend_by: str = "wavelength",  # "wavelength" (default) or "vg"
+):
+    """
+    Overlay ITS traces baseline-corrected at `baseline_t`.
+    Parameters
+    ----------
+    legend_by : {"wavelength","vg"}
+        Use wavelength labels like "365 nm" (default) or gate voltage labels like "3 V".
+        Aliases accepted: "wl","lambda" -> wavelength; "gate","vg","vgs" -> vg.
+    """
+    import numpy as np
+    # import matplotlib.pyplot as plt  # uncomment if not imported elsewhere
+
+    # --- normalize legend_by to a canonical value ---
+    lb = legend_by.strip().lower()
+    if lb in {"wavelength", "wl", "lambda"}:
+        lb = "wavelength"
+    elif lb in {"vg", "gate", "vgs"}:
+        lb = "vg"
+    else:
+        print(f"[info] legend_by='{legend_by}' not recognized; using wavelength")
+        lb = "wavelength"
+
+    # --- small helper to extract wavelength in nm from a metadata row ---
+    def _get_wavelength_nm(row: dict) -> float | None:
+        candidates = [
+            "Laser wavelength", "lambda", "lambda_nm", "wavelength", "wavelength_nm",
+            "Wavelength", "Wavelength (nm)", "Laser wavelength (nm)", "Laser λ (nm)"
+        ]
+        for k in candidates:
+            if k in row:
+                try:
+                    val = float(row[k])
+                    if np.isfinite(val):
+                        return val
+                except Exception:
+                    pass
+        # Sometimes wavelength is stored as meters:
+        for k in ["Wavelength (m)", "lambda_m"]:
+            if k in row:
+                try:
+                    val = float(row[k]) * 1e9
+                    if np.isfinite(val):
+                        return val
+                except Exception:
+                    pass
+        return None
+
+    # --- helper to extract Vg in volts from metadata row or from the data trace if constant ---
+    def _get_vg_V(row: dict, d: "pl.DataFrame | dict | None" = None) -> float | None:
+        # 1) Try metadata with common key variants
+        vg_keys = [
+            "VG", "Vg", "VGS", "Vgs", "Gate voltage", "Gate Voltage",
+            "VG (V)", "Vg (V)", "VGS (V)", "Gate voltage (V)",
+            "VG setpoint", "Vg setpoint", "Gate setpoint (V)", "VG bias (V)"
+        ]
+        # direct numeric first
+        for k in vg_keys:
+            if k in row:
+                try:
+                    val = float(row[k])
+                    if np.isfinite(val):
+                        return val
+                except Exception:
+                    pass
+        # permissive: numeric when key contains 'vg' or 'gate'
+        for k, v in row.items():
+            kl = str(k).lower()
+            if ("vg" in kl or "gate" in kl):
+                try:
+                    val = float(v)
+                    if np.isfinite(val):
+                        return val
+                except Exception:
+                    # maybe a string like "VG=3.0 V"
+                    try:
+                        import re
+                        m = re.search(r"([-+]?\d+(\.\d+)?)", str(v))
+                        if m:
+                            return float(m.group(1))
+                    except Exception:
+                        pass
+        # 2) Try the data trace: if there's a nearly-constant VG column, use its median
+        if d is not None and "VG" in d.columns:
+            try:
+                arr = np.asarray(d["VG"], dtype=float)
+                if arr.size:
+                    if np.nanstd(arr) < 1e-6:  # basically constant
+                        return float(np.nanmedian(arr))
+            except Exception:
+                pass
+        return None
+
+    its = df.filter(pl.col("proc") == "ITS").sort("file_idx")
+    if its.height == 0:
+        print("[warn] no ITS rows in metadata")
+        return
+
+    plt.figure()
+    curves_plotted = 0
+
+    t_totals = []
+    starts_vl, ends_vl = [], []
+    on_durations_meta = []
+
+    for row in its.iter_rows(named=True):
+        path = base_dir / row["source_file"]
+        if not path.exists():
+            print(f"[warn] missing file: {path}")
+            continue
+
+        d = _read_measurement(path)
+        if not {"t", "I"} <= set(d.columns):
+            print(f"[warn] {path} lacks t/I; got {d.columns}")
+            continue
+
+        tt = np.asarray(d["t"])
+        yy = np.asarray(d["I"])
+        if tt.size == 0 or yy.size == 0:
+            print(f"[warn] empty/invalid series in {path}")
+            continue
+        if not np.all(np.diff(tt) >= 0):
+            idx = np.argsort(tt)
+            tt = tt[idx]; yy = yy[idx]
+
+        # baseline @ baseline_t
+        if tt[0] <= baseline_t <= tt[-1]:
+            I0 = float(np.interp(baseline_t, tt, yy))
+        else:
+            nearest_idx = int(np.argmin(np.abs(tt - baseline_t)))
+            I0 = float(yy[nearest_idx])
+            print(f"[info] {path.name}: baseline_t={baseline_t:g}s outside [{tt[0]:.3g},{tt[-1]:.3g}]s; "
+                  f"used nearest t={tt[nearest_idx]:.3g}s")
+        yy_corr = yy - I0
+
+        # --- label based on legend_by ---
+        if lb == "wavelength":
+            wl = _get_wavelength_nm(row)
+            if wl is not None:
+                lbl = f"{wl:g} nm"
+                legend_title = "Wavelength"
+            else:
+                lbl = f"#{int(row['file_idx'])}"
+                legend_title = "Trace"
+        else:  # lb == "vg"
+            vg = _get_vg_V(row, d)
+            if vg is not None:
+                # Compact formatting: 3.0 → "3 V", 0.25 → "0.25 V"
+                # Use :g to avoid trailing zeros, then add unit.
+                lbl = f"{vg:g} V"
+                legend_title = "Vg"
+            else:
+                lbl = f"#{int(row['file_idx'])}"
+                legend_title = "Trace"
+
+        plt.plot(tt, yy_corr * 1e6, label=lbl)
+        curves_plotted += 1
+
+        try:
+            t_totals.append(float(tt[-1]))
+        except Exception:
+            pass
+
+        if "VL" in d.columns:
+            try:
+                vl = np.asarray(d["VL"])
+                on_idx = np.where(vl > 0)[0]
+                if on_idx.size:
+                    starts_vl.append(float(tt[on_idx[0]]))
+                    ends_vl.append(float(tt[on_idx[-1]]))
+            except Exception:
+                pass
+
+        if "Laser ON+OFF period" in its.columns:
+            try:
+                on_durations_meta.append(float(row["Laser ON+OFF period"]))
+            except Exception:
+                pass
+
+    if curves_plotted == 0:
+        print("[warn] no ITS traces plotted; skipping light-window shading")
+        return
+
+    if t_totals:
+        T_total = float(np.median(t_totals))
+        if np.isfinite(T_total) and T_total > 0:
+            plt.xlim(20, T_total)
+
+    t0 = t1 = None
+    if starts_vl and ends_vl:
+        t0 = float(np.median(starts_vl)); t1 = float(np.median(ends_vl))
+    if (t0 is None or t1 is None) and on_durations_meta and t_totals:
+        on_dur = float(np.median(on_durations_meta))
+        T_total = float(np.median(t_totals))
+        if np.isfinite(on_dur) and np.isfinite(T_total) and T_total > 0:
+            pre_off = max(0.0, (T_total - on_dur) / 2.0)
+            t0 = pre_off; t1 = pre_off + on_dur
+    if (t0 is None or t1 is None) and t_totals:
+        T_total = float(np.median(t_totals))
+        if np.isfinite(T_total) and T_total > 0:
+            t0 = T_total / 3.0; t1 = 2.0 * T_total / 3.0
+    if (t0 is not None) and (t1 is not None) and (t1 > t0):
+        plt.axvspan(t0, t1, alpha=0.15)
+
+    plt.xlabel("t (s)")
+    plt.ylabel("ΔCurrent (µA)")
+    chipnum = int(df["Chip number"][0])  # keep your original pattern
+    plt.title(f"Chip {chipnum} — ITS overlay")
+    plt.legend(fontsize=8, title=legend_title)
+    plt.tight_layout()
+    out = FIG_DIR / f"chip{chipnum}_ITS_overlay_{tag}.png"
+    plt.savefig(out, dpi=200)
+    print(f"saved {out}")
