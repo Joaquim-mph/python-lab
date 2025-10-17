@@ -1,0 +1,15 @@
+# Core data processing
+polars>=0.19.0
+numpy>=1.24.0
+
+# Plotting
+matplotlib>=3.7.0
+scienceplots>=2.0.0
+
+# Image/GIF generation
+imageio>=2.28.0
+Pillow>=10.0.0
+
+# Interactive analysis (optional, for Jupyter notebooks)
+ipython>=8.0.0
+jupyter>=1.0.0

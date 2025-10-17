@@ -9,6 +9,6 @@ set_plot_style("prism_rain")
 import polars as pl
 
 
-METADATA_CSV = "metadata/Alisson_25_sept/metadata.csv"        # path to the table you pasted
+METADATA_CSV = "metadata/Alisson_09_oct/metadata.csv"        # path to the table you pasted
 BASE_DIR     = Path(".")             # where the raw CSVs live, e.g. "Alisson_04_sept/"
 print_day_timeline(METADATA_CSV, Path("raw_data"), save_csv=False)

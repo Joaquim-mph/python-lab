@@ -37,6 +37,7 @@ except Exception:
 from plots import (
     load_and_prepare_metadata,
     plot_ivg_sequence,
+    plot_ivg_transconductance,
     plot_its_by_vg,
     plot_its_by_vg_delta,
     plot_its_wavelength_overlay_delta_for_chip,
@@ -83,12 +84,12 @@ def setup_chip_output_dir(chip_num: int, metadata_csv: Path) -> Path:
     """
     day = day_from_metadata_path(metadata_csv)
     date_str = extract_date_from_filename(metadata_csv.name)
-    
+
     # Mirror the day structure: figs/Alisson_04_sept/Chip68_2024_09_04/
     chip_dir = Path("figs") / day / f"Chip{chip_num:02d}_{date_str}"
-    
+
     for sub in [
-        "IVg/sequence", "IVg/pairs", "IVg/triplets", "IVg/gif",
+        "IVg/sequence", "IVg/pairs", "IVg/triplets", "IVg/gif", "IVg/transconductance",
         "ITS/regular", "ITS/delta", "ITS/overlays",
     ]:
         (chip_dir / sub).mkdir(parents=True, exist_ok=True)
@@ -177,16 +178,23 @@ def process_chip_ivg(meta: pl.DataFrame, raw_root: Path, tag: str, out_dir: Path
     pairs_dir = out_dir / "IVg" / "pairs"
     trips_dir = out_dir / "IVg" / "triplets"
     gif_dir = out_dir / "IVg" / "gif"
+    gm_dir = out_dir / "IVg" / "transconductance"
 
     orig = getattr(plots, "FIG_DIR", None)
     try:
+        # Generate IVg sequence plots
         _set_plots_fig_dir(seq_dir)
         plot_ivg_sequence(ivg_data, raw_root, tag)
+
+        # Generate transconductance plots
+        _set_plots_fig_dir(gm_dir)
+        plot_ivg_transconductance(ivg_data, raw_root, tag)
 
         file_indices = []
         if "file_idx" in ivg_data.columns:
             file_indices = sorted(set(ivg_data["file_idx"].drop_nulls().to_list()))
 
+        # Generate pair plots (both IVg and transconductance)
         if len(file_indices) >= 2:
             _set_plots_fig_dir(pairs_dir)
             for i in range(len(file_indices) - 1):
@@ -194,12 +202,27 @@ def process_chip_ivg(meta: pl.DataFrame, raw_root: Path, tag: str, out_dir: Path
                 meta_subset = ivg_data.filter(pl.col("file_idx").is_in(pair))
                 plot_ivg_sequence(meta_subset, raw_root, f"{tag}_pair_{pair[0]}_{pair[1]}")
 
+            # Transconductance for pairs
+            _set_plots_fig_dir(gm_dir)
+            for i in range(len(file_indices) - 1):
+                pair = (file_indices[i], file_indices[i + 1])
+                meta_subset = ivg_data.filter(pl.col("file_idx").is_in(pair))
+                plot_ivg_transconductance(meta_subset, raw_root, f"{tag}_pair_{pair[0]}_{pair[1]}")
+
+        # Generate triplet plots (both IVg and transconductance)
         if len(file_indices) >= 3:
             _set_plots_fig_dir(trips_dir)
             for i in range(len(file_indices) - 2):
                 triplet = (file_indices[i], file_indices[i + 1], file_indices[i + 2])
                 meta_subset = ivg_data.filter(pl.col("file_idx").is_in(triplet))
                 plot_ivg_sequence(meta_subset, raw_root, f"{tag}_triplet_{triplet[0]}_{triplet[-1]}")
+
+            # Transconductance for triplets
+            _set_plots_fig_dir(gm_dir)
+            for i in range(len(file_indices) - 2):
+                triplet = (file_indices[i], file_indices[i + 1], file_indices[i + 2])
+                meta_subset = ivg_data.filter(pl.col("file_idx").is_in(triplet))
+                plot_ivg_transconductance(meta_subset, raw_root, f"{tag}_triplet_{triplet[0]}_{triplet[-1]}")
 
         if generate_gifs:
             _set_plots_fig_dir(gif_dir)
