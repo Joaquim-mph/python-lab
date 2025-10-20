@@ -20,7 +20,20 @@ from scipy.signal import savgol_filter
 from src.utils import _proc_from_path, _file_index, _read_measurement
 import polars as pl
 import matplotlib
-matplotlib.use('Agg')
+
+# Auto-detect environment: use 'Agg' for scripts, keep default for Jupyter
+def _setup_matplotlib_backend():
+    """Set matplotlib backend based on environment (Jupyter vs script)."""
+    try:
+        # Check if we're in a Jupyter/IPython environment
+        get_ipython()  # This will raise NameError if not in IPython
+        # We're in Jupyter - don't force Agg backend
+        print("[info] Jupyter environment detected - plots will display inline")
+    except NameError:
+        # We're in a script - use Agg backend for file saving
+        matplotlib.use('Agg')
+
+_setup_matplotlib_backend()
 import matplotlib.pyplot as plt
 from src.styles import set_plot_style
 set_plot_style("prism_rain")
@@ -47,6 +60,22 @@ DEFAULT_XLIM_SECONDS = 180.0
 BASE_DIR = Path(".")
 FIG_DIR = Path("figs")
 FIG_DIR.mkdir(exist_ok=True)
+
+# ========================
+# JUPYTER HELPERS
+# ========================
+def set_its_figsize():
+    """
+    Set figure size for ITS plots in Jupyter notebooks.
+    Call this before creating ITS plots in notebooks to override the default (20, 20) size.
+
+    Example in Jupyter:
+    >>> from src.plots import set_its_figsize, plot_its_by_vg
+    >>> set_its_figsize()
+    >>> # Now create your plots
+    """
+    plt.rcParams['figure.figsize'] = (40, 35)
+    print("[info] ITS figure size set to (40, 35)")
 
 
 # ========================
@@ -79,7 +108,6 @@ def detect_light_on_window(
     
     return None, None
 
-
 def interpolate_baseline(
     t: np.ndarray,
     i: np.ndarray,
@@ -99,7 +127,6 @@ def interpolate_baseline(
     
     return float(np.interp(baseline_t, t, i))
 
-
 def sanitize_value_for_filename(value: float, prefix: str = "") -> str:
     """Convert a numeric value to filename-safe string."""
     if not np.isfinite(value):
@@ -107,7 +134,6 @@ def sanitize_value_for_filename(value: float, prefix: str = "") -> str:
     
     s = str(value).replace("-", "m").replace(".", "p")
     return f"{prefix}{s}" if prefix else s
-
 
 def get_chip_label(df: pl.DataFrame, default: str = "Chip") -> str:
     """Extract chip number from DataFrame for labeling."""
@@ -120,7 +146,6 @@ def get_chip_label(df: pl.DataFrame, default: str = "Chip") -> str:
                 pass
     return default
 
-
 def sort_time_series(t: np.ndarray, *arrays: np.ndarray) -> tuple[np.ndarray, ...]:
     """Sort time array and corresponding data arrays by time."""
     if t.size == 0:
@@ -129,7 +154,6 @@ def sort_time_series(t: np.ndarray, *arrays: np.ndarray) -> tuple[np.ndarray, ..
     order = np.argsort(t)
     return (t[order],) + tuple(arr[order] if arr.size == t.size else arr
                                 for arr in arrays)
-
 
 def calculate_transconductance(vg: np.ndarray, i: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -171,7 +195,6 @@ def calculate_transconductance(vg: np.ndarray, i: np.ndarray) -> tuple[np.ndarra
 
     return unique_vg[valid_mask], gm[valid_mask]
 
-
 def load_trace_data(
     path: Path,
     required_columns: set[str] | None = None
@@ -193,7 +216,6 @@ def load_trace_data(
     except Exception as e:
         print(f"[warn] failed to load {path.name}: {e}")
         return None
-
 
 def calculate_light_window(
     starts_vl: list[float],
@@ -224,6 +246,148 @@ def calculate_light_window(
             return T_use / 3.0, 2.0 * T_use / 3.0
     
     return None, None
+
+def combine_metadata_by_seq(
+    metadata_dir: Path,
+    raw_data_dir: Path,
+    chip: float,
+    seq_numbers: list[int],
+    chip_group_name: str = "Alisson"
+) -> pl.DataFrame:
+    """
+    Combine experiments from multiple days using seq numbers from chip history.
+
+    This is the CORRECT way to select cross-day experiments. Use seq numbers
+    from print_chip_history() output, NOT file_idx (which repeats across days).
+
+    Parameters
+    ----------
+    metadata_dir : Path
+        Directory containing all metadata CSV files (e.g., Path("metadata"))
+    raw_data_dir : Path
+        Root directory for raw data files (e.g., Path("."))
+    chip : float
+        Chip number to filter
+    seq_numbers : list[int]
+        List of seq values from chip history (the first column in history output)
+    chip_group_name : str
+        Chip group name prefix. Default: "Alisson"
+
+    Returns
+    -------
+    pl.DataFrame
+        Combined metadata containing only the specified experiments
+
+    Example
+    -------
+    >>> # Step 1: View chip history
+    >>> from src.timeline import print_chip_history
+    >>> print_chip_history(Path("metadata"), Path("."), 67, "Alisson", proc_filter="ITS")
+    >>>
+    >>> # Output shows:
+    >>> # seq  date        time     proc  summary
+    >>> #  52  2025-10-15  10:47:50  ITS  ... #1   ← Use seq=52
+    >>> #  57  2025-10-16  12:03:23  ITS  ... #1   ← Use seq=57 (NOT file_idx #1!)
+    >>>
+    >>> # Step 2: Select by seq numbers
+    >>> meta = combine_metadata_by_seq(
+    ...     Path("metadata"),
+    ...     Path("."),
+    ...     chip=67.0,
+    ...     seq_numbers=[52, 57, 58],  # Use seq from history
+    ...     chip_group_name="Alisson"
+    ... )
+    >>>
+    >>> # Step 3: Plot
+    >>> plot_its_overlay(meta, Path("."), "cross_day", legend_by="led_voltage")
+    """
+    from src.timeline import build_chip_history
+
+    # Build complete chip history
+    history = build_chip_history(
+        metadata_dir,
+        raw_data_dir,
+        int(chip),
+        chip_group_name
+    )
+
+    if history.height == 0:
+        print(f"[warn] no history found for {chip_group_name}{int(chip)}")
+        return pl.DataFrame()
+
+    # Filter history by requested seq numbers
+    selected = history.filter(pl.col("seq").is_in(seq_numbers))
+
+    if selected.height == 0:
+        print(f"[warn] no experiments found with seq numbers: {seq_numbers}")
+        return pl.DataFrame()
+
+    # Group by day_folder to process each day's metadata
+    day_groups = selected.group_by("day_folder").agg([
+        pl.col("source_file").alias("source_files"),
+        pl.col("seq").alias("seqs")
+    ])
+
+    all_meta = []
+
+    for row in day_groups.iter_rows(named=True):
+        day_folder = row["day_folder"]
+        source_files = row["source_files"]
+
+        # Find metadata file for this day
+        possible_paths = [
+            metadata_dir / day_folder / "metadata.csv",
+            metadata_dir / f"{day_folder}_metadata.csv",
+        ]
+
+        meta_path = None
+        for p in possible_paths:
+            if p.exists():
+                meta_path = p
+                break
+
+        if meta_path is None:
+            print(f"[warn] could not find metadata for {day_folder}")
+            continue
+
+        # Load metadata for this day
+        try:
+            day_meta = load_and_prepare_metadata(str(meta_path), chip)
+
+            # Filter by source files (most reliable way to match)
+            day_meta_filtered = day_meta.filter(
+                pl.col("source_file").is_in(source_files)
+            )
+
+            if day_meta_filtered.height > 0:
+                all_meta.append(day_meta_filtered)
+
+        except Exception as e:
+            print(f"[warn] failed to load {meta_path}: {e}")
+
+    if not all_meta:
+        print("[warn] no metadata could be loaded")
+        return pl.DataFrame()
+
+    # Find common columns across all days
+    common_cols = set(all_meta[0].columns)
+    for df in all_meta[1:]:
+        common_cols &= set(df.columns)
+
+    common_cols = sorted(list(common_cols))
+
+    # Align and concatenate
+    aligned = [df.select(common_cols) for df in all_meta]
+    combined = pl.concat(aligned, how="vertical")
+
+    # Sort by start_time if available for chronological order
+    if "start_time" in combined.columns:
+        combined = combined.sort("start_time")
+
+    print(f"[info] combined {combined.height} experiment(s) from {len(all_meta)} day(s)")
+    print(f"[info] using {len(common_cols)} common column(s)")
+
+    return combined
 
 
 def load_and_prepare_metadata(meta_csv: str, chip: float) -> pl.DataFrame:
@@ -298,9 +462,6 @@ def load_and_prepare_metadata(meta_csv: str, chip: float) -> pl.DataFrame:
     ])
     return df
 
-
-
-
 def segment_voltage_sweep(vg: np.ndarray, i: np.ndarray, min_segment_length: int = 5) -> List[Tuple[np.ndarray, np.ndarray, str]]:
     """Segment a voltage sweep into monotonic sections."""
     if len(vg) < min_segment_length:
@@ -327,7 +488,6 @@ def segment_voltage_sweep(vg: np.ndarray, i: np.ndarray, min_segment_length: int
         segments.append((vg_seg, i_seg, direction))
     
     return segments
-
 
 def _savgol_derivative_corrected(
     vg: np.ndarray,
@@ -373,8 +533,6 @@ def _savgol_derivative_corrected(
     
     return gm
 
-
-
 def _raw_derivative(vg: np.ndarray, i: np.ndarray) -> np.ndarray:
     """
     Calculate raw derivative using np.gradient for comparison.
@@ -412,7 +570,7 @@ def plot_ivg_sequence(df: pl.DataFrame, base_dir: Path, tag: str):
     plt.ylim(bottom=0)
     plt.tight_layout()
     out = FIG_DIR / f"Encap{int(df['Chip number'][0])}_IVg_sequence_{tag}.png"
-    plt.savefig(out, dpi=DEFAULT_DPI)
+    plt.savefig(out)
     print(f"saved {out}")
 
 def segment_voltage_sweep(vg: np.ndarray, i: np.ndarray, min_segment_length: int = 5) -> List[Tuple[np.ndarray, np.ndarray, str]]:
@@ -564,9 +722,8 @@ def plot_ivg_transconductance(
         print("[info] no IVg measurements to plot")
         return
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots()
     curves_plotted = 0
-    colors = plt.cm.tab10(np.linspace(0, 1, 10))
 
     for meas_idx, row in enumerate(ivg.iter_rows(named=True)):
         path = base_dir / row["source_file"]
@@ -626,13 +783,7 @@ def plot_ivg_transconductance(
         vg_concat = np.concatenate(vg_join)
         gm_concat = np.concatenate(gm_join)
 
-        ax.plot(
-            vg_concat, gm_concat * 1e6,   # µS
-            color=colors[meas_idx % len(colors)],
-            linewidth=1.5,
-            alpha=1.0,
-            label=base_lbl
-        )
+        ax.plot(vg_concat, gm_concat * 1e6, label=base_lbl)  # µS
         curves_plotted += 1
 
     if curves_plotted == 0:
@@ -640,17 +791,16 @@ def plot_ivg_transconductance(
         plt.close(fig)
         return
 
-    ax.set_xlabel("VG (V)", fontsize=11)
-    ax.set_ylabel("Transconductance gm (µS)", fontsize=11)
+    ax.set_xlabel("VG (V)")
+    ax.set_ylabel("Transconductance gm (µS)")
     chip_label = get_chip_label(df, default="Chip")
-    ax.set_title(f"{chip_label} — Transconductance (np.gradient, joined, no sort)", fontsize=12)
-    ax.legend(fontsize=8, loc='best')
-    ax.grid(True, alpha=0.3)
-    ax.axhline(y=0, color='k', linestyle=':', alpha=0.3, linewidth=0.8)
+    ax.set_title(f"{chip_label} — Transconductance (np.gradient, joined, no sort)")
+    ax.legend()
+    ax.axhline(y=0, color='k', linestyle=':')
 
     plt.tight_layout()
     out = FIG_DIR / f"{chip_label}_gm_sequence_{tag}.png"
-    plt.savefig(out, dpi=DEFAULT_DPI)
+    plt.savefig(out)
     print(f"saved {out}")
     plt.close(fig)
 
@@ -718,25 +868,19 @@ def plot_ivg_with_transconductance(
         return
     
     # Create figure with two subplots
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
-    
-    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
-    
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+
     # Plot I-V
     for seg_idx, (vg_seg, i_seg, direction) in enumerate(segments):
-        color = colors[seg_idx % len(colors)]
         linestyle = '-' if direction == 'forward' else '--'
         label = f"Seg {seg_idx+1} ({direction})"
-        
-        ax1.plot(vg_seg, i_seg * 1e6, 
-                color=color, linestyle=linestyle, 
-                linewidth=2, label=label, alpha=0.8)
-    
-    ax1.set_xlabel("VG (V)", fontsize=11)
-    ax1.set_ylabel("Current (µA)", fontsize=11)
-    ax1.set_title("I-V Curve (segmented)", fontsize=12)
-    ax1.legend(fontsize=9)
-    ax1.grid(True, alpha=0.3)
+
+        ax1.plot(vg_seg, i_seg * 1e6, linestyle=linestyle, label=label)
+
+    ax1.set_xlabel("VG (V)")
+    ax1.set_ylabel("Current (µA)")
+    ax1.set_title("I-V Curve (segmented)")
+    ax1.legend()
     
     # Plot transconductance
     for seg_idx, (vg_seg, i_seg, direction) in enumerate(segments):
@@ -748,30 +892,25 @@ def plot_ivg_with_transconductance(
         
         if vg_gm.size == 0:
             continue
-        
-        color = colors[seg_idx % len(colors)]
+
         linestyle = '-' if direction == 'forward' else '--'
-        
-        ax2.plot(vg_gm, gm * 1e6,
-                color=color, linestyle=linestyle,
-                linewidth=2, alpha=0.8)
-    
-    ax2.set_xlabel("VG (V)", fontsize=11)
-    ax2.set_ylabel("Transconductance gm (µS)", fontsize=11)
-    ax2.set_title("Transconductance (segmented)", fontsize=12)
-    ax2.grid(True, alpha=0.3)
-    ax2.axhline(y=0, color='k', linestyle=':', alpha=0.3)
-    
+
+        ax2.plot(vg_gm, gm * 1e6, linestyle=linestyle)
+
+    ax2.set_xlabel("VG (V)")
+    ax2.set_ylabel("Transconductance gm (µS)")
+    ax2.set_title("Transconductance (segmented)")
+    ax2.axhline(y=0, color='k', linestyle=':')
+
     # Overall title
     chip_label = get_chip_label(df)
     file_label = f"#{int(row['file_idx'])}"
-    fig.suptitle(f"{chip_label} {file_label} — I-V and Transconductance", 
-                fontsize=13, fontweight='bold')
-    
+    fig.suptitle(f"{chip_label} {file_label} — I-V and Transconductance")
+
     plt.tight_layout()
-    
+
     out = FIG_DIR / f"{chip_label}_iv_gm_comparison_{file_label}_{tag}.png"
-    plt.savefig(out, dpi=DEFAULT_DPI)
+    plt.savefig(out)
     print(f"saved {out}")
     plt.close(fig)
 
@@ -830,7 +969,7 @@ def plot_its_by_vg(
                 print(f"[info] no ITS rows for Vg≈{VG_target:g} V{msg_wl}")
                 continue
 
-            plt.figure()
+            plt.figure(figsize=(20,16))
             curves_plotted = 0
 
             # For window/x-lims
@@ -928,14 +1067,14 @@ def plot_its_by_vg(
             plt.title(f"Encap{int(df['Chip number'][0])} — Vg={VG_target:g} V{wl_txt}")
             plt.xlabel("Time (s)")
             plt.ylabel(f"Current (µA)")
-            plt.legend(fontsize=8)
+            plt.legend()
             plt.tight_layout()
 
             safe_vg = str(VG_target).replace("-", "m").replace(".", "p")
             safe_wl = (f"{int(round(wl_used))}nm" if np.isfinite(wl_used)
                        else ("allwl"))
             out = FIG_DIR / f"chip{int(df['Chip number'][0])}_ITS_overlay_Vg{safe_vg}_{safe_wl}_{tag}.png"
-            plt.savefig(out, dpi=DEFAULT_DPI)
+            plt.savefig(out)
             print(f"saved {out}")
 
 def plot_ivg_last_of_day1_vs_first_of_day2(
@@ -990,11 +1129,11 @@ def plot_ivg_last_of_day1_vs_first_of_day2(
     plt.xlabel("VG (V)")
     plt.ylabel("Current (µA)")
     plt.title(f"{chip_txt} — IVg: last (day1) vs first (day2)")
-    plt.legend(fontsize=8)
+    plt.legend()
     plt.tight_layout()
 
     out = FIG_DIR / f"{chip_txt.replace(' ','')}_IVg_last_day1_first_day2_{tag}.png"
-    plt.savefig(out, dpi=DEFAULT_DPI)
+    plt.savefig(out)
     print(f"saved {out}")
 
 def plot_its_by_vg_delta(
@@ -1052,7 +1191,7 @@ def plot_its_by_vg_delta(
                 print(f"[info] no ITS rows for Vg≈{VG_target:g} V{msg_wl}")
                 continue
 
-            plt.figure()
+            plt.figure(figsize=(20,16))
             curves_plotted = 0
 
             # For window/x-lims and shading
@@ -1173,13 +1312,13 @@ def plot_its_by_vg_delta(
             plt.title(f"Encap{int(df['Chip number'][0])} — ΔI(t) @ Vg={VG_target:g} V{wl_txt} (baseline {baseline_t:g}s)")
             plt.xlabel("Time (s)")
             plt.ylabel("ΔCurrent (µA)")
-            plt.legend(fontsize=8)
+            plt.legend()
             plt.tight_layout()
 
             safe_vg = str(VG_target).replace("-", "m").replace(".", "p")
             safe_wl = (f"{int(round(wl_used))}nm" if np.isfinite(wl_used) else "allwl")
             out = FIG_DIR / f"chip{int(df['Chip number'][0])}_ITS_dI_Vg{safe_vg}_{safe_wl}_{tag}.png"
-            plt.savefig(out, dpi=DEFAULT_DPI)
+            plt.savefig(out)
             print(f"saved {out}")
 
 def _first_chip_label(df: pl.DataFrame) -> str:
@@ -1252,7 +1391,7 @@ def plot_its_wavelength_overlay_delta(
     else:
         wls = [float(w) for w in (wavelengths or [])] or [float("nan")]
 
-    plt.figure()
+    plt.figure(figsize=(20,16))
     curves_plotted = 0
     seen_labels: set[str] = set()
     t_totals: list[float] = []
@@ -1351,11 +1490,11 @@ def plot_its_wavelength_overlay_delta(
     plt.title(f"{chip_txt} — ΔI(t) vs wavelength{title_suffix}")
     plt.xlabel("Time (s)")
     plt.ylabel("ΔCurrent (µA)")
-    plt.legend(fontsize=8, title="Wavelength", loc="best")
+    plt.legend(title="Wavelength")
     plt.tight_layout()
 
     out = FIG_DIR / f"{chip_txt}_ITS_dI_vs_wavelength_{tag}{filename_suffix}.png"
-    plt.savefig(out, dpi=DEFAULT_DPI)
+    plt.savefig(out)
     print(f"saved {out}")
 
 def plot_its_wavelength_overlay_delta_for_chip(
@@ -1486,7 +1625,7 @@ def ivg_sequence_gif(
 
     for i in range(len(curves)):
         plt.close("all")
-        fig, ax = plt.subplots(figsize=(8, 6), dpi=100)
+        fig, ax = plt.subplots()
 
         if cumulative:
             rng = range(0, i + 1)
@@ -1494,8 +1633,7 @@ def ivg_sequence_gif(
             rng = [i]
 
         for j in rng:
-            style = dict(linewidth=2.0, alpha=1.0) if j == i else dict(linewidth=1.0, alpha=0.6)
-            ax.plot(curves[j]["x"], curves[j]["y"], label=curves[j]["label"], **style)
+            ax.plot(curves[j]["x"], curves[j]["y"], label=curves[j]["label"])
 
         ax.set_xlim(xs_min, xs_max)
         ax.set_ylim(ys_min_pad, ys_max_pad)
@@ -1503,14 +1641,14 @@ def ivg_sequence_gif(
         ax.set_ylabel("Current (µA)" if y_unit_uA else "Current (A)")
         ax.set_title(f"{chip_txt} — IVg sequence ({i+1}/{len(curves)})")
         if show_grid:
-            ax.grid(True, alpha=0.3)
+            ax.grid(True)
 
         # Save to temporary buffer and convert to PIL Image
         import io
         from PIL import Image
-        
+
         buf = io.BytesIO()
-        fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+        fig.savefig(buf, format='png', bbox_inches='tight')
         buf.seek(0)
         img = Image.open(buf)
         frames.append(np.array(img))
@@ -1533,21 +1671,29 @@ def ivg_sequence_gif(
             iio.imwrite(frame_out, frame)
         print(f"[info] saved {len(frames)} individual frames instead")
 
+        
 def plot_its_overlay(
     df: pl.DataFrame,
     base_dir: Path,
     tag: str,
     baseline_t: float = 60.0,
     *,
-    legend_by: str = "wavelength",  # "wavelength" (default) or "vg"
+    legend_by: str = "wavelength",  # "wavelength" (default), "vg", or "led_voltage"
+    padding: float = 0.02,  # fraction of data range to add as padding (0.02 = 2%)
 ):
     """
     Overlay ITS traces baseline-corrected at `baseline_t`.
     Parameters
     ----------
-    legend_by : {"wavelength","vg"}
-        Use wavelength labels like "365 nm" (default) or gate voltage labels like "3 V".
-        Aliases accepted: "wl","lambda" -> wavelength; "gate","vg","vgs" -> vg.
+    legend_by : {"wavelength","vg","led_voltage"}
+        Use wavelength labels like "365 nm" (default), gate voltage labels like "3 V",
+        or LED/laser voltage labels like "2.5 V".
+        Aliases accepted: "wl","lambda" -> wavelength; "gate","vg","vgs" -> vg;
+        "led","laser","led_voltage","laser_voltage" -> led_voltage.
+    padding : float, optional
+        Fraction of data range to add as padding on y-axis (default: 0.02 = 2%).
+        Set to 0 for no padding, or increase for more whitespace around data.
+        X-axis uses PLOT_START_TIME constant to avoid noisy data at the start.
     """
     import numpy as np
     # import matplotlib.pyplot as plt  # uncomment if not imported elsewhere
@@ -1558,6 +1704,8 @@ def plot_its_overlay(
         lb = "wavelength"
     elif lb in {"vg", "gate", "vgs"}:
         lb = "vg"
+    elif lb in {"led", "laser", "led_voltage", "laser_voltage"}:
+        lb = "led_voltage"
     else:
         print(f"[info] legend_by='{legend_by}' not recognized; using wavelength")
         lb = "wavelength"
@@ -1632,17 +1780,56 @@ def plot_its_overlay(
                 pass
         return None
 
+    # --- helper to extract LED/Laser voltage in volts from metadata row ---
+    def _get_led_voltage_V(row: dict) -> float | None:
+        # Try metadata with common key variants
+        led_keys = [
+            "Laser voltage", "LED voltage", "Laser voltage (V)", "LED voltage (V)",
+            "Laser V", "LED V", "Laser bias", "LED bias", "Laser bias (V)", "LED bias (V)",
+            "Laser supply", "LED supply", "Laser supply (V)", "LED supply (V)"
+        ]
+        # direct numeric first
+        for k in led_keys:
+            if k in row:
+                try:
+                    val = float(row[k])
+                    if np.isfinite(val):
+                        return val
+                except Exception:
+                    pass
+        # permissive: numeric when key contains 'laser' and 'voltage' or 'led' and 'voltage'
+        for k, v in row.items():
+            kl = str(k).lower()
+            if (("laser" in kl or "led" in kl) and "voltage" in kl):
+                try:
+                    val = float(v)
+                    if np.isfinite(val):
+                        return val
+                except Exception:
+                    # maybe a string like "Laser voltage: 2.5 V"
+                    try:
+                        import re
+                        m = re.search(r"([-+]?\d+(\.\d+)?)", str(v))
+                        if m:
+                            return float(m.group(1))
+                    except Exception:
+                        pass
+        return None
+
     its = df.filter(pl.col("proc") == "ITS").sort("file_idx")
     if its.height == 0:
         print("[warn] no ITS rows in metadata")
         return
 
-    plt.figure()
+    plt.figure(figsize=(22,14))
     curves_plotted = 0
 
     t_totals = []
     starts_vl, ends_vl = [], []
     on_durations_meta = []
+
+    # Track y-values for manual limit calculation
+    all_y_values = []
 
     for row in its.iter_rows(named=True):
         path = base_dir / row["source_file"]
@@ -1683,7 +1870,7 @@ def plot_its_overlay(
             else:
                 lbl = f"#{int(row['file_idx'])}"
                 legend_title = "Trace"
-        else:  # lb == "vg"
+        elif lb == "vg":
             vg = _get_vg_V(row, d)
             if vg is not None:
                 # Compact formatting: 3.0 → "3 V", 0.25 → "0.25 V"
@@ -1693,6 +1880,20 @@ def plot_its_overlay(
             else:
                 lbl = f"#{int(row['file_idx'])}"
                 legend_title = "Trace"
+        else:  # lb == "led_voltage"
+            led_v = _get_led_voltage_V(row)
+            if led_v is not None:
+                # Compact formatting: 2.5 → "2.5 V", 3.0 → "3 V"
+                lbl = f"{led_v:g} V"
+                legend_title = "LED Voltage"
+            else:
+                lbl = f"#{int(row['file_idx'])}"
+                legend_title = "Trace"
+
+        # Store y-values ONLY for the visible time window (t >= PLOT_START_TIME)
+        # This ensures padding is calculated from data actually shown in the plot
+        visible_mask = tt >= PLOT_START_TIME
+        all_y_values.extend((yy_corr * 1e6)[visible_mask])
 
         plt.plot(tt, yy_corr * 1e6, label=lbl)
         curves_plotted += 1
@@ -1722,11 +1923,13 @@ def plot_its_overlay(
         print("[warn] no ITS traces plotted; skipping light-window shading")
         return
 
+    # Set x-axis limits
     if t_totals:
         T_total = float(np.median(t_totals))
         if np.isfinite(T_total) and T_total > 0:
             plt.xlim(PLOT_START_TIME, T_total)
 
+    # Calculate light window shading
     t0 = t1 = None
     if starts_vl and ends_vl:
         t0 = float(np.median(starts_vl)); t1 = float(np.median(ends_vl))
@@ -1747,10 +1950,41 @@ def plot_its_overlay(
     plt.ylabel("ΔCurrent (µA)")
     chipnum = int(df["Chip number"][0])  # keep your original pattern
     plt.title(f"Chip {chipnum} — ITS overlay")
-    plt.legend(fontsize=8, title=legend_title)
+    plt.legend(title=legend_title)
+
+    # Auto-adjust y-axis to data range with padding
+    # IMPORTANT: Do this AFTER legend/title but BEFORE tight_layout for Jupyter compatibility
+    if all_y_values and padding >= 0:
+        y_vals = np.array(all_y_values)
+        y_vals = y_vals[np.isfinite(y_vals)]  # Remove NaN/Inf
+
+        if y_vals.size > 0:
+            y_min = float(np.min(y_vals))
+            y_max = float(np.max(y_vals))
+
+            if y_max > y_min:
+                y_range = y_max - y_min
+                y_pad = padding * y_range
+                plt.ylim(y_min - y_pad, y_max + y_pad)
+
     plt.tight_layout()
+
+    # Reapply y-limits after tight_layout (which can reset them in Jupyter)
+    if all_y_values and padding >= 0:
+        y_vals = np.array(all_y_values)
+        y_vals = y_vals[np.isfinite(y_vals)]
+
+        if y_vals.size > 0:
+            y_min = float(np.min(y_vals))
+            y_max = float(np.max(y_vals))
+
+            if y_max > y_min:
+                y_range = y_max - y_min
+                y_pad = padding * y_range
+                plt.ylim(y_min - y_pad, y_max + y_pad)
+
     out = FIG_DIR / f"chip{chipnum}_ITS_overlay_{tag}.png"
-    plt.savefig(out, dpi=DEFAULT_DPI)
+    plt.savefig(out)
     print(f"saved {out}")
     
 def plot_ivg_transconductance_savgol(
@@ -1882,46 +2116,34 @@ def plot_ivg_transconductance_savgol(
         if show_raw:
             ax.plot(
                 vg_concat, gm_raw_concat * 1e6,  # µS
-                color=color,
-                alpha=raw_alpha,
                 linestyle=':',
                 label=None  # Don't add to legend
             )
-        
+
         # Plot filtered (solid foreground)
         ax.plot(
             vg_concat, gm_filt_concat * 1e6,  # µS
-            color=color,
-            alpha=1.0,
-            linestyle='-',
             label=base_lbl
         )
-        
+
         curves_plotted += 1
-    
+
     if curves_plotted == 0:
         print("[warn] no transconductance curves plotted")
         plt.close(fig)
         return
-    
+
     ax.set_xlabel("VG (V)")
     ax.set_ylabel("Transconductance gm (µS)")
-    
+
     chip_label = get_chip_label(df, default="Chip")
-    #title = f"{chip_label} — Transconductance (Savitzky-Golay"
-    #if show_raw:
-        #title += ", raw + filtered"
-    #title += ")"
-    #ax.set_title(title)
-    
-    ax.legend(loc='best')
-    #ax.grid(True, alpha=0.3)
-    #ax.axhline(y=0, color='k', linestyle=':', alpha=0.35, linewidth=0.9)
-    
+
+    ax.legend()
+
     plt.tight_layout()
-    
+
     out = FIG_DIR / f"{chip_label}_gm_savgol_{tag}.png"
-    plt.savefig(out, dpi=DEFAULT_DPI)
+    plt.savefig(out)
     print(f"saved {out}")
     plt.close(fig)
 
@@ -1973,38 +2195,30 @@ def plot_savgol_comparison(
         return
     
     # Create figure with 3 subplots
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10))
-    
-    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
-    
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
+
     # Plot 1: I-V curve (segmented)
     for seg_idx, (vg_seg, i_seg, direction) in enumerate(segments):
-        color = colors[seg_idx % len(colors)]
         linestyle = '-' if direction == 'forward' else '--'
         label = f"Seg {seg_idx+1} ({direction})"
-        ax1.plot(vg_seg, i_seg * 1e6, color=color, linestyle=linestyle, 
-                linewidth=2, label=label, alpha=0.8)
-    
-    ax1.set_xlabel("VG (V)", fontsize=10)
-    ax1.set_ylabel("Current (µA)", fontsize=10)
-    ax1.set_title("I-V Curve (segmented)", fontsize=11)
-    ax1.legend(fontsize=8)
-    ax1.grid(True, alpha=0.3)
-    
+        ax1.plot(vg_seg, i_seg * 1e6, linestyle=linestyle, label=label)
+
+    ax1.set_xlabel("VG (V)")
+    ax1.set_ylabel("Current (µA)")
+    ax1.set_title("I-V Curve (segmented)")
+    ax1.legend()
+
     # Plot 2: Raw derivative
     for seg_idx, (vg_seg, i_seg, direction) in enumerate(segments):
         gm_raw = _raw_derivative(vg_seg, i_seg)
-        color = colors[seg_idx % len(colors)]
         linestyle = '-' if direction == 'forward' else '--'
-        ax2.plot(vg_seg, gm_raw * 1e6, color=color, linestyle=linestyle,
-                linewidth=1.5, alpha=0.8)
-    
-    ax2.set_xlabel("VG (V)", fontsize=10)
-    ax2.set_ylabel("gm (µS) - Raw", fontsize=10)
-    ax2.set_title("Raw Transconductance (np.gradient)", fontsize=11)
-    ax2.grid(True, alpha=0.3)
-    ax2.axhline(y=0, color='k', linestyle=':', alpha=0.3)
-    
+        ax2.plot(vg_seg, gm_raw * 1e6, linestyle=linestyle)
+
+    ax2.set_xlabel("VG (V)")
+    ax2.set_ylabel("gm (µS) - Raw")
+    ax2.set_title("Raw Transconductance (np.gradient)")
+    ax2.axhline(y=0, color='k', linestyle=':')
+
     # Plot 3: Filtered derivative
     for seg_idx, (vg_seg, i_seg, direction) in enumerate(segments):
         gm_filt = _savgol_derivative_corrected(
@@ -2012,30 +2226,26 @@ def plot_savgol_comparison(
             window_length=window_length,
             polyorder=polyorder
         )
-        
+
         if gm_filt.size == 0:
             continue
-        
-        color = colors[seg_idx % len(colors)]
+
         linestyle = '-' if direction == 'forward' else '--'
-        ax3.plot(vg_seg, gm_filt * 1e6, color=color, linestyle=linestyle,
-                linewidth=2, alpha=0.8)
-    
-    ax3.set_xlabel("VG (V)", fontsize=10)
-    ax3.set_ylabel("gm (µS) - Filtered", fontsize=10)
-    ax3.set_title(f"Savitzky-Golay Filtered (window={window_length}, poly={polyorder})", fontsize=11)
-    ax3.grid(True, alpha=0.3)
-    ax3.axhline(y=0, color='k', linestyle=':', alpha=0.3)
-    
+        ax3.plot(vg_seg, gm_filt * 1e6, linestyle=linestyle)
+
+    ax3.set_xlabel("VG (V)")
+    ax3.set_ylabel("gm (µS) - Filtered")
+    ax3.set_title(f"Savitzky-Golay Filtered (window={window_length}, poly={polyorder})")
+    ax3.axhline(y=0, color='k', linestyle=':')
+
     # Overall title
     chip_label = get_chip_label(df)
     file_label = f"#{int(row['file_idx'])}"
-    fig.suptitle(f"{chip_label} {file_label} — Raw vs Filtered Transconductance Comparison", 
-                fontsize=13, fontweight='bold')
-    
+    fig.suptitle(f"{chip_label} {file_label} — Raw vs Filtered Transconductance Comparison")
+
     plt.tight_layout()
-    
+
     out = FIG_DIR / f"{chip_label}_gm_comparison_{file_label}_{tag}.png"
-    plt.savefig(out, dpi=DEFAULT_DPI)
+    plt.savefig(out)
     print(f"saved {out}")
     plt.close(fig)

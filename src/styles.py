@@ -94,7 +94,7 @@ THEMES = {
             
             # Legend
             "legend.frameon": False,
-            "legend.fontsize": 35,        # ← REDUCED from 35
+            "legend.fontsize": 30,        # ← REDUCED from 35
             "legend.loc": "best",
             "legend.fancybox": True,
             

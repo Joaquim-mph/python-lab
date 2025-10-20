@@ -51,7 +51,7 @@ def _coerce_float(x):
                 return None
     return None
 
-def build_day_timeline(meta_csv: str, base_dir: Path) -> pl.DataFrame:
+def build_day_timeline(meta_csv: str, base_dir: Path, chip_group_name: str = "Chip") -> pl.DataFrame:
     # load the day metadata as-is (no chip filter)
     meta = pl.read_csv(meta_csv, ignore_errors=True)
 
@@ -138,19 +138,20 @@ def build_day_timeline(meta_csv: str, base_dir: Path) -> pl.DataFrame:
     # ---- build 'summary' in Python (no pl.map_rows) ----
     def _mk_summary(r: dict) -> str:
         p = r.get("proc")
-        chip = (int(r["chip"]) if r.get("chip") is not None and str(r.get("chip")).strip() != "" else "?")
+        chip_num = (int(r["chip"]) if r.get("chip") is not None and str(r.get("chip")).strip() != "" else "?")
+        chip = f"{chip_group_name}{chip_num}"
         if p == "It":
-            return (f"It  chip {chip}  "
+            return (f"It  {chip}  "
                     f"VG={r.get('VG','?')} V  VDS={r.get('VDS','?')} V  "
                     f"VL={r.get('VL','?')} V  λ={r.get('wl','?')} nm  "
                     f"period={r.get('period','?')} s  "
                     f"#{r.get('file_idx','?')}")
         if p == "IVg":
-            return (f"IVg chip {chip}  VDS={r.get('VDS','?')} V  "
+            return (f"IVg {chip}  VDS={r.get('VDS','?')} V  "
                     f"VG:{r.get('VG_start','?')}→{r.get('VG_end','?')} (step {r.get('VG_step','?')})  "
                     f"#{r.get('file_idx','?')}")
         if p == "IV":
-            return (f"IV  chip {chip}  VG={r.get('VG','?')} V  "
+            return (f"IV  {chip}  VG={r.get('VG','?')} V  "
                     f"VSD:{r.get('VSD_start','?')}→{r.get('VSD_end','?')} (step {r.get('VSD_step','?')})  "
                     f"#{r.get('file_idx','?')}")
         if p == "LaserCalibration":
@@ -175,6 +176,7 @@ def print_day_timeline(
     chip_filter: int | None = None,
     proc_filter: str | None = None,
     show_elapsed: bool = True,
+    chip_group_name: str = "Encap",
 ) -> pl.DataFrame:
     """
     Build and print a chronological timeline for a day's experiments.
@@ -193,13 +195,15 @@ def print_day_timeline(
         If set, only show this short procedure (e.g., "IV", "IVg", "It")
     show_elapsed : bool
         If True, prints cumulative elapsed time and gap since previous run
+    chip_group_name : str
+        Chip group name prefix (e.g., "Encap", "Chip"). Default: "Encap"
 
     Returns
     -------
     pl.DataFrame
         Columns: seq, time_hms, proc, chip, summary, source_file, file_idx, start_time
     """
-    tl = build_day_timeline(meta_csv, base_dir)
+    tl = build_day_timeline(meta_csv, base_dir, chip_group_name=chip_group_name)
     if tl.height == 0:
         print("[warn] no experiments found")
         return tl
@@ -256,4 +260,284 @@ def print_day_timeline(
         tl.write_csv(out)
         print(f"saved {out}")
 
-    #return tl
+    return tl
+
+
+def build_chip_history(
+    metadata_dir: Path,
+    raw_data_dir: Path,
+    chip_number: int,
+    chip_group_name: str = "Alisson"
+) -> pl.DataFrame:
+    """
+    Build complete experiment history for a specific chip across all days.
+
+    Searches all metadata CSV files in metadata_dir and combines experiments
+    for the specified chip into a single chronological timeline.
+
+    Parameters
+    ----------
+    metadata_dir : Path
+        Directory containing metadata CSV files (e.g., "metadata/")
+    raw_data_dir : Path
+        Root directory for raw data files (e.g., "raw_data/")
+    chip_number : int
+        The chip number to track (e.g., 72 for "Alisson72")
+    chip_group_name : str
+        Chip group name prefix. Default: "Alisson"
+
+    Returns
+    -------
+    pl.DataFrame
+        Combined timeline with columns: seq, date, time_hms, proc, summary,
+        source_file, file_idx, start_time, day_folder
+    """
+    import glob
+
+    # Find all metadata CSV files
+    metadata_files = list(metadata_dir.glob("**/metadata.csv")) + \
+                     list(metadata_dir.glob("**/*_metadata.csv"))
+
+    if not metadata_files:
+        print(f"[warn] no metadata files found in {metadata_dir}")
+        return pl.DataFrame()
+
+    all_timelines = []
+
+    for meta_file in sorted(metadata_files):
+        # Build timeline for this day
+        try:
+            day_tl = build_day_timeline(str(meta_file), raw_data_dir, chip_group_name=chip_group_name)
+
+            if day_tl.height == 0:
+                continue
+
+            # Filter for the specific chip
+            if "chip" in day_tl.columns:
+                chip_tl = day_tl.filter(pl.col("chip") == chip_number)
+
+                if chip_tl.height > 0:
+                    # Add day folder info
+                    day_folder = meta_file.parent.name
+                    chip_tl = chip_tl.with_columns(pl.lit(day_folder).alias("day_folder"))
+                    all_timelines.append(chip_tl)
+
+        except Exception as e:
+            print(f"[warn] failed to process {meta_file}: {e}")
+            continue
+
+    if not all_timelines:
+        print(f"[info] no experiments found for {chip_group_name}{chip_number}")
+        return pl.DataFrame()
+
+    # Combine all timelines and sort by start_time
+    combined = pl.concat(all_timelines).sort("start_time", nulls_last=True)
+
+    # Add date column from start_time
+    def _extract_date(ts):
+        if ts is None:
+            return "unknown"
+        try:
+            return dt.datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
+        except:
+            return "unknown"
+
+    dates = [_extract_date(ts) for ts in combined["start_time"].to_list()]
+    combined = combined.with_columns(pl.Series("date", dates))
+
+    # Renumber sequence globally
+    combined = combined.with_columns(pl.arange(1, combined.height + 1).alias("seq"))
+
+    return combined.select(
+        "seq", "date", "time_hms", "proc", "summary",
+        "source_file", "file_idx", "start_time", "day_folder"
+    )
+
+
+def print_chip_history(
+    metadata_dir: Path,
+    raw_data_dir: Path,
+    chip_number: int,
+    chip_group_name: str = "Alisson",
+    *,
+    save_csv: bool = True,
+    proc_filter: str | None = None,
+) -> pl.DataFrame:
+    """
+    Print complete experiment history for a specific chip across all days.
+
+    Parameters
+    ----------
+    metadata_dir : Path
+        Directory containing metadata CSV files
+    raw_data_dir : Path
+        Root directory for raw data files
+    chip_number : int
+        The chip number to track
+    chip_group_name : str
+        Chip group name prefix. Default: "Alisson"
+    save_csv : bool
+        If True, saves timeline to '{chip_group_name}{chip_number}_history.csv'
+    proc_filter : str | None
+        If set, only show this procedure type (e.g., "IVg", "It", "IV")
+
+    Returns
+    -------
+    pl.DataFrame
+        Complete chip history timeline
+    """
+    history = build_chip_history(metadata_dir, raw_data_dir, chip_number, chip_group_name)
+
+    if history.height == 0:
+        print(f"[warn] no experiment history found for {chip_group_name}{chip_number}")
+        return history
+
+    # Optional procedure filter
+    if proc_filter is not None:
+        history = history.filter(pl.col("proc") == proc_filter)
+
+    if history.height == 0:
+        print(f"[warn] no experiments found after filtering for procedure '{proc_filter}'")
+        return history
+
+    # Print header
+    chip_name = f"{chip_group_name}{chip_number}"
+    print(f"\n{'='*80}")
+    print(f"Complete Experiment History: {chip_name}")
+    print(f"Total experiments: {history.height}")
+
+    # Get date range
+    dates = [d for d in history["date"].to_list() if d != "unknown"]
+    if dates:
+        print(f"Date range: {min(dates)} to {max(dates)}")
+
+    print(f"{'='*80}\n")
+
+    # Print timeline grouped by date
+    current_date = None
+    for r in history.iter_rows(named=True):
+        date = r.get("date", "unknown")
+
+        # Print date header when it changes
+        if date != current_date:
+            if current_date is not None:
+                print()  # blank line between days
+            print(f"─── {date} ({r.get('day_folder', '?')}) {'─'*50}")
+            current_date = date
+
+        print(f"{r['seq']:>4d}  {r['time_hms']:>8}  {r['summary']}")
+
+    print(f"\n{'='*80}\n")
+
+    # Save to CSV
+    if save_csv:
+        out_file = Path(f"{chip_name}_history.csv")
+        history.write_csv(out_file)
+        print(f"✓ Saved complete history to: {out_file}")
+
+    return history
+
+
+def generate_all_chip_histories(
+    metadata_dir: Path,
+    raw_data_dir: Path,
+    chip_group_name: str = "Alisson",
+    *,
+    save_csv: bool = True,
+    min_experiments: int = 1,
+) -> dict[int, pl.DataFrame]:
+    """
+    Automatically generate experiment histories for all chips found in metadata.
+
+    Scans all metadata files to find unique chip numbers, then generates
+    a complete timeline for each chip.
+
+    Parameters
+    ----------
+    metadata_dir : Path
+        Directory containing metadata CSV files
+    raw_data_dir : Path
+        Root directory for raw data files
+    chip_group_name : str
+        Chip group name prefix. Default: "Alisson"
+    save_csv : bool
+        If True, saves each chip's history to a separate CSV file
+    min_experiments : int
+        Only include chips with at least this many experiments. Default: 1
+
+    Returns
+    -------
+    dict[int, pl.DataFrame]
+        Dictionary mapping chip_number -> history DataFrame
+    """
+    import glob
+
+    print(f"\nScanning metadata directory: {metadata_dir}")
+
+    # Find all metadata files
+    metadata_files = list(metadata_dir.glob("**/metadata.csv")) + \
+                     list(metadata_dir.glob("**/*_metadata.csv"))
+
+    if not metadata_files:
+        print(f"[warn] no metadata files found in {metadata_dir}")
+        return {}
+
+    print(f"Found {len(metadata_files)} metadata file(s)")
+
+    # Discover all unique chip numbers
+    all_chips = set()
+    for meta_file in metadata_files:
+        try:
+            meta = pl.read_csv(meta_file, ignore_errors=True)
+            if "Chip number" in meta.columns:
+                chips = meta.get_column("Chip number").drop_nulls().unique().to_list()
+                for c in chips:
+                    try:
+                        all_chips.add(int(float(c)))
+                    except (ValueError, TypeError):
+                        pass
+        except Exception as e:
+            print(f"[warn] failed to read {meta_file}: {e}")
+
+    if not all_chips:
+        print("[warn] no chips found in metadata files")
+        return {}
+
+    print(f"Found {len(all_chips)} unique chip(s): {sorted(all_chips)}\n")
+
+    # Generate history for each chip
+    histories = {}
+
+    for chip_num in sorted(all_chips):
+        print(f"Processing {chip_group_name}{chip_num}...")
+
+        history = build_chip_history(
+            metadata_dir,
+            raw_data_dir,
+            chip_num,
+            chip_group_name
+        )
+
+        if history.height >= min_experiments:
+            histories[chip_num] = history
+
+            # Print summary
+            dates = [d for d in history["date"].to_list() if d != "unknown"]
+            date_range = f"{min(dates)} to {max(dates)}" if dates else "unknown dates"
+            print(f"  → {history.height} experiments ({date_range})")
+
+            # Save to CSV
+            if save_csv:
+                out_file = Path(f"{chip_group_name}{chip_num}_history.csv")
+                history.write_csv(out_file)
+                print(f"  → Saved to {out_file}")
+        else:
+            print(f"  → Skipped (only {history.height} experiment(s), minimum is {min_experiments})")
+
+        print()
+
+    print(f"{'='*80}")
+    print(f"Generated histories for {len(histories)} chip(s)")
+    print(f"{'='*80}\n")
+
+    return histories
