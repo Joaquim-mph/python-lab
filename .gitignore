@@ -10,6 +10,8 @@ __pycache__/
 *.so
 *.png
 figs/
+figs_/
+figs__/
 # Distribution / packaging
 .Python
 build/
