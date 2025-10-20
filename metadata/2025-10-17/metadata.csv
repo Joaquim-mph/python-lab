@@ -1,0 +1,4 @@
+Irange,NPLC,Burn-in time,Chip group name,Chip number,Information,Laser voltage,Laser wavelength,Procedure version,Sample,Step time,VDS,VG end,VG start,VG step,Laser toggle,source_file,start_time,time_hms,T step start time,Initial (current) T,Laser ON+OFF period,Sampling time (excluding Keithley),Target T,VG
+0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/2025-10-17/IVg2025-10-17_1.csv,1760741907.9028459,19:58:27,,,,,,
+0.0001,1.0,,Alisson,67.0,Light testing - hbn,2.15,365.0,2.2.0,other,,0.1,,,,true,raw_data/2025-10-17/It2025-10-17_1.csv,1760742043.1987543,20:00:43,120.0,0.0,120.0,0.0,25.0,-0.4
+0.0001,1.0,,Alisson,67.0,Light testing - hbn,0.0,365.0,2.2.0,other,,0.1,,,,false,raw_data/2025-10-17/It2025-10-17_2.csv,1760742827.3636675,20:13:47,120.0,0.0,10800.0,0.0,25.0,-0.4

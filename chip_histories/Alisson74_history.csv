@@ -1,0 +1,3 @@
+seq,date,time_hms,proc,summary,source_file,file_idx,start_time,day_folder
+1,2025-09-08,12:53:54,IVg,IVg Alisson74  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #8,raw_data/Alisson_08_sept/IVg2025-09-08_8.csv,8,1757346834.7246556,Alisson_08_sept
+2,2025-09-08,12:54:55,IVg,IVg Alisson74  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #9,raw_data/Alisson_08_sept/IVg2025-09-08_9.csv,9,1757346895.0247686,Alisson_08_sept

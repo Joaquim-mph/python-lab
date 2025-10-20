@@ -8,7 +8,7 @@ This demonstrates:
 """
 
 from pathlib import Path
-from src.timeline import print_chip_history, generate_all_chip_histories
+from src.core.timeline import print_chip_history, generate_all_chip_histories
 
 # =============================================================================
 # Configuration
@@ -81,7 +81,7 @@ def example_all_chips():
 # =============================================================================
 def example_data_analysis():
     """Show how to access and analyze the history data programmatically."""
-    from src.timeline import build_chip_history
+    from src.core.timeline import build_chip_history
 
     print("\n" + "="*80)
     print("EXAMPLE 3: Programmatic Data Access")
