@@ -1,6 +1,87 @@
 # TUI Development Changelog
 
-## Session: October 21, 2025
+## Session: October 21, 2025 (Continued) - Phase 2 Completion
+
+### Summary
+
+Completed **Phase 2: Custom Configuration** by implementing IVg and Transconductance custom configuration screens with full parameter control, comprehensive input validation, and seamless integration into the wizard flow.
+
+### Changes
+
+1. **Created IVg Custom Configuration Screen** (`src/tui/screens/ivg_config.py`)
+   - Selection mode: Interactive/Auto/Manual
+   - VDS filter with numeric validation
+   - Date filter with YYYY-MM-DD format validation
+   - Output directory configuration
+   - Arrow key navigation between buttons
+   - Dynamic focus indicators
+
+2. **Created Transconductance Custom Configuration Screen** (`src/tui/screens/transconductance_config.py`)
+   - Method selection: Gradient vs Savitzky-Golay filtering
+   - Savgol parameters: window_length (must be odd), polyorder, min_segment_length
+   - Conditional UI: Savgol params only shown when method = "savgol"
+   - Comprehensive validation:
+     - Window length must be odd and >= 3
+     - Polyorder must be < window_length and >= 1
+     - Min segment length must be >= 1
+   - VDS and date filters with validation
+   - Help text for all parameters
+
+3. **Enhanced Input Validation Across All Config Screens**
+   - **ITS Config**: Baseline > 0, padding 0-1, wavelength 200-2000 nm, date format
+   - **IVg Config**: Date format, manual indices requirement, numeric conversions
+   - **Transconductance Config**: Savgol parameter constraints, date format, manual indices
+   - Try-except blocks for all float/int conversions
+   - User-friendly error notifications on validation failure
+
+4. **Updated Config Mode Selector** (`src/tui/screens/config_mode_selector.py`)
+   - Removed "Coming soon" placeholders for IVg and Transconductance
+   - Added routing to new custom config screens
+   - Passes metadata_dir and raw_dir to config screens
+
+5. **Bug Fix: Button.Focus Type Hint**
+   - Removed invalid `Button.Focus` type hints (doesn't exist in Textual 0.60.0)
+   - Changed to untyped event parameters
+   - Affected files: `ivg_config.py`, `transconductance_config.py`
+
+6. **Bug Fix: Transconductance Experiment Selection**
+   - **Issue**: When selecting transconductance plot type, no experiments were shown (empty table)
+   - **Root Cause**: Was filtering for proc="Transconductance", but transconductance is calculated from IVg measurements
+   - **Solution**: Changed proc_filter to "IVg" when plot_type is "Transconductance"
+   - Updated title to clarify: "Select IVg Experiments (for Transconductance)"
+   - File: `src/tui/screens/experiment_selector.py`
+
+7. **Enhancement: Arrow Key Navigation in Success/Error Screens**
+   - **Issue**: PlotSuccessScreen and PlotErrorScreen didn't respond to arrow keys for button navigation
+   - **Solution**: Added arrow key navigation handlers (`on_key`) to both screens
+   - Added visual focus styling (`:focus` CSS) - color change, border, bold text
+   - Added dynamic arrow indicators (→) that move with focus
+   - Changed "Main Menu" button from `variant="primary"` to `variant="default"` for consistency
+   - Files: `src/tui/screens/plot_generation.py` (PlotSuccessScreen, PlotErrorScreen)
+   - Navigation: Left/Right/Up/Down arrows cycle between buttons, Enter activates
+
+### Testing
+
+Created and executed validation test suite:
+- ✅ Screen imports successful
+- ✅ Screen instantiation successful
+- ✅ IVg validation logic correct
+- ✅ Transconductance validation logic correct
+- ✅ Error cases properly caught (bad dates, even window_length, polyorder >= window_length)
+
+### Files Created
+- `src/tui/screens/ivg_config.py` (304 lines)
+- `src/tui/screens/transconductance_config.py` (431 lines)
+
+### Files Modified
+- `src/tui/screens/its_config.py` - Added `_validate_config()` method
+- `src/tui/screens/config_mode_selector.py` - Routing to new screens
+- `TUI_PROGRESS_REPORT.md` - Updated Phase 2 status to complete
+- `CHANGELOG_TUI.md` - This update
+
+---
+
+## Session: October 21, 2025 (Initial)
 
 ### Summary
 

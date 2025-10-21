@@ -1,6 +1,7 @@
 # Core data processing
 polars>=0.19.0
 numpy>=1.24.0
+scipy>=1.11.0  # For signal processing (Savitzky-Golay filtering in transconductance)
 
 # Plotting
 matplotlib>=3.7.0
@@ -14,7 +15,9 @@ Pillow>=10.0.0
 ipython>=8.0.0
 jupyter>=1.0.0
 
-# CLI tools
+# CLI tools (for process_and_analyze.py)
 typer>=0.9.0
 rich>=13.0.0
-textual>=0.60.0
+
+# TUI (Terminal User Interface - for tui_app.py)
+textual==0.60.0  # Exact version - TUI tested with this version

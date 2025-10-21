@@ -240,10 +240,22 @@ class ConfigModeSelectorScreen(Screen):
                     plot_type=self.plot_type,
                 ))
             elif self.plot_type == "IVg":
-                # TODO: Implement IVgConfigScreen
-                self.app.notify(f"Custom config for IVg coming soon!", severity="information")
+                from src.tui.screens.ivg_config import IVgConfigScreen
+                self.app.push_screen(IVgConfigScreen(
+                    chip_number=self.chip_number,
+                    chip_group=self.chip_group,
+                    plot_type=self.plot_type,
+                    metadata_dir=self.app.metadata_dir,
+                    raw_dir=self.app.raw_dir,
+                ))
             elif self.plot_type == "Transconductance":
-                # TODO: Implement TransconductanceConfigScreen
-                self.app.notify(f"Custom config for Transconductance coming soon!", severity="information")
+                from src.tui.screens.transconductance_config import TransconductanceConfigScreen
+                self.app.push_screen(TransconductanceConfigScreen(
+                    chip_number=self.chip_number,
+                    chip_group=self.chip_group,
+                    plot_type=self.plot_type,
+                    metadata_dir=self.app.metadata_dir,
+                    raw_dir=self.app.raw_dir,
+                ))
             else:
                 self.app.notify(f"Unknown plot type: {self.plot_type}", severity="error")

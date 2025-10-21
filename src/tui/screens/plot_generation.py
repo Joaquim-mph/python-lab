@@ -15,6 +15,7 @@ from textual.containers import Container, Vertical, Horizontal
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, ProgressBar
 from textual.binding import Binding
+from textual import events
 
 
 class PlotGenerationScreen(Screen):
@@ -381,6 +382,13 @@ class PlotSuccessScreen(Screen):
         width: 1fr;
         margin: 0 1;
     }
+
+    .nav-button:focus {
+        background: $primary;
+        border: tall $accent;
+        color: $primary-background;
+        text-style: bold;
+    }
     """
 
     def compose(self) -> ComposeResult:
@@ -403,13 +411,47 @@ class PlotSuccessScreen(Screen):
             with Horizontal(id="button-container"):
                 yield Button("Open File", id="open-button", variant="default", classes="nav-button")
                 yield Button("Plot Another", id="another-button", variant="default", classes="nav-button")
-                yield Button("Main Menu", id="menu-button", variant="primary", classes="nav-button")
+                yield Button("Main Menu", id="menu-button", variant="default", classes="nav-button")
 
         yield Footer()
 
     def on_mount(self) -> None:
         """Focus the main menu button."""
         self.query_one("#menu-button", Button).focus()
+
+    def on_key(self, event: events.Key) -> None:
+        """Handle arrow key navigation between buttons."""
+        buttons = [
+            self.query_one("#open-button", Button),
+            self.query_one("#another-button", Button),
+            self.query_one("#menu-button", Button),
+        ]
+
+        focused_idx = next((i for i, b in enumerate(buttons) if b.has_focus), None)
+
+        if focused_idx is not None:
+            if event.key in ("left", "up"):
+                new_idx = (focused_idx - 1) % len(buttons)
+                buttons[new_idx].focus()
+                event.prevent_default()
+            elif event.key in ("right", "down"):
+                new_idx = (focused_idx + 1) % len(buttons)
+                buttons[new_idx].focus()
+                event.prevent_default()
+
+    def on_button_focus(self, event) -> None:
+        """Add arrow indicator to focused button."""
+        # Remove arrows from all buttons
+        for button in self.query(".nav-button"):
+            label = str(button.label)
+            if label.startswith("→ "):
+                button.label = label[2:]
+
+        # Add arrow to focused button
+        focused_button = event.button
+        label = str(focused_button.label)
+        if not label.startswith("→ "):
+            focused_button.label = f"→ {label}"
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""
@@ -522,6 +564,13 @@ class PlotErrorScreen(Screen):
         width: 1fr;
         margin: 0 1;
     }
+
+    .nav-button:focus {
+        background: $primary;
+        border: tall $accent;
+        color: $primary-background;
+        text-style: bold;
+    }
     """
 
     def compose(self) -> ComposeResult:
@@ -546,13 +595,47 @@ class PlotErrorScreen(Screen):
             with Horizontal(id="button-container"):
                 yield Button("View Details", id="details-button", variant="default", classes="nav-button")
                 yield Button("Edit Config", id="edit-button", variant="default", classes="nav-button")
-                yield Button("Main Menu", id="menu-button", variant="primary", classes="nav-button")
+                yield Button("Main Menu", id="menu-button", variant="default", classes="nav-button")
 
         yield Footer()
 
     def on_mount(self) -> None:
         """Focus the edit config button."""
         self.query_one("#edit-button", Button).focus()
+
+    def on_key(self, event: events.Key) -> None:
+        """Handle arrow key navigation between buttons."""
+        buttons = [
+            self.query_one("#details-button", Button),
+            self.query_one("#edit-button", Button),
+            self.query_one("#menu-button", Button),
+        ]
+
+        focused_idx = next((i for i, b in enumerate(buttons) if b.has_focus), None)
+
+        if focused_idx is not None:
+            if event.key in ("left", "up"):
+                new_idx = (focused_idx - 1) % len(buttons)
+                buttons[new_idx].focus()
+                event.prevent_default()
+            elif event.key in ("right", "down"):
+                new_idx = (focused_idx + 1) % len(buttons)
+                buttons[new_idx].focus()
+                event.prevent_default()
+
+    def on_button_focus(self, event) -> None:
+        """Add arrow indicator to focused button."""
+        # Remove arrows from all buttons
+        for button in self.query(".nav-button"):
+            label = str(button.label)
+            if label.startswith("→ "):
+                button.label = label[2:]
+
+        # Add arrow to focused button
+        focused_button = event.button
+        label = str(focused_button.label)
+        if not label.startswith("→ "):
+            focused_button.label = f"→ {label}"
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""

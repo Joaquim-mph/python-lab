@@ -229,6 +229,12 @@ class ITSConfigScreen(Screen):
         # Collect all form values
         config = self._collect_config()
 
+        # Validate configuration
+        validation_error = self._validate_config(config)
+        if validation_error:
+            self.notify(validation_error, severity="error", timeout=5)
+            return
+
         # Save to app state
         self.app.update_config(**config)
 
@@ -270,6 +276,35 @@ class ITSConfigScreen(Screen):
             timeout=3
         )
 
+    def _validate_config(self, config: dict) -> str | None:
+        """Validate configuration values.
+
+        Returns error message if validation fails, None if OK.
+        """
+        # Validate baseline (must be positive)
+        baseline = config.get("baseline")
+        if baseline is not None and baseline <= 0:
+            return "Baseline must be a positive number"
+
+        # Validate padding (must be between 0 and 1)
+        padding = config.get("padding")
+        if padding is not None and (padding < 0 or padding > 1):
+            return "Padding must be between 0 and 1"
+
+        # Validate wavelength (typical range 200-2000 nm)
+        wavelength = config.get("wavelength_filter")
+        if wavelength is not None and (wavelength < 200 or wavelength > 2000):
+            return "Wavelength should be between 200 and 2000 nm"
+
+        # Validate date format (basic check)
+        date_filter = config.get("date_filter")
+        if date_filter:
+            import re
+            if not re.match(r"^\d{4}-\d{2}-\d{2}$", date_filter):
+                return "Date must be in YYYY-MM-DD format"
+
+        return None
+
     def _collect_config(self) -> dict:
         """Collect all configuration values from the form."""
         # Get selection mode
@@ -294,16 +329,34 @@ class ITSConfigScreen(Screen):
         padding = self.query_one("#padding-input", Input).value.strip()
         output_dir = self.query_one("#output-dir-input", Input).value.strip()
 
-        # Build config dict
+        # Build config dict with type conversion and error handling
         config = {
             "selection_mode": selection_mode,
-            "vg_filter": float(vg_filter) if vg_filter else None,
-            "wavelength_filter": float(wavelength_filter) if wavelength_filter else None,
-            "date_filter": date_filter if date_filter else None,
             "legend_by": legend_by,
-            "baseline": float(baseline) if baseline else 60.0,
-            "padding": float(padding) if padding else 0.05,
             "output_dir": output_dir,
         }
+
+        # Convert numeric values with error handling
+        try:
+            config["vg_filter"] = float(vg_filter) if vg_filter else None
+        except ValueError:
+            config["vg_filter"] = None
+
+        try:
+            config["wavelength_filter"] = float(wavelength_filter) if wavelength_filter else None
+        except ValueError:
+            config["wavelength_filter"] = None
+
+        config["date_filter"] = date_filter if date_filter else None
+
+        try:
+            config["baseline"] = float(baseline) if baseline else 60.0
+        except ValueError:
+            config["baseline"] = 60.0
+
+        try:
+            config["padding"] = float(padding) if padding else 0.05
+        except ValueError:
+            config["padding"] = 0.05
 
         return config

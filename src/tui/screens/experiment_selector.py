@@ -70,13 +70,20 @@ class ExperimentSelectorScreen(Screen):
                 return
 
             # Create the selector screen with proper filtering
-            title = f"Select {self.plot_type} Experiments - {self.chip_group}{self.chip_number}"
+            # Transconductance is calculated from IVg measurements, not a separate measurement type
+            proc_filter = "IVg" if self.plot_type == "Transconductance" else self.plot_type
+
+            # Update title to be clear about what experiments are being selected
+            if self.plot_type == "Transconductance":
+                title = f"Select IVg Experiments (for Transconductance) - {self.chip_group}{self.chip_number}"
+            else:
+                title = f"Select {self.plot_type} Experiments - {self.chip_group}{self.chip_number}"
 
             selector = BaseExperimentSelector(
                 chip_number=self.chip_number,
                 chip_group=self.chip_group,
                 history_df=history_df,
-                proc_filter=self.plot_type,
+                proc_filter=proc_filter,
                 title=title
             )
 
