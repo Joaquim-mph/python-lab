@@ -40,6 +40,22 @@ This repository provides end-to-end processing of raw measurement CSV files from
 
 ## Quick Start
 
+### Option 1: TUI (Recommended for Lab Members)
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Launch the interactive plotting assistant
+python tui_app.py
+
+# Follow the wizard: Select chip → plot type → experiments → generate!
+```
+
+🎨 **Beautiful guided interface** with keyboard navigation, real-time progress, and interactive experiment selection.
+
+### Option 2: CLI (For Automation)
+
 ```bash
 # Clone and setup
 git clone <repo-url>
@@ -76,12 +92,30 @@ pip install -r requirements.txt
 - `numpy` - Numerical computing
 - `matplotlib` + `scienceplots` - Plotting and styling
 - `imageio` + `Pillow` - GIF generation
+- `textual` - Terminal user interface (TUI)
 
 ---
 
 ## Usage
 
-### Workflow Overview
+### TUI Workflow (Interactive)
+
+```bash
+python tui_app.py
+```
+
+**7-Step Wizard:**
+1. **Main Menu** - Choose action (New Plot / Process Data)
+2. **Chip Selection** - Auto-discover chips from metadata
+3. **Plot Type** - ITS / IVg / Transconductance
+4. **Experiment Selection** - Interactive multi-select table
+5. **Preview** - Review config before generating
+6. **Generation** - Real-time progress tracking
+7. **Success** - View results, plot another, or exit
+
+📘 **Full guide:** See `TUI_GUIDE.md` for keyboard shortcuts, troubleshooting, and advanced features.
+
+### CLI Workflow (Scripting)
 
 ```
 Raw CSVs → Metadata Extraction → Session Grouping → Figure Generation

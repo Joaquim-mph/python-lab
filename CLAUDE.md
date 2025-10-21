@@ -6,6 +6,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Utilities for parsing and plotting IV/ITS measurement data from semiconductor device characterization experiments. Processes raw CSV files with embedded metadata to generate organized plots for analysis.
 
+## User Interfaces
+
+### TUI (Terminal User Interface) - Recommended for Lab Members
+
+```bash
+# Launch the interactive plotting assistant
+python tui_app.py
+```
+
+**Features:**
+- 🎨 Beautiful guided wizard interface (Tokyo Night theme)
+- 🧭 Step-by-step plot generation workflow
+- ⌨️ Full keyboard navigation (arrows, tab, enter)
+- 🔄 Real-time progress tracking
+- 📊 Interactive experiment selection from chip history
+- 🎯 Quick workflow for multiple plots
+
+**Perfect for:**
+- Lab members who prefer visual interfaces
+- Quick plot generation without remembering CLI syntax
+- Exploring available chips and experiments
+- Generating multiple plots of the same type
+
+See **`TUI_GUIDE.md`** for complete documentation.
+
+### CLI (Command Line Interface) - For Scripts and Automation
+
 ## Commands
 
 ### Metadata Generation
@@ -96,6 +123,55 @@ plot_ivg_transconductance(meta_ivg, Path("."), "cross_day_gm")
 - See `CROSS_DAY_ITS_GUIDE.md` and `example_cross_day_its.ipynb` for details
 
 ## Code Architecture
+
+### TUI Architecture (Textual Framework)
+
+The TUI is built with [Textual 0.60.0](https://textual.textualize.io/), a modern Python framework for terminal user interfaces.
+
+**Main Components:**
+
+1. **Application (`src/tui/app.py`)**
+   - `PlotterApp` - Main app class managing screen stack and global config
+   - Tokyo Night theme with focus indicators
+   - Global keyboard shortcuts (Ctrl+Q to quit)
+   - Shared state via `plot_config` dictionary
+
+2. **Screens (`src/tui/screens/`)**
+   - `MainMenuScreen` - Entry point with main actions
+   - `ChipSelectorScreen` - Auto-discover chips from metadata
+   - `PlotTypeSelectorScreen` - Choose ITS/IVg/Transconductance
+   - `ExperimentSelectorScreen` - Interactive multi-select from chip history
+   - `PreviewScreen` - Review config before generation
+   - `PlotGenerationScreen` - Real-time progress with background threading
+   - `PlotSuccessScreen` / `PlotErrorScreen` - Results and error handling
+   - `ProcessConfirmationScreen` - Metadata generation dialog
+
+3. **Key Patterns**
+   - **Screen Navigation**: Stack-based with `push_screen()` / `pop_screen()`
+   - **Focus Management**: Custom arrow key handlers + CSS `:focus` styling
+   - **Background Threading**: Plot generation runs in daemon thread with `call_from_thread()` for UI updates
+   - **State Passing**: Constructor params + global `plot_config` dict
+   - **Visual Feedback**: Arrow indicators (→), color changes, bold text on focus
+
+**Critical TUI Implementation Details:**
+
+- **Thread Safety**: NEVER update UI from background thread directly
+  - ❌ `self.call_from_thread()` (AttributeError - Screen doesn't have this)
+  - ✅ `self.app.call_from_thread()` (App has this method)
+- **Screen Stack**: Base screen (0) + MainMenuScreen (1) + wizard screens (2+)
+  - Return to menu: `while len(stack) > 2: pop_screen()`
+- **Focus Styling**: Use CSS `:focus` pseudo-class + `on_button_focus()` for arrows
+- **Arrow Navigation**: Implement `on_key()` handler with `event.prevent_default()`
+- **Button Variants**: Use `variant="default"` for uniform styling (not "primary")
+
+**Entry Point:** `tui_app.py` - Launches PlotterApp with default paths
+
+See **`TUI_GUIDE.md`** for complete TUI documentation including:
+- Wizard workflow (7 steps)
+- Keyboard navigation reference
+- Focus management patterns
+- Background threading guide
+- Troubleshooting common issues
 
 ### Core Data Pipeline
 
@@ -248,12 +324,20 @@ Metadata CSV columns (sample):
 - Virtual environment at `.venv/` (recommended)
 
 ### Key Dependencies
+
+**Core Analysis:**
 - `polars>=0.19.0` - Fast dataframe operations with lazy evaluation
 - `numpy>=1.24.0` - Numerical computing
 - `scipy` - Signal processing (Savitzky-Golay filtering for transconductance)
 - `matplotlib>=3.7.0` + `scienceplots>=2.0.0` - Plotting with publication-ready styles
 - `imageio>=2.28.0` + `Pillow>=10.0.0` - GIF animation generation
-- `jupyter>=1.0.0` - Interactive notebooks (optional)
+
+**TUI:**
+- `textual==0.60.0` - Terminal user interface framework
+- `rich>=13.0.0` - Rich text and formatting (used by Textual)
+
+**Optional:**
+- `jupyter>=1.0.0` - Interactive notebooks for exploratory analysis
 
 ### Common Issues
 - **Missing files**: Check that `source_file` paths in metadata are relative to `raw_data/`
@@ -279,6 +363,7 @@ Metadata CSV columns (sample):
 
 - **`README.md`**: User-facing project overview and quick start guide
 - **`CLAUDE.md`**: This file - technical reference for AI assistants
+- **`TUI_GUIDE.md`**: **NEW!** Complete TUI documentation (wizard flow, keyboard nav, troubleshooting)
 - **`CHIP_HISTORY_GUIDE.md`**: Complete guide for using chip history timeline functions
 - **`CROSS_DAY_ITS_GUIDE.md`**: Quick reference for cross-day analysis workflow (ITS, IVg, transconductance)
 - **`example_chip_history.py`**: Example script demonstrating chip history functions
@@ -287,18 +372,36 @@ Metadata CSV columns (sample):
 
 ## Recent Additions (2025-10)
 
-### Cross-Day Analysis Feature
+### TUI Implementation (Oct 2025)
+- **Framework**: Textual 0.60.0 with Tokyo Night theme
+- **Features**:
+  - Complete wizard workflow for plot generation (7 screens)
+  - Interactive experiment selection with multi-select DataTable
+  - Real-time progress tracking with background threading
+  - Full keyboard navigation (arrows, tab, enter, escape)
+  - Visual focus indicators (color change, arrows, bold text)
+  - "Plot Another" quick workflow for batch plotting
+  - Process new data dialog for metadata generation
+- **Technical achievements**:
+  - Thread-safe UI updates via `app.call_from_thread()`
+  - Custom arrow key navigation with CSS `:focus` styling
+  - Stack-based screen navigation with proper state management
+  - Lazy matplotlib initialization for background threads
+  - Dynamic button labels with arrow indicators (→)
+- **Documentation**: Complete guide in `TUI_GUIDE.md`
+
+### Cross-Day Analysis Feature (Sep 2025)
 - **Function**: `combine_metadata_by_seq()` in `src/plots.py`
 - **Purpose**: Combine experiments from multiple days for unified plotting
 - **Key innovation**: Uses `seq` numbers from chip history (globally unique) instead of `file_idx` (repeats across days)
 - **Works with**: All plot types (ITS overlay, IVg sequence, transconductance, delta plots)
 - **Automatic handling**: Schema mismatches between days, metadata file discovery, chronological sorting
 
-### ITS Plot Improvements
+### ITS Plot Improvements (Sep 2025)
 - **Figure size**: Changed from (40, 35) to (22, 14) for better aspect ratio
 - **Y-axis padding**: Fixed to calculate from visible data only (after PLOT_START_TIME=20s)
 - **Jupyter compatibility**: Y-limits applied twice to prevent tight_layout from resetting
 
-### Style Updates
+### Style Updates (Sep 2025)
 - **Legend font**: Reduced from 35 to 30 for better fit in plots
 - **Theme**: prism_rain remains default with optimized sizing
