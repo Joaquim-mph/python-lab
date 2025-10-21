@@ -21,11 +21,16 @@ from textual.binding import Binding
 class PlotTypeSelectorScreen(Screen):
     """Plot type selection screen (Step 2 of wizard)."""
 
+    def __init__(self, chip_number: int = 0, chip_group: str = ""):
+        super().__init__()
+        self.chip_number = chip_number
+        self.chip_group = chip_group
+
     BINDINGS = [
         Binding("escape", "back", "Back", priority=True),
         Binding("ctrl+b", "back", "Back", show=False),
-        Binding("ctrl+n", "next", "Next", show=False),
-        Binding("enter", "handle_enter", "Select/Next", show=False),
+        Binding("enter", "next", "Next", priority=True),
+        Binding("space", "toggle_selection", "Select", show=False),
         Binding("up", "focus_previous", "Up", show=False),
         Binding("down", "focus_next", "Down", show=False),
     ]
@@ -54,6 +59,13 @@ class PlotTypeSelectorScreen(Screen):
         content-align: center middle;
         text-style: bold;
         color: $accent;
+    }
+
+    #chip-info {
+        width: 100%;
+        content-align: center middle;
+        color: $accent;
+        margin-bottom: 1;
     }
 
     #step-indicator {
@@ -103,10 +115,12 @@ class PlotTypeSelectorScreen(Screen):
         with Container(id="main-container"):
             with Vertical(id="header-container"):
                 yield Static("Select Plot Type", id="title")
-                yield Static("[Step 1/6]", id="step-indicator")
+                if self.chip_number and self.chip_group:
+                    yield Static(f"Chip: [bold]{self.chip_group}{self.chip_number}[/bold]", id="chip-info")
+                yield Static("[Step 2/6]", id="step-indicator")
 
             with RadioSet(id="plot-type-radio"):
-                yield RadioButton("ITS (Current vs Time)", id="its-radio", value=True)
+                yield RadioButton("ITS (Current vs Time)", id="its-radio")
                 yield RadioButton("IVg (Transfer Curves)", id="ivg-radio")
                 yield RadioButton("Transconductance", id="transconductance-radio")
 
@@ -145,41 +159,49 @@ class PlotTypeSelectorScreen(Screen):
             self.action_next()
 
     def action_back(self) -> None:
-        """Go back to main menu."""
+        """Go back to chip selector."""
         self.app.pop_screen()
 
-    def action_handle_enter(self) -> None:
-        """
-        Handle Enter key intelligently:
-        - If focused on RadioSet: select the focused radio button
-        - If focused on Next button or radio already selected: proceed to next screen
-        """
+    def action_toggle_selection(self) -> None:
+        """Toggle the currently focused radio button with Space key."""
         focused = self.focused
         radio_set = self.query_one(RadioSet)
 
-        # Check if we're focused on the RadioSet or a RadioButton
+        # If focused on RadioSet or a RadioButton, toggle it
         if focused == radio_set or (hasattr(focused, 'parent') and focused.parent == radio_set):
-            # First Enter: Select the radio button if not already selected
-            if radio_set.pressed_button is None:
-                # No selection yet, let the RadioSet handle it
-                radio_set.action_toggle_button()
-            else:
-                # Already selected, proceed to next
-                self.action_next()
-        elif isinstance(focused, Button):
-            # Focused on a button, press it
-            focused.press()
-        else:
-            # Default: try to proceed if selection is made
-            if radio_set.pressed_button is not None:
-                self.action_next()
+            radio_set.action_toggle_button()
 
     def action_next(self) -> None:
-        """Proceed to chip selector with selected plot type."""
-        # Get selected plot type
+        """Select highlighted option and proceed to next screen."""
         radio_set = self.query_one(RadioSet)
-        selected = radio_set.pressed_button
+        focused = self.focused
 
+        # Find which RadioButton is currently focused/highlighted
+        highlighted_button = None
+
+        # Check if a RadioButton is directly focused
+        if isinstance(focused, RadioButton):
+            highlighted_button = focused
+        # If RadioSet is focused, find the selected one
+        elif focused == radio_set:
+            # Get all radio buttons and find the one with -selected class
+            radio_buttons = list(self.query(RadioButton).results(RadioButton))
+            for button in radio_buttons:
+                if button.has_class("-selected"):
+                    highlighted_button = button
+                    break
+
+        # If we found a highlighted button, make sure it's selected
+        if highlighted_button:
+            # Toggle it if it's not already the pressed button
+            if radio_set.pressed_button != highlighted_button:
+                highlighted_button.toggle()
+            selected = highlighted_button
+        else:
+            # Fall back to whatever is already selected
+            selected = radio_set.pressed_button
+
+        # Validate selection
         if selected is None:
             self.app.notify("Please select a plot type", severity="warning")
             return
@@ -200,12 +222,6 @@ class PlotTypeSelectorScreen(Screen):
         # Save plot type to app state
         self.app.update_config(plot_type=plot_type)
 
-        # Navigate to Chip Selector
-        from src.tui.screens.chip_selector import ChipSelectorScreen
-
-        self.app.push_screen(ChipSelectorScreen(
-            metadata_dir=self.app.metadata_dir,
-            raw_dir=self.app.raw_dir,
-            history_dir=self.app.history_dir,
-            chip_group=self.app.chip_group,
-        ))
+        # Navigate to next screen (Config Mode Selector or Experiment Selector)
+        # TODO: Import and navigate to next screen
+        self.app.notify(f"Selected {plot_type} for {self.chip_group}{self.chip_number} - Next screen coming soon!")

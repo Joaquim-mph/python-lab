@@ -25,6 +25,7 @@ class MainMenuScreen(Screen):
     BINDINGS = [
         Binding("q", "quit", "Quit", priority=True),
         Binding("n", "new_plot", "New Plot", show=False),
+        Binding("p", "process_data", "Process Data", show=False),
         Binding("r", "recent", "Recent", show=False),
         Binding("b", "batch", "Batch", show=False),
         Binding("s", "settings", "Settings", show=False),
@@ -98,13 +99,14 @@ class MainMenuScreen(Screen):
 
             with Vertical():
                 yield Button("New Plot", id="new-plot", variant="default", classes="menu-button")
+                yield Button("Process New Data", id="process-data", variant="default", classes="menu-button")
                 yield Button("Recent Configurations (0)", id="recent", variant="default", classes="menu-button")
                 yield Button("Batch Mode", id="batch", variant="default", classes="menu-button")
                 yield Button("Settings", id="settings", variant="default", classes="menu-button")
                 yield Button("Help", id="help-button", variant="default", classes="menu-button")
                 yield Button("Quit", id="quit", variant="error", classes="menu-button")
 
-            yield Static("Use ↑↓ arrows to navigate, Enter to select, Q to quit", id="help-text")
+            yield Static("Use ↑↓ arrows to navigate, Enter to select, P to process data, Q to quit", id="help-text")
 
         yield Footer()
 
@@ -132,6 +134,8 @@ class MainMenuScreen(Screen):
 
         if button_id == "new-plot":
             self.action_new_plot()
+        elif button_id == "process-data":
+            self.action_process_data()
         elif button_id == "recent":
             self.action_recent()
         elif button_id == "batch":
@@ -145,13 +149,24 @@ class MainMenuScreen(Screen):
 
     def action_new_plot(self) -> None:
         """Start new plot wizard."""
-        from src.tui.screens.plot_type_selector import PlotTypeSelectorScreen
+        from src.tui.screens.chip_selector import ChipSelectorScreen
 
         # Reset configuration for new plot
         self.app.reset_config()
 
-        # Navigate to Plot Type Selector
-        self.app.push_screen(PlotTypeSelectorScreen())
+        # Navigate to Chip Selector (Step 1)
+        self.app.push_screen(ChipSelectorScreen(
+            metadata_dir=self.app.metadata_dir,
+            raw_dir=self.app.raw_dir,
+            history_dir=self.app.history_dir,
+            chip_group=self.app.chip_group,
+        ))
+
+    def action_process_data(self) -> None:
+        """Show process data confirmation dialog."""
+        from src.tui.screens.process_confirmation import ProcessConfirmationScreen
+
+        self.app.push_screen(ProcessConfirmationScreen())
 
     def action_recent(self) -> None:
         """Show recent configurations."""

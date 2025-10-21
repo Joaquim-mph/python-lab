@@ -62,66 +62,77 @@ def discover_chips(
 
     # 1. Scan chip_histories directory (preferred source)
     if history_dir.exists():
-        for parquet_file in history_dir.glob("*.parquet"):
-            try:
-                # Parse filename: e.g., "Alisson67.parquet" or "chip67_history.parquet"
-                filename = parquet_file.stem
+        # Try both parquet and CSV files
+        for file_pattern in ["*.parquet", "*.csv"]:
+            for history_file in history_dir.glob(file_pattern):
+                try:
+                    # Parse filename: e.g., "Alisson67.parquet", "Alisson67_history.csv", "chip67_history.csv"
+                    filename = history_file.stem
 
-                # Try different naming patterns
-                chip_num = None
-                group = chip_group
+                    # Try different naming patterns
+                    chip_num = None
+                    group = chip_group
 
-                # Pattern 1: "Alisson67"
-                if filename.startswith(chip_group):
-                    try:
-                        chip_num = int(filename[len(chip_group):])
-                    except ValueError:
-                        pass
+                    # Pattern 1: "Alisson67" or "Alisson67_history"
+                    if filename.startswith(chip_group):
+                        try:
+                            # Remove _history suffix if present
+                            num_str = filename[len(chip_group):].replace("_history", "")
+                            chip_num = int(num_str)
+                        except ValueError:
+                            pass
 
-                # Pattern 2: "chip67_history"
-                elif filename.startswith("chip") and "_history" in filename:
-                    try:
-                        chip_num = int(filename.replace("chip", "").replace("_history", ""))
-                    except ValueError:
-                        pass
+                    # Pattern 2: "chip67_history"
+                    elif filename.startswith("chip") and "_history" in filename:
+                        try:
+                            chip_num = int(filename.replace("chip", "").replace("_history", ""))
+                        except ValueError:
+                            pass
 
-                if chip_num is None:
+                    if chip_num is None:
+                        continue
+
+                    # Skip if we already processed this chip from parquet
+                    if chip_num in chips:
+                        continue
+
+                    # Read the file (parquet or CSV)
+                    if history_file.suffix == ".parquet":
+                        df = pl.read_parquet(history_file)
+                    else:  # CSV
+                        df = pl.read_csv(history_file)
+
+                    if df.height == 0:
+                        continue
+
+                    # Count experiments by procedure type
+                    total = df.height
+                    ivg_count = df.filter(pl.col("proc") == "IVg").height if "proc" in df.columns else 0
+                    its_count = df.filter(pl.col("proc").is_in(["ITS", "It"])).height if "proc" in df.columns else 0
+
+                    # Get last experiment date
+                    last_date = None
+                    if "date" in df.columns:
+                        try:
+                            dates = df["date"].drop_nulls()
+                            if len(dates) > 0:
+                                last_date = str(dates[-1])
+                        except Exception:
+                            pass
+
+                    chips[chip_num] = ChipInfo(
+                        chip_number=chip_num,
+                        chip_group=group,
+                        total_experiments=total,
+                        ivg_count=ivg_count,
+                        its_count=its_count,
+                        last_experiment_date=last_date,
+                        source="history"
+                    )
+
+                except Exception as e:
+                    # Skip files that can't be read
                     continue
-
-                # Read the parquet file
-                df = pl.read_parquet(parquet_file)
-
-                if df.height == 0:
-                    continue
-
-                # Count experiments by procedure type
-                total = df.height
-                ivg_count = df.filter(pl.col("proc") == "IVg").height if "proc" in df.columns else 0
-                its_count = df.filter(pl.col("proc").is_in(["ITS", "It"])).height if "proc" in df.columns else 0
-
-                # Get last experiment date
-                last_date = None
-                if "date" in df.columns:
-                    try:
-                        dates = df["date"].drop_nulls()
-                        if len(dates) > 0:
-                            last_date = str(dates[-1])
-                    except Exception:
-                        pass
-
-                chips[chip_num] = ChipInfo(
-                    chip_number=chip_num,
-                    chip_group=group,
-                    total_experiments=total,
-                    ivg_count=ivg_count,
-                    its_count=its_count,
-                    last_experiment_date=last_date,
-                    source="history"
-                )
-
-            except Exception as e:
-                # Skip files that can't be read
-                continue
 
     # 2. Scan metadata directory as fallback
     if metadata_dir.exists():

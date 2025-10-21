@@ -11,9 +11,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from textual.app import ComposeResult
-from textual.containers import Container, Vertical, VerticalScroll
+from textual.containers import Container, Vertical, Grid
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Static, Button, ListItem, ListView
+from textual.widgets import Header, Footer, Static, Button
 from textual.binding import Binding
 
 from src.tui.utils import discover_chips, format_chip_display, ChipInfo
@@ -25,10 +25,11 @@ class ChipSelectorScreen(Screen):
     BINDINGS = [
         Binding("escape", "back", "Back", priority=True),
         Binding("ctrl+b", "back", "Back", show=False),
-        Binding("ctrl+n", "next", "Next", show=False),
-        Binding("enter", "handle_enter", "Select/Next", show=False),
-        Binding("up", "move_up", "Up", priority=True),
-        Binding("down", "move_down", "Down", priority=True),
+        Binding("enter", "select_chip", "Select", priority=True),
+        Binding("up", "navigate_up", "Up", priority=True),
+        Binding("down", "navigate_down", "Down", priority=True),
+        Binding("left", "navigate_left", "Left", priority=True),
+        Binding("right", "navigate_right", "Right", priority=True),
         Binding("r", "refresh", "Refresh", show=False),
     ]
 
@@ -40,7 +41,6 @@ class ChipSelectorScreen(Screen):
     #main-container {
         width: 70;
         height: auto;
-        max-height: 90%;
         background: $surface;
         border: thick $primary;
         padding: 2 4;
@@ -59,62 +59,80 @@ class ChipSelectorScreen(Screen):
         color: $accent;
     }
 
+    #plot-type-info {
+        width: 100%;
+        content-align: center middle;
+        color: $accent;
+        margin-bottom: 1;
+    }
+
     #step-indicator {
         width: 100%;
         content-align: center middle;
         color: $text-muted;
         text-style: dim;
-        margin-bottom: 1;
+        margin-bottom: 2;
     }
 
     #loading-text {
         width: 100%;
         content-align: center middle;
         color: $text-muted;
-        margin: 2 0;
+        margin: 1 0;
     }
 
-    #chip-list-container {
+    #chip-group-title {
         width: 100%;
-        height: auto;
-        max-height: 20;
-        border: solid $primary;
-        margin-bottom: 2;
-    }
-
-    ListView {
-        width: 100%;
-        height: 100%;
-    }
-
-    ListItem {
-        padding: 1 2;
-    }
-
-    ListItem:hover {
-        background: $primary;
-        color: $primary-background;
-    }
-
-    ListItem > .chip-name {
+        content-align: center middle;
         text-style: bold;
         color: $accent;
+        margin-bottom: 1;
     }
 
-    ListItem > .chip-details {
-        color: $text-muted;
-        margin-top: 1;
+    #chip-grid-container {
+        width: 100%;
+        height: auto;
+        border: solid $primary;
+        padding: 2;
+        margin-bottom: 1;
+    }
+
+    #chip-grid {
+        width: 100%;
+        height: auto;
+        grid-size: 5;
+        grid-gutter: 1 2;
+    }
+
+    .chip-button {
+        width: 100%;
+        height: 3;
+        min-width: 10;
+    }
+
+    .chip-button:focus {
+        background: $primary;
+        border: tall $accent;
+        color: $primary-background;
+        text-style: bold;
+    }
+
+    .chip-button:hover {
+        background: $primary;
+        color: $primary-background;
     }
 
     #button-container {
         width: 100%;
         height: auto;
         layout: horizontal;
+        margin-top: 1;
     }
 
     .nav-button {
         width: 1fr;
         margin: 0 1;
+        min-height: 3;
     }
 
     #error-text {
@@ -147,19 +165,19 @@ class ChipSelectorScreen(Screen):
         with Container(id="main-container"):
             with Vertical(id="header-container"):
                 yield Static("Select Chip", id="title")
-                yield Static("[Step 2/6]", id="step-indicator")
+                yield Static("[Step 1/6]", id="step-indicator")
 
             yield Static("Discovering chips...", id="loading-text")
+            yield Static("", id="chip-group-title")
 
-            with VerticalScroll(id="chip-list-container"):
-                yield ListView(id="chip-list")
+            with Container(id="chip-grid-container"):
+                yield Grid(id="chip-grid")
 
             yield Static("", id="error-text")
 
             with Vertical(id="button-container"):
                 yield Button("← Back", id="back-button", variant="default", classes="nav-button")
                 yield Button("Refresh", id="refresh-button", variant="default", classes="nav-button")
-                yield Button("Next →", id="next-button", variant="primary", classes="nav-button")
 
         yield Footer()
 
@@ -168,10 +186,11 @@ class ChipSelectorScreen(Screen):
         self._discover_and_populate()
 
     def _discover_and_populate(self) -> None:
-        """Discover chips and populate the list."""
+        """Discover chips and populate the grid."""
         loading = self.query_one("#loading-text", Static)
         error_text = self.query_one("#error-text", Static)
-        chip_list = self.query_one("#chip-list", ListView)
+        group_title = self.query_one("#chip-group-title", Static)
+        chip_grid = self.query_one("#chip-grid", Grid)
 
         try:
             # Discover chips
@@ -187,29 +206,38 @@ class ChipSelectorScreen(Screen):
             loading.update("")
             error_text.update("")
 
-            # Populate list
-            chip_list.clear()
+            # Remove all existing chip buttons
+            chip_grid.remove_children()
 
             if not self.chips:
-                error_text.update("⚠ No chips found. Check your chip_histories/ directory.")
+                error_text.update(f"⚠ No chips found in {self.history_dir}")
                 return
 
-            for chip in self.chips:
-                # Create list item with chip info
-                item_text = format_chip_display(chip, show_details=True)
-                chip_list.append(ListItem(Static(item_text)))
+            # Sort chips by chip number in ascending order
+            sorted_chips = sorted(self.chips, key=lambda c: c.chip_number)
 
-            # Focus the list
-            chip_list.focus()
+            # Set group title
+            if sorted_chips:
+                group_title.update(f"[bold]{sorted_chips[0].chip_group} Group[/bold]")
+
+            # Create chip buttons in grid
+            for chip in sorted_chips:
+                chip_button = Button(
+                    str(chip.chip_number),
+                    id=f"chip-{chip.chip_number}",
+                    classes="chip-button",
+                    variant="default"
+                )
+                chip_grid.mount(chip_button)
+
+            # Focus the first chip button
+            if sorted_chips:
+                first_button = self.query_one(f"#chip-{sorted_chips[0].chip_number}", Button)
+                first_button.focus()
 
         except Exception as e:
             loading.update("")
-            error_text.update(f"⚠ Error discovering chips: {e}")
-
-    def on_list_view_selected(self, event: ListView.Selected) -> None:
-        """Handle chip selection from list."""
-        if event.list_view.index is not None and event.list_view.index < len(self.chips):
-            self.selected_chip = self.chips[event.list_view.index]
+            error_text.update(f"⚠ Error discovering chips: {e}\nPaths: metadata={self.metadata_dir}, history={self.history_dir}")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""
@@ -217,66 +245,40 @@ class ChipSelectorScreen(Screen):
             self.action_back()
         elif event.button.id == "refresh-button":
             self.action_refresh()
-        elif event.button.id == "next-button":
-            self.action_next()
+        elif event.button.id and event.button.id.startswith("chip-"):
+            # Chip button pressed - extract chip number and proceed
+            chip_number = int(event.button.id.replace("chip-", ""))
+            self._select_and_proceed(chip_number)
 
     def action_back(self) -> None:
-        """Go back to plot type selector."""
+        """Go back to main menu."""
         self.app.pop_screen()
 
     def action_refresh(self) -> None:
-        """Refresh chip list."""
+        """Refresh chip grid."""
         self._discover_and_populate()
 
-    def action_move_up(self) -> None:
-        """Move selection up in list."""
-        chip_list = self.query_one("#chip-list", ListView)
-        if chip_list.index is not None and chip_list.index > 0:
-            chip_list.index -= 1
-
-    def action_move_down(self) -> None:
-        """Move selection down in list."""
-        chip_list = self.query_one("#chip-list", ListView)
-        if chip_list.index is not None and chip_list.index < len(self.chips) - 1:
-            chip_list.index += 1
-
-    def action_handle_enter(self) -> None:
-        """
-        Handle Enter key intelligently:
-        - If on ListView: select the chip
-        - If chip selected: proceed to next
-        """
+    def action_select_chip(self) -> None:
+        """Select the currently focused chip button and proceed."""
         focused = self.focused
+        if isinstance(focused, Button) and focused.id and focused.id.startswith("chip-"):
+            chip_number = int(focused.id.replace("chip-", ""))
+            self._select_and_proceed(chip_number)
 
-        if isinstance(focused, ListView):
-            # Mark chip as selected
-            if focused.index is not None and focused.index < len(self.chips):
-                self.selected_chip = self.chips[focused.index]
-                # Proceed to next if already selected
-                if self.selected_chip:
-                    self.action_next()
-        elif isinstance(focused, Button):
-            # Press the button
-            focused.press()
-        else:
-            # Try to proceed if selection made
-            if self.selected_chip:
-                self.action_next()
+    def _select_and_proceed(self, chip_number: int) -> None:
+        """Select a chip by number and proceed to next screen."""
+        # Find the chip
+        selected_chip = None
+        for chip in self.chips:
+            if chip.chip_number == chip_number:
+                selected_chip = chip
+                break
 
-    def action_next(self) -> None:
-        """Proceed to config mode selector with selected chip."""
-        # Get selected chip
-        chip_list = self.query_one("#chip-list", ListView)
-
-        if chip_list.index is None:
-            self.app.notify("Please select a chip", severity="warning")
+        if not selected_chip:
+            self.app.notify(f"Chip {chip_number} not found", severity="error")
             return
 
-        if chip_list.index >= len(self.chips):
-            self.app.notify("Invalid chip selection", severity="error")
-            return
-
-        selected_chip = self.chips[chip_list.index]
+        self.selected_chip = selected_chip
 
         # Save to app config
         self.app.update_config(
@@ -284,6 +286,64 @@ class ChipSelectorScreen(Screen):
             chip_group=selected_chip.chip_group
         )
 
-        # Navigate to next screen (Config Mode Selector)
-        # TODO: Import and navigate to ConfigModeSelectorScreen
-        self.app.notify(f"Selected: {selected_chip} - Config Mode Selector coming next!")
+        # Navigate to Plot Type Selector (Step 2)
+        from src.tui.screens.plot_type_selector import PlotTypeSelectorScreen
+
+        self.app.push_screen(PlotTypeSelectorScreen(
+            chip_number=selected_chip.chip_number,
+            chip_group=selected_chip.chip_group,
+        ))
+
+    def _get_chip_buttons(self) -> list[Button]:
+        """Get all chip buttons in order."""
+        return list(self.query(".chip-button").results(Button))
+
+    def _get_current_button_index(self) -> int:
+        """Get index of currently focused button."""
+        focused = self.focused
+        if not isinstance(focused, Button) or not focused.id or not focused.id.startswith("chip-"):
+            return -1
+
+        buttons = self._get_chip_buttons()
+        for i, button in enumerate(buttons):
+            if button.id == focused.id:
+                return i
+        return -1
+
+    def action_navigate_up(self) -> None:
+        """Navigate up in grid (5 columns)."""
+        buttons = self._get_chip_buttons()
+        current_index = self._get_current_button_index()
+
+        if current_index >= 0:
+            # Move up by 5 (one row up in 5-column grid)
+            new_index = current_index - 5
+            if new_index >= 0:
+                buttons[new_index].focus()
+
+    def action_navigate_down(self) -> None:
+        """Navigate down in grid (5 columns)."""
+        buttons = self._get_chip_buttons()
+        current_index = self._get_current_button_index()
+
+        if current_index >= 0:
+            # Move down by 5 (one row down in 5-column grid)
+            new_index = current_index + 5
+            if new_index < len(buttons):
+                buttons[new_index].focus()
+
+    def action_navigate_left(self) -> None:
+        """Navigate left in grid."""
+        buttons = self._get_chip_buttons()
+        current_index = self._get_current_button_index()
+
+        if current_index > 0:
+            buttons[current_index - 1].focus()
+
+    def action_navigate_right(self) -> None:
+        """Navigate right in grid."""
+        buttons = self._get_chip_buttons()
+        current_index = self._get_current_button_index()
+
+        if current_index >= 0 and current_index < len(buttons) - 1:
+            buttons[current_index + 1].focus()
