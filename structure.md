@@ -184,3 +184,18 @@
 
   Let me know your preference and I'll help you reorganize in a safe, non-breaking
   way!
+
+
+
+  python-lab/
+  ├── src/
+  │   ├── __init__.py
+  │   │
+  │   ├── plotting/                     # All plotting functionality
+  │   │   ├── __init__.py
+  │   │   ├── its.py                    # ITS plotting functions
+  │   │   ├── ivg.py                    # IVg plotting functions
+  │   │   ├── transconductance.py       # Transconductance plots
+  │   │   ├── overlays.py               # Multi-experiment overlays
+  │   │   ├── styles.py                 # Matplotlib styles
+  │   │   └── utils.py                  # Plotting utilities

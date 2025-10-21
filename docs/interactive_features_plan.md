@@ -699,3 +699,97 @@ Add new sections:
 - Preview/dry-run are progressive checks (dry-run < preview < plot)
 - Batch command should support all features of individual commands
 - Error messages should guide users between modes
+
+
+## TUI Update
+
+  1. Navigation Flow
+
+  Should it be:
+  - Option A: Main menu → Select plot type → Select chip → Configure options → Launch
+  selector → Generate plot
+  - Option B: Main menu with tabs (ITS, IVg, Transconductance) where each tab has its
+  own chip/option inputs?
+  - Option C: Wizard-style (step-by-step screens)?
+
+  2. Chip Selection
+
+  - Should the TUI auto-discover available chips from the metadata/chip_histories
+  directories?
+  - Or show a manual input field for chip number?
+  - Should it show a list of chips with experiment counts (e.g., "Alisson67 (82
+  experiments)")?
+
+  3. Plot Options
+
+  For each plot type, should the TUI provide:
+  - All CLI options (filters, baselines, methods, etc.)?
+  - Most common options only (simplified)?
+  - Preset configurations (e.g., "Quick plot", "Custom plot")?
+
+  4. Advanced Features
+
+  Do you want:
+  - Batch plotting: Select multiple chips/plot types and queue them?
+  - Preview mode: Show what will be plotted before generating?
+  - Recent/favorites: Quick access to recently used configurations?
+  - Export configuration: Save settings for later reuse?
+
+  5. Output Display
+
+  After generating a plot, should it:
+  - Show success message and return to main menu?
+  - Show the plot file path with option to open it?
+  - Stay on the same screen for easy re-plotting?
+
+  6. User Level
+
+  Are your target users:
+  - Complete beginners: Need tooltips, help screens, safe defaults?
+  - Lab members: Familiar with the experiments but not CLI?
+  - Mix of both?
+
+  7. Launch Method
+
+  Should users run:
+  - python process_and_analyze.py (opens TUI by default)
+  - python process_and_analyze.py tui (explicit TUI command)
+  - Separate script like python tui_app.py?
+
+  ---
+  My recommendation based on typical scientific workflow:
+
+  Main Menu with options:
+  ┌─────────────────────────────────────────┐
+  │     Experiment Plotting Assistant       │
+  ├─────────────────────────────────────────┤
+  │  1. Plot ITS (Current vs Time)          │
+  │  2. Plot IVg (Transfer Curves)          │
+  │  3. Plot Transconductance               │
+  │  4. Settings (directories, chip group)  │
+  │  5. Quit                                │
+  └─────────────────────────────────────────┘
+
+  Then for each plot type, a configuration screen with:
+  - Chip selection (dropdown of available chips)
+  - Selection mode (Auto / Interactive / Manual seq input)
+  - Common filters (VG, wavelength, date)
+  - Plot-specific options (collapsible/optional)
+  - Preview/Generate buttons
+
+  Does this match your vision? What would you change?
+
+
+  I want:
+  Navigation Flow: Wizard-style (step-by-step screens)
+  Chip Selection: The TUI hould auto-discover available chips from the metadata/chip_histories directories
+  Plot Options: Preset configurations (e.g., "Quick plot", "Custom plot") 
+  Advanced Features:
+  - Batch plotting: Select multiple chips/plot types and queue them?
+  - Preview mode: Show what will be plotted before generating?
+  - Recent/favorites: Quick access to recently used configurations?
+  - Export configuration: Save settings for later reuse?
+  After generating a plot, it should: Stay on the same screen for easy re-plotting
+  target users are lab members familiar with the experiments but not all familiar with CLI
+  I would like a separate script like python tui_app.py
+  Your suggestion are good, what do you think about this vision?
