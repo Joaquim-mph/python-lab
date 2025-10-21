@@ -1,12 +1,10 @@
 """
-Plot Type Selector Screen.
+Configuration Mode Selector Screen.
 
-Step 2 of the wizard: Select the type of plot to generate.
+Step 3 of the wizard: Choose between Quick Plot (smart defaults) or Custom Plot (full configuration).
 
-Options:
-- ITS (Current vs Time): Photocurrent time series with light/dark cycles
-- IVg (Transfer Curves): Gate voltage sweep characteristics
-- Transconductance: gm = dI/dVg derivative analysis
+Quick mode uses sensible defaults and goes straight to experiment selection.
+Custom mode allows detailed configuration of all plotting parameters.
 """
 
 from __future__ import annotations
@@ -18,13 +16,14 @@ from textual.widgets import Header, Footer, Static, Button, RadioButton, RadioSe
 from textual.binding import Binding
 
 
-class PlotTypeSelectorScreen(Screen):
-    """Plot type selection screen (Step 2 of wizard)."""
+class ConfigModeSelectorScreen(Screen):
+    """Configuration mode selection screen (Step 3 of wizard)."""
 
-    def __init__(self, chip_number: int = 0, chip_group: str = ""):
+    def __init__(self, chip_number: int = 0, chip_group: str = "", plot_type: str = ""):
         super().__init__()
         self.chip_number = chip_number
         self.chip_group = chip_group
+        self.plot_type = plot_type
 
     BINDINGS = [
         Binding("escape", "back", "Back", priority=True),
@@ -36,7 +35,7 @@ class PlotTypeSelectorScreen(Screen):
     ]
 
     CSS = """
-    PlotTypeSelectorScreen {
+    ConfigModeSelectorScreen {
         align: center middle;
     }
 
@@ -61,7 +60,7 @@ class PlotTypeSelectorScreen(Screen):
         color: $accent;
     }
 
-    #chip-info {
+    #chip-plot-info {
         width: 100%;
         content-align: center middle;
         color: $accent;
@@ -88,7 +87,7 @@ class PlotTypeSelectorScreen(Screen):
         margin: 1 0;
     }
 
-    .plot-description {
+    .mode-description {
         width: 100%;
         color: $text-muted;
         margin: 0 2 1 2;
@@ -109,36 +108,35 @@ class PlotTypeSelectorScreen(Screen):
     """
 
     def compose(self) -> ComposeResult:
-        """Create plot type selector widgets."""
+        """Create configuration mode selector widgets."""
         yield Header()
 
         with Container(id="main-container"):
             with Vertical(id="header-container"):
-                yield Static("Select Plot Type", id="title")
-                if self.chip_number and self.chip_group:
-                    yield Static(f"Chip: [bold]{self.chip_group}{self.chip_number}[/bold]", id="chip-info")
-                yield Static("[Step 2/6]", id="step-indicator")
+                yield Static("Configuration Mode", id="title")
+                if self.chip_number and self.chip_group and self.plot_type:
+                    yield Static(
+                        f"[bold]{self.chip_group}{self.chip_number}[/bold] - {self.plot_type}",
+                        id="chip-plot-info"
+                    )
+                yield Static("[Step 3/6]", id="step-indicator")
 
-            with RadioSet(id="plot-type-radio"):
-                yield RadioButton("ITS (Current vs Time)", id="its-radio")
-                yield RadioButton("IVg (Transfer Curves)", id="ivg-radio")
-                yield RadioButton("Transconductance", id="transconductance-radio")
+            with RadioSet(id="mode-radio"):
+                yield RadioButton("Quick Plot", id="quick-radio")
+                yield RadioButton("Custom Plot", id="custom-radio")
 
             # Descriptions below radio buttons
             yield Static(
-                "[bold]ITS (Current vs Time)[/bold]\n"
-                "Plot photocurrent time series with light/dark cycles. Best for analyzing photoresponse behavior.",
-                classes="plot-description"
+                "[bold]Quick Plot[/bold]\n"
+                "Use smart defaults, just select experiments interactively. "
+                "Best for routine plotting.",
+                classes="mode-description"
             )
             yield Static(
-                "[bold]IVg (Transfer Curves)[/bold]\n"
-                "Plot gate voltage sweep characteristics. Shows device transfer behavior (Id vs Vg).",
-                classes="plot-description"
-            )
-            yield Static(
-                "[bold]Transconductance[/bold]\n"
-                "Plot gm = dI/dVg from IVg data. Derivative analysis of transfer curves.",
-                classes="plot-description"
+                "[bold]Custom Plot[/bold]\n"
+                "Configure all parameters: filters, baseline, legend style, etc. "
+                "For specialized analysis.",
+                classes="mode-description"
             )
 
             with Vertical(id="button-container"):
@@ -159,7 +157,7 @@ class PlotTypeSelectorScreen(Screen):
             self.action_next()
 
     def action_back(self) -> None:
-        """Go back to chip selector."""
+        """Go back to plot type selector."""
         self.app.pop_screen()
 
     def action_toggle_selection(self) -> None:
@@ -182,9 +180,8 @@ class PlotTypeSelectorScreen(Screen):
         # Check if a RadioButton is directly focused
         if isinstance(focused, RadioButton):
             highlighted_button = focused
-        # If RadioSet is focused, find the selected one
+        # If RadioSet is focused, find the one with -selected class
         elif focused == radio_set:
-            # Get all radio buttons and find the one with -selected class
             radio_buttons = list(self.query(RadioButton).results(RadioButton))
             for button in radio_buttons:
                 if button.has_class("-selected"):
@@ -203,30 +200,30 @@ class PlotTypeSelectorScreen(Screen):
 
         # Validate selection
         if selected is None:
-            self.app.notify("Please select a plot type", severity="warning")
+            self.app.notify("Please select a configuration mode", severity="warning")
             return
 
-        # Map radio button to plot type
-        plot_type_map = {
-            "its-radio": "ITS",
-            "ivg-radio": "IVg",
-            "transconductance-radio": "Transconductance",
+        # Map radio button to mode
+        mode_map = {
+            "quick-radio": "quick",
+            "custom-radio": "custom",
         }
 
-        plot_type = plot_type_map.get(selected.id)
+        mode = mode_map.get(selected.id)
 
-        if plot_type is None:
-            self.app.notify("Invalid plot type selected", severity="error")
+        if mode is None:
+            self.app.notify("Invalid mode selected", severity="error")
             return
 
-        # Save plot type to app state
-        self.app.update_config(plot_type=plot_type)
+        # Save mode to app state
+        self.app.update_config(mode=mode)
 
-        # Navigate to Config Mode Selector (Step 3)
-        from src.tui.screens.config_mode_selector import ConfigModeSelectorScreen
-
-        self.app.push_screen(ConfigModeSelectorScreen(
-            chip_number=self.chip_number,
-            chip_group=self.chip_group,
-            plot_type=plot_type
-        ))
+        # Navigate to next screen
+        if mode == "quick":
+            # Go to experiment selector (interactive selection)
+            # TODO: Navigate to InteractiveSelectorScreen
+            self.app.notify(f"Quick mode selected - Interactive selector coming soon!", severity="information")
+        else:
+            # Go to custom config screen for the plot type
+            # TODO: Navigate to config screen based on plot_type
+            self.app.notify(f"Custom mode selected - Config screen for {self.plot_type} coming soon!", severity="information")
