@@ -29,6 +29,9 @@ class MainMenuScreen(Screen):
         Binding("b", "batch", "Batch", show=False),
         Binding("s", "settings", "Settings", show=False),
         Binding("h", "help", "Help", show=False),
+        Binding("up", "move_up", "Up", priority=True),
+        Binding("down", "move_down", "Down", priority=True),
+        Binding("enter", "select_current", "Select", show=False),
     ]
 
     CSS = """
@@ -64,8 +67,16 @@ class MainMenuScreen(Screen):
         margin: 1 0;
     }
 
+    .menu-button:focus {
+        background: $primary;
+        border: tall $accent;
+        color: $primary-background;
+        text-style: bold;
+    }
+
     .menu-button:hover {
         background: $primary;
+        color: $primary-background;
     }
 
     #help-text {
@@ -86,20 +97,34 @@ class MainMenuScreen(Screen):
             yield Static("Alisson Lab - Device Characterization", id="subtitle")
 
             with Vertical():
-                yield Button("→ New Plot", id="new-plot", variant="primary", classes="menu-button")
+                yield Button("New Plot", id="new-plot", variant="default", classes="menu-button")
                 yield Button("Recent Configurations (0)", id="recent", variant="default", classes="menu-button")
                 yield Button("Batch Mode", id="batch", variant="default", classes="menu-button")
                 yield Button("Settings", id="settings", variant="default", classes="menu-button")
                 yield Button("Help", id="help-button", variant="default", classes="menu-button")
                 yield Button("Quit", id="quit", variant="error", classes="menu-button")
 
-            yield Static("Use arrow keys to navigate, Enter to select", id="help-text")
+            yield Static("Use ↑↓ arrows to navigate, Enter to select, Q to quit", id="help-text")
 
         yield Footer()
 
     def on_mount(self) -> None:
         """Focus the first button when mounted."""
         self.query_one("#new-plot", Button).focus()
+
+    def on_button_focus(self, event: Button.Focus) -> None:
+        """Update button labels to show arrow on focused button."""
+        # Remove arrows from all buttons
+        for button in self.query(".menu-button").results(Button):
+            label = str(button.label)
+            if label.startswith("→ "):
+                button.label = label[2:]  # Remove arrow
+
+        # Add arrow to focused button
+        focused_button = event.button
+        label = str(focused_button.label)
+        if not label.startswith("→ "):
+            focused_button.label = f"→ {label}"
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""
@@ -120,8 +145,13 @@ class MainMenuScreen(Screen):
 
     def action_new_plot(self) -> None:
         """Start new plot wizard."""
-        # TODO: Navigate to Plot Type Selector (Phase 2)
-        self.app.notify("New Plot - Coming in Phase 2!")
+        from src.tui.screens.plot_type_selector import PlotTypeSelectorScreen
+
+        # Reset configuration for new plot
+        self.app.reset_config()
+
+        # Navigate to Plot Type Selector
+        self.app.push_screen(PlotTypeSelectorScreen())
 
     def action_recent(self) -> None:
         """Show recent configurations."""
@@ -156,3 +186,17 @@ class MainMenuScreen(Screen):
     def action_quit(self) -> None:
         """Quit the application."""
         self.app.exit()
+
+    def action_select_current(self) -> None:
+        """Select the currently focused button using Enter key."""
+        focused = self.focused
+        if isinstance(focused, Button):
+            focused.press()
+
+    def action_move_up(self) -> None:
+        """Move focus to previous button."""
+        self.screen.focus_previous()
+
+    def action_move_down(self) -> None:
+        """Move focus to next button."""
+        self.screen.focus_next()
