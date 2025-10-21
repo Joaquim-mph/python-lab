@@ -39,6 +39,12 @@ def plot_transconductance_command(
         "--auto",
         help="Automatically select all IVg experiments"
     ),
+    interactive: bool = typer.Option(
+        False,
+        "--interactive",
+        "-i",
+        help="Launch interactive experiment selector (TUI)"
+    ),
     method: str = typer.Option(
         "gradient",
         "--method",
@@ -123,6 +129,9 @@ def plot_transconductance_command(
         # Plot transconductance with default gradient method
         python process_and_analyze.py plot-transconductance 67 --seq 2,8,14
 
+        # Interactive selection (TUI)
+        python process_and_analyze.py plot-transconductance 67 --interactive
+
         # Use Savitzky-Golay filter for smoother curves
         python process_and_analyze.py plot-transconductance 67 --seq 2,8,14 --method savgol
 
@@ -145,14 +154,15 @@ def plot_transconductance_command(
         console.print(f"[red]Error:[/red] Invalid method '{method}'. Must be 'gradient' or 'savgol'")
         raise typer.Exit(1)
 
-    # Step 1: Get seq numbers (manual or auto)
-    if seq and auto:
-        console.print("[red]Error:[/red] Cannot use both --seq and --auto. Choose one.")
+    # Step 1: Get seq numbers (manual, auto, or interactive)
+    mode_count = sum([bool(seq), auto, interactive])
+    if mode_count > 1:
+        console.print("[red]Error:[/red] Can only use one of: --seq, --auto, or --interactive")
         raise typer.Exit(1)
 
-    if not seq and not auto:
-        console.print("[red]Error:[/red] Must specify either --seq or --auto")
-        console.print("[yellow]Hint:[/yellow] Use --seq 2,8,14 or --auto")
+    if mode_count == 0:
+        console.print("[red]Error:[/red] Must specify one of: --seq, --auto, or --interactive")
+        console.print("[yellow]Hint:[/yellow] Use --seq 2,8,14, --auto, or --interactive")
         console.print("[yellow]Note:[/yellow] Only IVg experiments can be used for transconductance")
         console.print("[dim]      Run: python process_and_analyze.py show-history {chip_number} --proc IVg[/dim]")
         raise typer.Exit(1)
@@ -174,6 +184,31 @@ def plot_transconductance_command(
                 filters
             )
             console.print(f"[green]✓[/green] Auto-selected {len(seq_numbers)} IVg experiment(s)")
+        elif interactive:
+            # Launch interactive selector
+            from src.interactive_selector import select_experiments_interactive
+
+            console.print("[cyan]Launching interactive selector...[/cyan]")
+            console.print("[dim]Use Space to select, Enter to confirm, Q to quit[/dim]\n")
+
+            seq_numbers = select_experiments_interactive(
+                chip_number,
+                chip_group=chip_group,
+                metadata_dir=metadata_dir,
+                raw_dir=raw_dir,
+                proc_filter="IVg",
+                title=f"Select IVg Experiments - {chip_group}{chip_number} (Transconductance)"
+            )
+
+            if seq_numbers is None:
+                console.print("\n[yellow]Selection cancelled[/yellow]")
+                raise typer.Exit(0)
+
+            if not seq_numbers:
+                console.print("\n[red]No experiments selected[/red]")
+                raise typer.Exit(1)
+
+            console.print(f"\n[green]✓[/green] Selected {len(seq_numbers)} IVg experiment(s)")
         else:
             seq_numbers = parse_seq_list(seq)
             console.print(f"[cyan]Using specified seq numbers:[/cyan] {seq_numbers}")

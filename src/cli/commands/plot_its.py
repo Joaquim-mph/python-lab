@@ -84,6 +84,12 @@ def plot_its_command(
         "--auto",
         help="Automatically select all ITS experiments"
     ),
+    interactive: bool = typer.Option(
+        False,
+        "--interactive",
+        "-i",
+        help="Launch interactive experiment selector (TUI)"
+    ),
     legend_by: str = typer.Option(
         "led_voltage",
         "--legend",
@@ -170,6 +176,9 @@ def plot_its_command(
         # Plot specific experiments
         python process_and_analyze.py plot-its 67 --seq 52,57,58
 
+        # Interactive selection (TUI)
+        python process_and_analyze.py plot-its 67 --interactive
+
         # Auto-select all ITS with custom legend
         python process_and_analyze.py plot-its 67 --auto --legend wavelength
 
@@ -186,14 +195,15 @@ def plot_its_command(
     ))
     console.print()
 
-    # Step 1: Get seq numbers (manual or auto)
-    if seq and auto:
-        console.print("[red]Error:[/red] Cannot use both --seq and --auto. Choose one.")
+    # Step 1: Get seq numbers (manual, auto, or interactive)
+    mode_count = sum([bool(seq), auto, interactive])
+    if mode_count > 1:
+        console.print("[red]Error:[/red] Can only use one of: --seq, --auto, or --interactive")
         raise typer.Exit(1)
 
-    if not seq and not auto:
-        console.print("[red]Error:[/red] Must specify either --seq or --auto")
-        console.print("[yellow]Hint:[/yellow] Use --seq 52,57,58 or --auto")
+    if mode_count == 0:
+        console.print("[red]Error:[/red] Must specify one of: --seq, --auto, or --interactive")
+        console.print("[yellow]Hint:[/yellow] Use --seq 52,57,58, --auto, or --interactive")
         raise typer.Exit(1)
 
     try:
@@ -215,6 +225,31 @@ def plot_its_command(
                 filters
             )
             console.print(f"[green]✓[/green] Auto-selected {len(seq_numbers)} ITS experiment(s)")
+        elif interactive:
+            # Launch interactive selector
+            from src.interactive_selector import select_experiments_interactive
+
+            console.print("[cyan]Launching interactive selector...[/cyan]")
+            console.print("[dim]Use Space to select, Enter to confirm, Q to quit[/dim]\n")
+
+            seq_numbers = select_experiments_interactive(
+                chip_number,
+                chip_group=chip_group,
+                metadata_dir=metadata_dir,
+                raw_dir=raw_dir,
+                proc_filter="ITS",
+                title=f"Select ITS Experiments - {chip_group}{chip_number}"
+            )
+
+            if seq_numbers is None:
+                console.print("\n[yellow]Selection cancelled[/yellow]")
+                raise typer.Exit(0)
+
+            if not seq_numbers:
+                console.print("\n[red]No experiments selected[/red]")
+                raise typer.Exit(1)
+
+            console.print(f"\n[green]✓[/green] Selected {len(seq_numbers)} ITS experiment(s)")
         else:
             seq_numbers = parse_seq_list(seq)
             console.print(f"[cyan]Using specified seq numbers:[/cyan] {seq_numbers}")
