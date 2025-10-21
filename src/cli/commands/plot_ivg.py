@@ -7,7 +7,7 @@ from rich.console import Console
 from rich.panel import Panel
 import polars as pl
 
-from src.plotting import plots
+from src.plotting import ivg, plot_utils
 from src.cli.helpers import (
     parse_seq_list,
     generate_plot_tag,
@@ -199,7 +199,7 @@ def plot_ivg_command(
     # Step 3: Load metadata using combine_metadata_by_seq
     console.print("\n[cyan]Loading experiment metadata...[/cyan]")
     try:
-        meta = plots.combine_metadata_by_seq(
+        meta = plot_utils.combine_metadata_by_seq(
             metadata_dir,
             raw_dir,
             float(chip_number),
@@ -271,10 +271,10 @@ def plot_ivg_command(
 
     # Step 9: Set FIG_DIR and call plotting function
     console.print("\n[cyan]Generating plot...[/cyan]")
-    plots.FIG_DIR = output_dir
+    ivg.FIG_DIR = output_dir
 
     try:
-        plots.plot_ivg_sequence(
+        ivg.plot_ivg_sequence(
             meta,
             raw_dir,
             plot_tag

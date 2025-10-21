@@ -6,7 +6,7 @@ from typing import Optional
 from rich.console import Console
 from rich.panel import Panel
 
-from src.plotting import plots
+from src.plotting import its, plot_utils
 from src.cli.helpers import (
     parse_seq_list,
     generate_plot_tag,
@@ -267,7 +267,7 @@ def plot_its_command(
     # Step 3: Load metadata using combine_metadata_by_seq
     console.print("\n[cyan]Loading experiment metadata...[/cyan]")
     try:
-        meta = plots.combine_metadata_by_seq(
+        meta = plot_utils.combine_metadata_by_seq(
             metadata_dir,
             raw_dir,
             float(chip_number),
@@ -345,11 +345,11 @@ def plot_its_command(
 
     # Step 9: Set FIG_DIR and call plotting function
     console.print("\n[cyan]Generating plot...[/cyan]")
-    plots.FIG_DIR = output_dir
+    its.FIG_DIR = output_dir
 
     try:
         if all_dark:
-            plots.plot_its_dark(
+            its.plot_its_dark(
                 meta,
                 raw_dir,
                 plot_tag,
@@ -358,7 +358,7 @@ def plot_its_command(
                 padding=padding
             )
         else:
-            plots.plot_its_overlay(
+            its.plot_its_overlay(
                 meta,
                 raw_dir,
                 plot_tag,

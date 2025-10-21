@@ -7,7 +7,7 @@ from rich.console import Console
 from rich.panel import Panel
 import polars as pl
 
-from src.plotting import plots
+from src.plotting import transconductance, plot_utils
 from src.cli.helpers import (
     parse_seq_list,
     generate_plot_tag,
@@ -231,7 +231,7 @@ def plot_transconductance_command(
     # Step 3: Load metadata using combine_metadata_by_seq
     console.print("\n[cyan]Loading experiment metadata...[/cyan]")
     try:
-        meta = plots.combine_metadata_by_seq(
+        meta = plot_utils.combine_metadata_by_seq(
             metadata_dir,
             raw_dir,
             float(chip_number),
@@ -326,17 +326,17 @@ def plot_transconductance_command(
 
     # Step 9: Set FIG_DIR and call appropriate plotting function
     console.print("\n[cyan]Generating transconductance plot...[/cyan]")
-    plots.FIG_DIR = output_dir
+    transconductance.FIG_DIR = output_dir
 
     try:
         if method == "gradient":
-            plots.plot_ivg_transconductance(
+            transconductance.plot_ivg_transconductance(
                 meta,
                 raw_dir,
                 plot_tag
             )
         else:  # savgol
-            plots.plot_ivg_transconductance_savgol(
+            transconductance.plot_ivg_transconductance_savgol(
                 meta,
                 raw_dir,
                 plot_tag,
