@@ -24,6 +24,10 @@ def plot_ivg_sequence(df: pl.DataFrame, base_dir: Path, tag: str):
     tag : str
         Tag for output filename
     """
+    # Apply plot style (lazy initialization for thread-safety)
+    from src.plotting.styles import set_plot_style
+    set_plot_style("prism_rain")
+
     ivg = df.filter(pl.col("proc") == "IVg").sort("file_idx")
     if ivg.height == 0:
         return

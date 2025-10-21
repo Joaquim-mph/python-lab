@@ -103,13 +103,19 @@ class ExperimentSelectorScreen(Screen):
             # Pop this screen (experiment selector wrapper)
             self.app.pop_screen()
 
-            # Navigate to preview screen (Step 6)
-            # TODO: Import and navigate to PreviewScreen
-            self.app.notify(
-                f"Selected {len(result)} experiments - Preview coming soon!",
-                severity="information",
-                timeout=3
-            )
+            # Navigate to preview screen (Step 5/6)
+            from src.tui.screens.preview_screen import PreviewScreen
+
+            # Get current config
+            config = self.app.plot_config.copy()
+
+            self.app.push_screen(PreviewScreen(
+                chip_number=self.chip_number,
+                chip_group=self.chip_group,
+                plot_type=self.plot_type,
+                seq_numbers=result,
+                config=config,
+            ))
 
     def action_cancel(self) -> None:
         """Cancel and return to config mode."""

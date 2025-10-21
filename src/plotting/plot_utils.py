@@ -7,7 +7,8 @@ from src.core.utils import _proc_from_path, _file_index
 import polars as pl
 
 from src.plotting.styles import set_plot_style
-set_plot_style("prism_rain")
+# Note: set_plot_style() is now called at the start of each plotting function
+# instead of at module import time for thread-safety in TUI applications
 
 
 DEFAULT_VL_THRESHOLD = 0.0

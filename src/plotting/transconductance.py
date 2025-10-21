@@ -52,6 +52,10 @@ def plot_ivg_transconductance(
     - Duplicate VG values in a segment are removed before gradient to avoid div-by-zero.
     - Output units: gm shown in µS.
     """
+    # Apply plot style (lazy initialization for thread-safety)
+    from src.plotting.styles import set_plot_style
+    set_plot_style("prism_rain")
+
     ivg = df.filter(pl.col("proc") == "IVg").sort("file_idx")
     if ivg.height == 0:
         print("[info] no IVg measurements to plot")
@@ -175,6 +179,10 @@ def plot_ivg_transconductance_savgol(
     raw_alpha : float
         Transparency for raw derivative (0-1)
     """
+    # Apply plot style (lazy initialization for thread-safety)
+    from src.plotting.styles import set_plot_style
+    set_plot_style("prism_rain")
+
     ivg = df.filter(pl.col("proc") == "IVg").sort("file_idx")
     if ivg.height == 0:
         print("[info] no IVg measurements to plot")

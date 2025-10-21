@@ -232,5 +232,18 @@ class ConfigModeSelectorScreen(Screen):
             ))
         else:
             # Go to custom config screen for the plot type
-            # TODO: Navigate to config screen based on plot_type
-            self.app.notify(f"Custom mode selected - Config screen for {self.plot_type} coming soon!", severity="information")
+            if self.plot_type == "ITS":
+                from src.tui.screens.its_config import ITSConfigScreen
+                self.app.push_screen(ITSConfigScreen(
+                    chip_number=self.chip_number,
+                    chip_group=self.chip_group,
+                    plot_type=self.plot_type,
+                ))
+            elif self.plot_type == "IVg":
+                # TODO: Implement IVgConfigScreen
+                self.app.notify(f"Custom config for IVg coming soon!", severity="information")
+            elif self.plot_type == "Transconductance":
+                # TODO: Implement TransconductanceConfigScreen
+                self.app.notify(f"Custom config for Transconductance coming soon!", severity="information")
+            else:
+                self.app.notify(f"Unknown plot type: {self.plot_type}", severity="error")

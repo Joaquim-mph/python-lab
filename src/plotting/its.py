@@ -49,6 +49,10 @@ def plot_its_overlay(
         Set to 0 for no padding, or increase for more whitespace around data.
         X-axis uses PLOT_START_TIME constant to avoid noisy data at the start.
     """
+    # Apply plot style (lazy initialization for thread-safety)
+    from src.plotting.styles import set_plot_style
+    set_plot_style("prism_rain")
+
     # --- normalize legend_by to a canonical value ---
     lb = legend_by.strip().lower()
     if lb in {"wavelength", "wl", "lambda"}:
@@ -369,6 +373,10 @@ def plot_its_dark(
     - Simpler and cleaner plot for noise characterization experiments
     - Uses same baseline correction as plot_its_overlay
     """
+    # Apply plot style (lazy initialization for thread-safety)
+    from src.plotting.styles import set_plot_style
+    set_plot_style("prism_rain")
+
     # --- normalize legend_by to a canonical value ---
     lb = legend_by.strip().lower()
     if lb in {"wavelength", "wl", "lambda"}:
