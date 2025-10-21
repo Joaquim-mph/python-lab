@@ -5,6 +5,7 @@ from src.tui.screens.plot_type_selector import PlotTypeSelectorScreen
 from src.tui.screens.chip_selector import ChipSelectorScreen
 from src.tui.screens.process_confirmation import ProcessConfirmationScreen
 from src.tui.screens.config_mode_selector import ConfigModeSelectorScreen
+from src.tui.screens.experiment_selector import ExperimentSelectorScreen
 
 __all__ = [
     "MainMenuScreen",
@@ -12,4 +13,5 @@ __all__ = [
     "ChipSelectorScreen",
     "ProcessConfirmationScreen",
     "ConfigModeSelectorScreen",
+    "ExperimentSelectorScreen",
 ]

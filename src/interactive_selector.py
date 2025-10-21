@@ -11,7 +11,7 @@ from typing import List, Optional
 
 import polars as pl
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal, Vertical
+from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.widgets import (
     Header,
     Footer,
@@ -37,8 +37,66 @@ class ExperimentSelectorScreen(Screen):
         Binding("space", "toggle", "Toggle"),
         Binding("ctrl+a", "select_all", "Select All"),
         Binding("ctrl+d", "deselect_all", "Deselect All"),
+        Binding("ctrl+f", "focus_search", "Search"),
         Binding("slash", "focus_search", "Search", show=False),
     ]
+
+    CSS = """
+    #main-container {
+        height: 100%;
+        layout: vertical;
+    }
+
+    #title {
+        text-align: center;
+        text-style: bold;
+        color: cyan;
+        height: auto;
+        dock: top;
+    }
+
+    #stats {
+        text-align: center;
+        height: auto;
+        dock: top;
+    }
+
+    #controls-text {
+        text-align: center;
+        color: $accent;
+        height: auto;
+        dock: top;
+    }
+
+    #search-bar {
+        height: 3;
+        dock: top;
+    }
+
+    #search-label {
+        width: 10;
+        padding-top: 1;
+    }
+
+    #search-input {
+        width: 1fr;
+    }
+
+    #table-container {
+        height: 1fr;
+        border: solid $primary;
+    }
+
+    #experiments-table {
+        height: auto;
+    }
+
+    #selection-count {
+        text-align: center;
+        height: auto;
+        dock: bottom;
+    }
+    """
 
     def __init__(
         self,
@@ -66,21 +124,23 @@ class ExperimentSelectorScreen(Screen):
             yield Static(self.title_text, id="title")
             yield Static("", id="stats")
 
+            # Controls (always visible at top)
+            yield Static(
+                "[bold]Controls:[/bold] Space=Toggle  Enter=Select  Esc=Cancel  Ctrl+A=All  Ctrl+D=Clear  Ctrl+F=Search",
+                id="controls-text"
+            )
+
             # Search bar
             with Horizontal(id="search-bar"):
                 yield Label("Filter: ", id="search-label")
                 yield Input(placeholder="Type to filter...", id="search-input")
 
-            # Main data table
-            yield DataTable(id="experiments-table", cursor_type="row")
+            # Main data table wrapped in scroll container
+            with VerticalScroll(id="table-container"):
+                yield DataTable(id="experiments-table", cursor_type="row")
 
-            # Help text
-            with Vertical(id="help-container"):
-                yield Static(
-                    "[bold]Controls:[/bold] Space=Toggle  Enter=Confirm  Ctrl+A=All  Ctrl+D=Clear  Q=Quit",
-                    id="help-text"
-                )
-                yield Static("", id="selection-count")
+            # Selection count
+            yield Static("", id="selection-count")
 
         yield Footer()
 
@@ -90,10 +150,21 @@ class ExperimentSelectorScreen(Screen):
         self._update_stats()
         self._update_selection_count()
 
+        # Focus the table by default (not the search input)
+        table = self.query_one("#experiments-table", DataTable)
+        table.focus()
+
     def _populate_table(self, filter_text: str = "") -> None:
         """Populate the data table with experiments."""
         table = self.query_one("#experiments-table", DataTable)
         table.clear(columns=True)
+
+        # Get the scroll container and scroll to top when repopulating
+        try:
+            scroll_container = self.query_one("#table-container", VerticalScroll)
+            scroll_container.scroll_home(animate=False)
+        except Exception:
+            pass
 
         # Add columns (different based on procedure type)
         table.add_column("✓", width=3)
@@ -398,24 +469,34 @@ class ExperimentSelectorApp(App):
 
     CSS = """
     #main-container {
-        padding: 1;
+        height: 100%;
+        layout: vertical;
     }
 
     #title {
         text-align: center;
         text-style: bold;
         color: cyan;
-        margin-bottom: 1;
+        height: auto;
+        dock: top;
     }
 
     #stats {
         text-align: center;
-        margin-bottom: 1;
+        height: auto;
+        dock: top;
+    }
+
+    #controls-text {
+        text-align: center;
+        color: $accent;
+        height: auto;
+        dock: top;
     }
 
     #search-bar {
         height: 3;
-        margin-bottom: 1;
+        dock: top;
     }
 
     #search-label {
@@ -427,24 +508,19 @@ class ExperimentSelectorApp(App):
         width: 1fr;
     }
 
-    #experiments-table {
+    #table-container {
         height: 1fr;
-        margin-bottom: 1;
+        border: solid $primary;
     }
 
-    #help-container {
-        height: 4;
-        border-top: solid cyan;
-        padding-top: 1;
-    }
-
-    #help-text {
-        text-align: center;
+    #experiments-table {
+        height: auto;
     }
 
     #selection-count {
         text-align: center;
-        margin-top: 1;
+        height: auto;
+        dock: bottom;
     }
     """
 

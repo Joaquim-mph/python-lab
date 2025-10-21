@@ -221,8 +221,15 @@ class ConfigModeSelectorScreen(Screen):
         # Navigate to next screen
         if mode == "quick":
             # Go to experiment selector (interactive selection)
-            # TODO: Navigate to InteractiveSelectorScreen
-            self.app.notify(f"Quick mode selected - Interactive selector coming soon!", severity="information")
+            from src.tui.screens.experiment_selector import ExperimentSelectorScreen
+
+            self.app.push_screen(ExperimentSelectorScreen(
+                chip_number=self.chip_number,
+                chip_group=self.chip_group,
+                plot_type=self.plot_type,
+                metadata_dir=self.app.metadata_dir,
+                raw_dir=self.app.raw_dir,
+            ))
         else:
             # Go to custom config screen for the plot type
             # TODO: Navigate to config screen based on plot_type
