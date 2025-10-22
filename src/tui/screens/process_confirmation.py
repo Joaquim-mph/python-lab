@@ -5,18 +5,12 @@ Simple confirmation dialog before running the full data processing pipeline.
 """
 
 from __future__ import annotations
-import threading
-from pathlib import Path
 
 from textual.app import ComposeResult
 from textual.containers import Container, Vertical
 from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button
 from textual.binding import Binding
-
-import polars as pl
-from src.core.parser import parse_iv_metadata
-from src.core.timeline import build_chip_history
 
 
 class ProcessConfirmationScreen(Screen):
@@ -103,7 +97,6 @@ class ProcessConfirmationScreen(Screen):
 
     def __init__(self):
         super().__init__()
-        self.processing = False
 
     def compose(self) -> ComposeResult:
         """Create confirmation dialog widgets."""
@@ -149,82 +142,9 @@ class ProcessConfirmationScreen(Screen):
         self.app.pop_screen()
 
     def action_confirm(self) -> None:
-        """Start processing in background and close immediately."""
-        # Start processing in background thread (fire and forget)
-        thread = threading.Thread(target=self._run_process, daemon=True)
-        thread.start()
+        """Start processing with loading screen."""
+        from src.tui.screens.process_loading import ProcessLoadingScreen
 
-        # Notify and close immediately
-        self.app.notify(
-            "Processing started in background",
-            severity="information",
-            timeout=3
-        )
+        # Replace this screen with the loading screen
         self.app.pop_screen()
-
-    def _run_process(self) -> None:
-        """Run the processing pipeline in background."""
-        try:
-            raw_dir = Path("raw_data")
-            meta_dir = Path("metadata")
-            history_dir = Path("chip_histories")
-            chip_group = "Alisson"
-
-            # Step 1: Parse all metadata
-            folders = [item for item in raw_dir.iterdir() if item.is_dir() and list(item.glob("*.csv"))]
-
-            meta_dir.mkdir(parents=True, exist_ok=True)
-
-            for folder in folders:
-                folder_name = folder.name
-                out_dir = meta_dir / folder_name
-                out_dir.mkdir(parents=True, exist_ok=True)
-                out_file = out_dir / "metadata.csv"
-
-                csv_files = sorted(folder.glob("*.csv"))
-                metadata_rows = []
-
-                for csv_file in csv_files:
-                    try:
-                        meta = parse_iv_metadata(csv_file)
-                        if meta:
-                            rel_path = f"{raw_dir.name}/{folder_name}/{csv_file.name}"
-                            meta['source_file'] = rel_path
-                            metadata_rows.append(meta)
-                    except Exception:
-                        pass
-
-                if metadata_rows:
-                    df = pl.DataFrame(metadata_rows)
-                    df.write_csv(out_file)
-
-            # Step 2: Build chip histories
-            metadata_files = list(meta_dir.glob("**/metadata.csv")) + list(meta_dir.glob("**/*_metadata.csv"))
-
-            all_chips = set()
-            for meta_file in metadata_files:
-                try:
-                    meta = pl.read_csv(meta_file, ignore_errors=True)
-                    if "Chip number" in meta.columns:
-                        chips = meta.get_column("Chip number").drop_nulls().unique().to_list()
-                        for c in chips:
-                            try:
-                                all_chips.add(int(float(c)))
-                            except (ValueError, TypeError):
-                                pass
-                except Exception:
-                    pass
-
-            history_dir.mkdir(parents=True, exist_ok=True)
-
-            for chip_num in sorted(all_chips):
-                chip_name = f"{chip_group}{chip_num}"
-                history = build_chip_history(meta_dir, Path("."), chip_num, chip_group)
-
-                if history.height >= 1:
-                    out_file = history_dir / f"{chip_name}_history.csv"
-                    history.write_csv(out_file)
-
-        except Exception:
-            # Silently fail - user can check files manually
-            pass
+        self.app.push_screen(ProcessLoadingScreen())
