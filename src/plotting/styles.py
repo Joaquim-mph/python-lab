@@ -28,19 +28,72 @@ PRISM_RAIN_PALETTE = [
     "#a65628",  # warm brown-orange
     "#8dd3c7",  # aqua-mint
 
-    # Deep complementary accents (maintain contrast)
+]
+
+DEEP_RAIN_PALETTE = [
+    # Deep accents (maintain contrast)
     "#b2182b",  # crimson
     "#2166ac",  # royal blue
     "#1a9850",  # rich green
     "#762a83",  # deep violet
-    "#e08214",  # vivid amber
+    "#e08214",  # vivid amber 
+    
+    # Extended vivid tones (brighter, neon-like accents)
+    "#88C0D0",  # cyan-teal
+    "#CC78BC",  # pink
+    "#EBCB8B",  # bright yellow
+    "#BF616A",  # warm brown-orange
+    "#00b3b3",  # aqua-mint
 ]
 
+
 PRISM_RAIN_PALETTE_VIVID = [
-    "#ff0054", "#0099ff", "#00cc66", "#cc33ff", "#ffaa00",
-    "#00e6e6", "#ff66b2", "#ffe600", "#ff3300", "#00b3b3",
-    "#3366ff", "#66ff33", "#9933ff", "#ff9933", "#33ccff",
+    
+    "#ff0054", 
+    "#0099ff", 
+    "#00cc66", 
+    "#cc33ff", 
+    "#ffaa00",
+    
+    "#00e6e6", 
+    "#ff66b2", 
+    "#ffe600", 
+    "#ff3300", 
+    "#00b3b3",
+    
+    "#3366ff", 
+    "#66ff33", 
+    "#9933ff", 
+    "#ff9933", 
+    "#33ccff",
 ]
+
+# Minimal palette (professional, understated)
+MINIMAL_PALETTE= [
+    
+    '#2E3440',  # Dark gray
+    '#5E81AC',  # Blue
+    '#88C0D0',  # Light blue
+    '#81A1C1',  # Medium blue
+    '#BF616A',  # Red
+    '#D08770',  # Orange
+    '#EBCB8B',  # Yellow
+    '#A3BE8C',  # Green
+    '#B48EAD',  # Purple
+        ]
+
+# Scientific publication palette (Nature-inspired)
+SCIENTIFIC_PALETTE = [
+    
+    '#0173B2',  # Blue
+    '#DE8F05',  # Orange
+    '#029E73',  # Green
+    '#CC78BC',  # Purple
+    "#b2182b",  # Brown
+    '#ECE133',  # Yellow
+    '#56B4E9', # Sky blue
+    "#762a83"
+    ]
 
 # ============================================================================
 # Theme Definitions
