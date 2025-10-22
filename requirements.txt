@@ -20,4 +20,4 @@ typer>=0.9.0
 rich>=13.0.0
 
 # TUI (Terminal User Interface - for tui_app.py)
-textual==0.60.0  # Exact version - TUI tested with this version
+textual==6.3.0

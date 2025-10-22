@@ -209,11 +209,10 @@ def plot_ivg_command(
 
     # Dry-run mode: exit after validation, before loading metadata
     if dry_run:
-        # Calculate output filename
+        # Calculate output filename (using standardized naming)
         output_dir_calc = setup_output_dir(output_dir, chip_number, chip_group)
         plot_tag = generate_plot_tag(seq_numbers, custom_tag=tag)
-        chip_label = f"Encap{chip_number}"
-        output_file = output_dir_calc / f"{chip_label}_IVg_sequence_{plot_tag}.png"
+        output_file = output_dir_calc / f"encap{chip_number}_IVg_{plot_tag}.png"
 
         # Check if file already exists
         file_exists = output_file.exists()
@@ -287,8 +286,7 @@ def plot_ivg_command(
     plot_tag = generate_plot_tag(seq_numbers, custom_tag=tag)
 
     # Preview output filename
-    chip_label = f"Encap{chip_number}"  # IVg uses "Encap" prefix
-    output_file = output_dir / f"{chip_label}_IVg_sequence_{plot_tag}.png"
+    output_file = output_dir / f"encap{chip_number}_IVg_{plot_tag}.png"
 
     console.print()
     console.print(Panel(

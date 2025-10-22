@@ -332,7 +332,7 @@ def plot_its_overlay(
                 y_pad = padding * y_range
                 plt.ylim(y_min - y_pad, y_max + y_pad)
 
-    out = FIG_DIR / f"chip{chipnum}_ITS_overlay_{tag}.png"
+    out = FIG_DIR / f"encap{chipnum}_ITS_{tag}.png"
     plt.savefig(out)
     print(f"saved {out}")
 
@@ -586,6 +586,6 @@ def plot_its_dark(
                 y_pad = padding * y_range
                 plt.ylim(y_min - y_pad, y_max + y_pad)
 
-    out = FIG_DIR / f"chip{chipnum}_ITS_dark_{tag}.png"
+    out = FIG_DIR / f"encap{chipnum}_ITS_dark_{tag}.png"
     plt.savefig(out)
     print(f"saved {out}")

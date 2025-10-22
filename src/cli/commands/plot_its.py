@@ -277,11 +277,11 @@ def plot_its_command(
 
     # Dry-run mode: exit after validation, before loading metadata
     if dry_run:
-        # Calculate output filename
+        # Calculate output filename (using standardized naming)
         output_dir_calc = setup_output_dir(output_dir, chip_number, chip_group)
         plot_tag = generate_plot_tag(seq_numbers, custom_tag=tag)
-        chip_label = f"chip{chip_number}"
-        output_file = output_dir_calc / f"{chip_label}_ITS_overlay_{plot_tag}.png"
+        # Note: Can't detect dark/light in dry-run, assume regular ITS
+        output_file = output_dir_calc / f"encap{chip_number}_ITS_{plot_tag}.png"
 
         # Check if file already exists
         file_exists = output_file.exists()
@@ -348,9 +348,8 @@ def plot_its_command(
     # Generate unique tag based on seq numbers
     plot_tag = generate_plot_tag(seq_numbers, custom_tag=tag)
 
-    # Preview output filename
-    chip_label = f"chip{chip_number}"
-    output_file = output_dir / f"{chip_label}_ITS_overlay_{plot_tag}.png"
+    # Preview output filename (will be updated if dark measurement detected)
+    output_file = output_dir / f"encap{chip_number}_ITS_{plot_tag}.png"
 
     console.print()
     console.print(Panel(
@@ -373,7 +372,7 @@ def plot_its_command(
         console.print("\n[dim]Detected: All ITS experiments are dark (no laser)[/dim]")
         console.print("[dim]Using simplified dark plot (no light window shading)[/dim]")
         # Update output filename for dark plots
-        output_file = output_dir / f"{chip_label}_ITS_dark_{plot_tag}.png"
+        output_file = output_dir / f"encap{chip_number}_ITS_dark_{plot_tag}.png"
         # Adjust legend default for dark plots (vg is more useful than led_voltage)
         if legend_by == "led_voltage":
             console.print("[dim]Tip: For dark measurements, --legend vg might be more useful[/dim]")

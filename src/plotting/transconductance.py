@@ -132,13 +132,13 @@ def plot_ivg_transconductance(
 
     ax.set_xlabel("VG (V)")
     ax.set_ylabel("Transconductance gm (µS)")
-    chip_label = get_chip_label(df, default="Chip")
-    ax.set_title(f"{chip_label} — Transconductance (np.gradient, joined, no sort)")
+    chipnum = int(df['Chip number'][0])
+    ax.set_title(f"Encap{chipnum} — Transconductance (np.gradient, joined, no sort)")
     ax.legend()
     ax.axhline(y=0, color='k', linestyle=':')
 
     plt.tight_layout()
-    out = FIG_DIR / f"{chip_label}_gm_sequence_{tag}.png"
+    out = FIG_DIR / f"encap{chipnum}_gm_{tag}.png"
     plt.savefig(out)
     print(f"saved {out}")
     plt.close(fig)
@@ -294,13 +294,13 @@ def plot_ivg_transconductance_savgol(
     ax.set_xlabel("VG (V)")
     ax.set_ylabel("Transconductance gm (µS)")
 
-    chip_label = get_chip_label(df, default="Chip")
+    chipnum = int(df['Chip number'][0])
 
     ax.legend()
 
     plt.tight_layout()
 
-    out = FIG_DIR / f"{chip_label}_gm_savgol_{tag}.png"
+    out = FIG_DIR / f"encap{chipnum}_gm_savgol_{tag}.png"
     plt.savefig(out)
     print(f"saved {out}")
     plt.close(fig)

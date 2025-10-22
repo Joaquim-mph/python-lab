@@ -236,16 +236,14 @@ def plot_transconductance_command(
 
     # Dry-run mode: exit after validation, before loading metadata
     if dry_run:
-        # Calculate output filename (method-dependent)
+        # Calculate output filename (using standardized naming)
         output_dir_calc = setup_output_dir(output_dir, chip_number, chip_group)
         plot_tag = generate_plot_tag(seq_numbers, custom_tag=tag)
 
         if method == "gradient":
-            output_filename = f"gm_sequence_{plot_tag}.png"
+            output_file = output_dir_calc / f"encap{chip_number}_gm_{plot_tag}.png"
         else:  # savgol
-            output_filename = f"gm_savgol_{plot_tag}.png"
-
-        output_file = output_dir_calc / output_filename
+            output_file = output_dir_calc / f"encap{chip_number}_gm_savgol_{plot_tag}.png"
 
         # Check if file already exists
         file_exists = output_file.exists()
@@ -336,14 +334,11 @@ def plot_transconductance_command(
     # Generate unique tag based on seq numbers and method
     plot_tag = generate_plot_tag(seq_numbers, custom_tag=tag)
 
-    # Preview output filename (method-dependent)
+    # Preview output filename
     if method == "gradient":
-        output_filename = f"gm_sequence_{plot_tag}.png"
+        output_file = output_dir / f"encap{chip_number}_gm_{plot_tag}.png"
     else:  # savgol
-        output_filename = f"gm_savgol_{plot_tag}.png"
-
-    chip_label = f"Chip{chip_number}"  # Will be updated by plot function if needed
-    output_file = output_dir / output_filename
+        output_file = output_dir / f"encap{chip_number}_gm_savgol_{plot_tag}.png"
 
     console.print()
     console.print(Panel(

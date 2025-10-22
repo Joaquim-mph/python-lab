@@ -192,11 +192,12 @@ class ITSConfigScreen(Screen):
             with Horizontal(classes="form-row"):
                 yield Label("Output dir:", classes="form-label")
                 yield Input(
-                    value=f"figs/{self.chip_group}{self.chip_number}/",
+                    value="figs",
+                    placeholder="figs",
                     id="output-dir-input",
                     classes="form-input"
                 )
-                yield Static("Output directory", classes="form-help")
+                yield Static(f"→ figs/{self.chip_group}{self.chip_number}/", classes="form-help")
 
             # Buttons
             with Horizontal(id="button-container"):

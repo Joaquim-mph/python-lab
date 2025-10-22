@@ -179,10 +179,11 @@ class TransconductanceConfigScreen(Screen):
         with Horizontal(classes="field-container"):
             yield Static("Output directory:", classes="field-label")
             yield Input(
-                placeholder="Default: figs/",
-                value="figs/",
+                placeholder="figs",
+                value="figs",
                 id="output-dir-input",
             )
+            yield Static(f"→ figs/{self.chip_group}{self.chip_number}/", classes="field-label")
 
         # Buttons
         with Horizontal(id="button-container"):

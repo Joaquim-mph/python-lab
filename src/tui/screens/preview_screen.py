@@ -170,9 +170,22 @@ class PreviewScreen(Screen):
             # Output Section
             yield Static("─── Output ─────────────────────────────", classes="section-title")
 
-            # Generate output filename
+            # Generate output filename and directory (with automatic chip subdirectory)
             output_filename = self._generate_filename()
-            output_dir = self.config.get("output_dir", f"figs/{self.chip_group}{self.chip_number}/")
+            base_output_dir = self.config.get("output_dir", "figs")
+
+            # Apply same logic as plot_generation.py: always append chip subdirectory
+            base_str = str(base_output_dir)
+            chip_subdir_name = f"{self.chip_group}{self.chip_number}"
+
+            # Check if the path already ends with the chip subdirectory
+            if base_str.endswith(f"/{chip_subdir_name}") or base_str.endswith(f"/{chip_subdir_name}/"):
+                output_dir = base_output_dir
+            elif base_str.endswith(chip_subdir_name):
+                output_dir = base_output_dir
+            else:
+                # Append chip subdirectory
+                output_dir = f"{base_output_dir}/{chip_subdir_name}"
 
             yield Static(f"Directory: {output_dir}", classes="info-text")
             yield Static(f"Filename: {output_filename}", classes="info-text")
@@ -340,14 +353,39 @@ class PreviewScreen(Screen):
         return lines
 
     def _generate_filename(self) -> str:
-        """Generate output filename based on configuration."""
-        chip_name = f"{self.chip_group}{self.chip_number}".lower()
-        plot_type_lower = self.plot_type.lower()
+        """Generate output filename using standardized naming convention.
 
-        # Format seq numbers for filename (limit to first 10)
-        seq_str = "_".join(map(str, self.seq_numbers[:10]))
-        if len(self.seq_numbers) > 10:
-            seq_str += f"_plus{len(self.seq_numbers) - 10}more"
+        Format: encap{N}_plottype_seq_X_Y_Z.png
+        """
+        # Generate plot tag from seq numbers (same logic as CLI)
+        sorted_seqs = sorted(self.seq_numbers)
 
-        filename = f"{chip_name}_{plot_type_lower}_overlay_{seq_str}.png"
+        if len(sorted_seqs) <= 5:
+            # Short lists: readable format
+            seq_str = "_".join(str(s) for s in sorted_seqs)
+            plot_tag = f"seq_{seq_str}"
+        else:
+            # Long lists: first 3 + count + hash
+            first_three = "_".join(str(s) for s in sorted_seqs[:3])
+            import hashlib
+            seq_hash = hashlib.md5("_".join(str(s) for s in sorted_seqs).encode()).hexdigest()[:6]
+            plot_tag = f"seq_{first_three}_plus{len(sorted_seqs)-3}_{seq_hash}"
+
+        # Standardized format: encap{N}_plottype_tag.png
+        if self.plot_type == "ITS":
+            # Check if it's a dark measurement (same detection as plot_generation.py)
+            # For preview, we can't easily check metadata, so assume regular ITS
+            filename = f"encap{self.chip_number}_ITS_{plot_tag}.png"
+        elif self.plot_type == "IVg":
+            filename = f"encap{self.chip_number}_IVg_{plot_tag}.png"
+        elif self.plot_type == "Transconductance":
+            method = self.config.get("method", "gradient")
+            if method == "savgol":
+                filename = f"encap{self.chip_number}_gm_savgol_{plot_tag}.png"
+            else:
+                filename = f"encap{self.chip_number}_gm_{plot_tag}.png"
+        else:
+            # Fallback
+            filename = f"encap{self.chip_number}_{self.plot_type}_{plot_tag}.png"
+
         return filename

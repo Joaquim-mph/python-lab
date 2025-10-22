@@ -48,11 +48,11 @@ class PlotGenerationScreen(Screen):
     }
 
     #main-container {
-        width: 70;
+        width: 80;
         height: auto;
         background: $surface;
         border: thick $primary;
-        padding: 2 4;
+        padding: 3 6;
     }
 
     #title {
@@ -71,9 +71,15 @@ class PlotGenerationScreen(Screen):
         min-height: 3;
     }
 
+    #progress-container {
+        width: 100%;
+        height: auto;
+        margin-bottom: 2;
+        padding: 0 20;
+    }
+
     #progress-bar {
         width: 100%;
-        margin-bottom: 2;
     }
 
     #current-task {
@@ -91,7 +97,8 @@ class PlotGenerationScreen(Screen):
         with Container(id="main-container"):
             yield Static("Generating Plot...", id="title")
             yield Static("⣾ Initializing...", id="status")
-            yield ProgressBar(total=100, show_eta=False, id="progress-bar")
+            with Horizontal(id="progress-container"):
+                yield ProgressBar(total=100, show_eta=False, id="progress-bar")
             yield Static("Starting plot generation", id="current-task")
 
         yield Footer()
@@ -135,8 +142,25 @@ class PlotGenerationScreen(Screen):
 
             self.app.call_from_thread(self._update_progress, 30, f"⣾ Loaded {meta.height} experiment(s)...")
 
-            # Step 2: Setup output directory
-            output_dir = PathLib(self.config.get("output_dir", f"figs/{self.chip_group}{self.chip_number}/"))
+            # Step 2: Setup output directory (always append chip subdirectory)
+            base_output_dir = PathLib(self.config.get("output_dir", "figs"))
+
+            # If user specified "figs/Alisson67/" or similar, extract just the base
+            # Otherwise, always append chip subdirectory automatically
+            base_str = str(base_output_dir)
+            chip_subdir_name = f"{self.chip_group}{self.chip_number}"
+
+            # Check if the path already ends with the chip subdirectory
+            if base_str.endswith(f"/{chip_subdir_name}") or base_str.endswith(f"/{chip_subdir_name}/"):
+                # Use as-is
+                output_dir = base_output_dir
+            elif base_str.endswith(chip_subdir_name):
+                # Use as-is
+                output_dir = base_output_dir
+            else:
+                # Append chip subdirectory
+                output_dir = base_output_dir / chip_subdir_name
+
             output_dir.mkdir(parents=True, exist_ok=True)
 
             # Step 3: Generate plot tag from seq numbers
@@ -234,20 +258,40 @@ class PlotGenerationScreen(Screen):
 
             self.app.call_from_thread(self._update_progress, 90, "⣾ Saving file...")
 
-            # Step 5: Determine output file path
-            chip_name = f"{self.chip_group}{self.chip_number}".lower()
-            plot_type_lower = self.plot_type.lower()
-
+            # Step 5: Determine output file path (using standardized naming)
             if self.plot_type == "ITS":
-                filename = f"chip{self.chip_number}_ITS_overlay_{plot_tag}.png"
+                # Check if it's a dark measurement
+                all_dark = False
+                import polars as pl
+                its_df = meta.filter(pl.col("proc") == "ITS")
+                if its_df.height > 0 and "Laser toggle" in its_df.columns:
+                    try:
+                        toggles = []
+                        for val in its_df["Laser toggle"].to_list():
+                            if isinstance(val, bool):
+                                toggles.append(val)
+                            elif isinstance(val, str):
+                                toggles.append(val.lower() == "true")
+                            else:
+                                toggles.append(True)
+                        all_dark = all(not t for t in toggles)
+                    except Exception:
+                        pass
+
+                if all_dark:
+                    filename = f"encap{self.chip_number}_ITS_dark_{plot_tag}.png"
+                else:
+                    filename = f"encap{self.chip_number}_ITS_{plot_tag}.png"
+
             elif self.plot_type == "IVg":
-                filename = f"Encap{self.chip_number}_IVg_sequence_{plot_tag}.png"
+                filename = f"encap{self.chip_number}_IVg_{plot_tag}.png"
+
             elif self.plot_type == "Transconductance":
                 method = self.config.get("method", "gradient")
                 if method == "savgol":
-                    filename = f"gm_savgol_{plot_tag}.png"
+                    filename = f"encap{self.chip_number}_gm_savgol_{plot_tag}.png"
                 else:
-                    filename = f"gm_sequence_{plot_tag}.png"
+                    filename = f"encap{self.chip_number}_gm_{plot_tag}.png"
 
             output_path = output_dir / filename
 

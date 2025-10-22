@@ -117,9 +117,9 @@ def generate_plot_tag(seq_numbers: list[int], custom_tag: str | None = None) -> 
 
 def setup_output_dir(output_dir: Path, chip: int, chip_group: str) -> Path:
     """
-    Create and return appropriate output directory.
+    Create and return chip-specific output directory.
 
-    Creates the directory if it doesn't exist.
+    Creates: output_dir/{chip_group}{chip}/
 
     Parameters
     ----------
@@ -133,15 +133,16 @@ def setup_output_dir(output_dir: Path, chip: int, chip_group: str) -> Path:
     Returns
     -------
     Path
-        Output directory path (created if needed)
+        Chip-specific output directory path (created if needed)
 
     Examples
     --------
     >>> setup_output_dir(Path("figs"), 67, "Alisson")
-    PosixPath('figs')
+    PosixPath('figs/Alisson67')
     """
-    output_dir.mkdir(parents=True, exist_ok=True)
-    return output_dir
+    chip_subdir = output_dir / f"{chip_group}{chip}"
+    chip_subdir.mkdir(parents=True, exist_ok=True)
+    return chip_subdir
 
 
 def auto_select_experiments(

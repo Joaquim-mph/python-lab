@@ -48,11 +48,12 @@ def plot_ivg_sequence(df: pl.DataFrame, base_dir: Path, tag: str):
 
     plt.xlabel("$\\rm{V_g\\ (V)}$")
     plt.ylabel("$\\rm{I_{ds}\\ (\\mu A)}$")
-    plt.title(f"Encap{int(df['Chip number'][0])} — IVg")
+    chipnum = int(df['Chip number'][0])
+    plt.title(f"Encap{chipnum} — IVg")
     plt.legend()
     plt.ylim(bottom=0)
     plt.tight_layout()
 
-    out = FIG_DIR / f"Encap{int(df['Chip number'][0])}_IVg_sequence_{tag}.png"
+    out = FIG_DIR / f"encap{chipnum}_IVg_{tag}.png"
     plt.savefig(out)
     print(f"saved {out}")
