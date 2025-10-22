@@ -120,13 +120,13 @@ class PlotTypeSelectorScreen(Screen):
                 yield Static("[Step 2/6]", id="step-indicator")
 
             with RadioSet(id="plot-type-radio"):
-                yield RadioButton("ITS (Current vs Time)", id="its-radio")
+                yield RadioButton("It (Current vs Time)", id="its-radio")
                 yield RadioButton("IVg (Transfer Curves)", id="ivg-radio")
                 yield RadioButton("Transconductance", id="transconductance-radio")
 
             # Descriptions below radio buttons
             yield Static(
-                "[bold]ITS (Current vs Time)[/bold]\n"
+                "[bold]It (Current vs Time)[/bold]\n"
                 "Plot photocurrent time series with light/dark cycles. Best for analyzing photoresponse behavior.",
                 classes="plot-description"
             )

@@ -95,7 +95,7 @@ class MainMenuScreen(Screen):
 
         with Container(id="main-container"):
             yield Static("🔬 Experiment Plotting Assistant", id="title")
-            yield Static("Alisson Lab - Device Characterization", id="subtitle")
+            yield Static("NanoLab - Device Characterization", id="subtitle")
 
             with Vertical():
                 yield Button("New Plot", id="new-plot", variant="default", classes="menu-button")

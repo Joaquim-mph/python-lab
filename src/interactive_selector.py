@@ -48,34 +48,37 @@ class ExperimentSelectorScreen(Screen):
     }
 
     #title {
-        text-align: center;
+        text-align: left;
         text-style: bold;
         color: cyan;
-        height: auto;
-        dock: top;
+        height: 1;
+        padding: 0 2;
     }
 
     #stats {
-        text-align: center;
-        height: auto;
-        dock: top;
+        text-align: left;
+        height: 1;
+        padding: 0 2;
     }
 
     #controls-text {
-        text-align: center;
+        text-align: left;
         color: $accent;
-        height: auto;
-        dock: top;
+        height: 1;
+        padding: 0 2;
+    }
+
+    #spacer {
+        height: 1;
     }
 
     #search-bar {
-        height: 3;
-        dock: top;
+        height: 1;
+        padding: 0 2;
     }
 
     #search-label {
         width: 10;
-        padding-top: 1;
     }
 
     #search-input {
@@ -85,6 +88,7 @@ class ExperimentSelectorScreen(Screen):
     #table-container {
         height: 1fr;
         border: solid $primary;
+        margin: 0 2;
     }
 
     #experiments-table {
@@ -93,7 +97,7 @@ class ExperimentSelectorScreen(Screen):
 
     #selection-count {
         text-align: center;
-        height: auto;
+        height: 1;
         dock: bottom;
     }
     """
@@ -130,9 +134,12 @@ class ExperimentSelectorScreen(Screen):
                 id="controls-text"
             )
 
+            # Spacer for visual separation
+            yield Static("", id="spacer")
+
             # Search bar
             with Horizontal(id="search-bar"):
-                yield Label("Filter: ", id="search-label")
+                yield Label("Filter:", id="search-label")
                 yield Input(placeholder="Type to filter...", id="search-input")
 
             # Main data table wrapped in scroll container
@@ -171,7 +178,6 @@ class ExperimentSelectorScreen(Screen):
         table.add_column("Seq", width=5)
         table.add_column("Date", width=12)
         table.add_column("Time", width=10)
-        table.add_column("Proc", width=6)
 
         # For IVg experiments, VG is swept so show VDS instead
         # For ITS experiments, show VG (gate bias during time series)
@@ -182,6 +188,10 @@ class ExperimentSelectorScreen(Screen):
 
         table.add_column("λ (nm)", width=8)
         table.add_column("LED V", width=7)
+
+        # Add Duration column for ITS experiments
+        if self.proc_filter == "ITS":
+            table.add_column("Duration", width=10)
 
         # Filter data
         df = self.history_df
@@ -220,7 +230,6 @@ class ExperimentSelectorScreen(Screen):
             # Extract data
             date_str = str(row.get("date", ""))
             time_str = str(row.get("time_hms", ""))
-            proc = str(row.get("proc", ""))
             summary = str(row.get("summary", ""))
 
             # Get voltage info based on procedure type
@@ -243,17 +252,23 @@ class ExperimentSelectorScreen(Screen):
             # Check mark if selected
             check = "✓" if idx in self.selected_rows else " "
 
-            table.add_row(
+            # Build row data based on procedure type
+            row_data = [
                 check,
                 str(seq),
                 date_str,
                 time_str,
-                proc,
                 voltage_str,
                 wl_str,
                 led_str,
-                key=str(idx)
-            )
+            ]
+
+            # Add Duration for ITS experiments
+            if self.proc_filter == "ITS":
+                duration = self._extract_duration(row)
+                row_data.append(duration)
+
+            table.add_row(*row_data, key=str(idx))
 
     def _extract_vds(self, row: dict) -> Optional[float]:
         """Extract VDS value from row."""
@@ -347,6 +362,49 @@ class ExperimentSelectorScreen(Screen):
                     pass
 
         return None
+
+    def _extract_duration(self, row: dict) -> str:
+        """Extract and calculate duration from ITS experiment.
+
+        Duration = (Laser ON+OFF period) * 1.5
+
+        The "Laser ON+OFF period" is the sum of ON time + OFF time.
+        Duration is calculated as 1.5x this period.
+        """
+        # Try to get "Laser ON+OFF period" from metadata
+        for key in ["Laser ON+OFF period", "Laser ON+OFF period (s)", "ON+OFF period"]:
+            if key in row:
+                try:
+                    period = float(row[key])
+                    if period > 0:
+                        duration = period * 1.5
+                        # Format nicely (remove .0 if whole number)
+                        if duration == int(duration):
+                            return f"{int(duration)}s"
+                        else:
+                            return f"{duration:.1f}s"
+                except (TypeError, ValueError):
+                    pass
+
+        # Try to extract from summary field as fallback
+        summary = str(row.get("summary", ""))
+        import re
+
+        # Look for pattern like "120s period" or "period: 120s"
+        m = re.search(r"(?:period|ON\+OFF)[:=\s]+(\d+\.?\d*)s?", summary, re.IGNORECASE)
+        if m:
+            try:
+                period = float(m.group(1))
+                duration = period * 1.5
+                if duration == int(duration):
+                    return f"{int(duration)}s"
+                else:
+                    return f"{duration:.1f}s"
+            except ValueError:
+                pass
+
+        # Default: unknown
+        return "-"
 
     def _update_stats(self) -> None:
         """Update the statistics display."""
@@ -474,34 +532,37 @@ class ExperimentSelectorApp(App):
     }
 
     #title {
-        text-align: center;
+        text-align: left;
         text-style: bold;
         color: cyan;
-        height: auto;
-        dock: top;
+        height: 1;
+        padding: 0 2;
     }
 
     #stats {
-        text-align: center;
-        height: auto;
-        dock: top;
+        text-align: left;
+        height: 1;
+        padding: 0 2;
     }
 
     #controls-text {
-        text-align: center;
+        text-align: left;
         color: $accent;
-        height: auto;
-        dock: top;
+        height: 1;
+        padding: 0 2;
+    }
+
+    #spacer {
+        height: 1;
     }
 
     #search-bar {
-        height: 3;
-        dock: top;
+        height: 1;
+        padding: 0 2;
     }
 
     #search-label {
         width: 10;
-        padding-top: 1;
     }
 
     #search-input {
@@ -511,6 +572,7 @@ class ExperimentSelectorApp(App):
     #table-container {
         height: 1fr;
         border: solid $primary;
+        margin: 0 2;
     }
 
     #experiments-table {
@@ -519,7 +581,7 @@ class ExperimentSelectorApp(App):
 
     #selection-count {
         text-align: center;
-        height: auto;
+        height: 1;
         dock: bottom;
     }
     """
