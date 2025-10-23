@@ -15,6 +15,11 @@ from textual.widgets import Header, Footer, Static, Button
 from textual.binding import Binding
 from textual import events
 
+try:
+    import polars as pl
+except ImportError:
+    pl = None
+
 
 class PreviewScreen(Screen):
     """Preview screen showing configuration before plot generation (Step 5/6)."""
@@ -26,6 +31,8 @@ class PreviewScreen(Screen):
         plot_type: str,
         seq_numbers: List[int],
         config: dict,
+        metadata_dir: Optional[Path] = None,
+        raw_dir: Optional[Path] = None,
     ):
         super().__init__()
         self.chip_number = chip_number
@@ -33,6 +40,8 @@ class PreviewScreen(Screen):
         self.plot_type = plot_type
         self.seq_numbers = seq_numbers
         self.config = config
+        self.metadata_dir = metadata_dir or Path("metadata")
+        self.raw_dir = raw_dir or Path("raw_data")
 
     BINDINGS = [
         Binding("escape", "back", "Back", priority=True),
@@ -158,6 +167,14 @@ class PreviewScreen(Screen):
             if len(self.seq_numbers) > 20:
                 seq_str += f", ... ({len(self.seq_numbers) - 20} more)"
             yield Static(f"Seq numbers: {seq_str}", classes="info-text")
+
+            # Check for duration warnings (ITS only)
+            duration_warning = self._check_duration_warnings()
+            if duration_warning:
+                yield Static(
+                    f"⚠ {duration_warning}",
+                    classes="warning-text"
+                )
 
             # Configuration Section
             yield Static("─── Configuration ──────────────────────", classes="section-title")
@@ -309,6 +326,14 @@ class PreviewScreen(Screen):
 
         # Plot-specific options
         if self.plot_type == "ITS":
+            # Show preset name if used
+            preset_name = self.config.get("preset")
+            if preset_name:
+                from src.plotting.its_presets import get_preset
+                preset = get_preset(preset_name)
+                if preset:
+                    lines.append(f"• Preset: {preset.name}")
+
             legend_by = self.config.get("legend_by", "led_voltage")
             legend_map = {
                 "led_voltage": "LED Voltage",
@@ -317,8 +342,16 @@ class PreviewScreen(Screen):
             }
             lines.append(f"• Legend by: {legend_map.get(legend_by, legend_by)}")
 
-            baseline = self.config.get("baseline", 60.0)
-            lines.append(f"• Baseline time: {baseline} s")
+            # Show baseline mode
+            baseline_mode = self.config.get("baseline_mode", "fixed")
+            if baseline_mode == "none":
+                lines.append("• Baseline: None (no correction)")
+            elif baseline_mode == "auto":
+                divisor = self.config.get("baseline_auto_divisor", 2.0)
+                lines.append(f"• Baseline: Auto (LED period / {divisor})")
+            else:  # fixed
+                baseline = self.config.get("baseline", 60.0)
+                lines.append(f"• Baseline time: {baseline} s")
 
             padding = self.config.get("padding", 0.05)
             lines.append(f"• Y-axis padding: {padding * 100:.1f}%")
@@ -389,3 +422,56 @@ class PreviewScreen(Screen):
             filename = f"encap{self.chip_number}_{self.plot_type}_{plot_tag}.png"
 
         return filename
+
+    def _check_duration_warnings(self) -> Optional[str]:
+        """Check for duration mismatch warnings in ITS experiments.
+
+        Returns warning message if duration mismatch detected, None otherwise.
+        """
+        # Only check for ITS plots
+        if self.plot_type != "ITS":
+            return None
+
+        # Only check if enabled in config
+        if not self.config.get("check_duration_mismatch", False):
+            return None
+
+        # Need polars to load metadata
+        if pl is None:
+            return None
+
+        try:
+            # Load metadata using combine_metadata_by_seq approach
+            from src.plots import combine_metadata_by_seq
+
+            df = combine_metadata_by_seq(
+                metadata_dir=self.metadata_dir,
+                raw_data_dir=self.raw_dir,
+                chip=float(self.chip_number),
+                seq_numbers=self.seq_numbers,
+                chip_group_name=self.chip_group
+            )
+
+            if df is None or len(df) == 0:
+                return None
+
+            # Get durations from metadata
+            from src.plotting.its import _get_experiment_durations, _check_duration_mismatch
+
+            durations = _get_experiment_durations(df, self.raw_dir)
+
+            if not durations:
+                return None
+
+            # Check for mismatches
+            tolerance = self.config.get("duration_tolerance", 0.10)
+            has_mismatch, warning_msg = _check_duration_mismatch(durations, tolerance)
+
+            if has_mismatch:
+                return warning_msg
+
+            return None
+
+        except Exception:
+            # Silently ignore errors during warning check
+            return None

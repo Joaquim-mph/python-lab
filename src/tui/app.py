@@ -13,6 +13,7 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 
 from src.tui.screens.main_menu import MainMenuScreen
+from src.tui.config_manager import ConfigManager
 
 
 class PlotterApp(App):
@@ -85,6 +86,9 @@ class PlotterApp(App):
             "output_dir": output_dir,
             "chip_group": chip_group,
         }
+
+        # Initialize configuration manager
+        self.config_manager = ConfigManager()
 
     def on_mount(self) -> None:
         """Set theme and show main menu on startup."""

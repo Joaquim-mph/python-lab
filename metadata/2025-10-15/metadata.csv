@@ -1,5 +1,5 @@
-Irange,NPLC,Burn-in time,Chip group name,Chip number,Information,Laser voltage,Laser wavelength,Procedure version,Sample,Step time,VDS,VG end,VG start,VG step,Laser toggle,source_file,start_time,time_hms,T step start time,Initial (current) T,Laser ON+OFF period,Sampling time (excluding Keithley),Target T,VG
-0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/2025-10-15/IVg2025-10-15_1.csv,1760533665.0351331,10:07:45,,,,,,
-0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/2025-10-15/IVg2025-10-15_2.csv,1760536619.058638,10:56:59,,,,,,
-0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/2025-10-15/IVg2025-10-15_3.csv,1760552050.9539292,15:14:10,,,,,,
-0.0001,1.0,,Alisson,67.0,Light testing - hbn,1.05,365.0,2.2.0,other,,0.1,,,,true,raw_data/2025-10-15/It2025-10-15_1.csv,1760536070.279681,10:47:50,120.0,0.0,120.0,0.0,25.0,-0.4
+Irange,NPLC,Burn-in time,Chip group name,Chip number,Information,Laser voltage,Laser wavelength,Procedure version,Sample,Step time,VDS,VG end,VG start,VG step,Laser toggle,has_light,source_file,start_time,time_hms,T step start time,Initial (current) T,Laser ON+OFF period,Sampling time (excluding Keithley),Target T,VG
+0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-15/IVg2025-10-15_1.csv,1760533665.0351331,10:07:45,,,,,,
+0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-15/IVg2025-10-15_2.csv,1760536619.058638,10:56:59,,,,,,
+0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-15/IVg2025-10-15_3.csv,1760552050.9539292,15:14:10,,,,,,
+0.0001,1.0,,Alisson,67.0,Light testing - hbn,1.05,365.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-15/It2025-10-15_1.csv,1760536070.279681,10:47:50,120.0,0.0,120.0,0.0,25.0,-0.4

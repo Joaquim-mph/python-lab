@@ -17,17 +17,143 @@ PLOT_START_TIME = 20.0
 FIG_DIR = Path("figs")
 FIGSIZE: Tuple[float, float] = (24.0, 17.0)
 
+
+def _calculate_auto_baseline(df: pl.DataFrame, divisor: float = 2.0) -> float:
+    """
+    Calculate automatic baseline from LED ON+OFF period metadata.
+
+    Parameters
+    ----------
+    df : pl.DataFrame
+        Metadata dataframe containing ITS experiments
+    divisor : float
+        Divisor for baseline calculation (period / divisor).
+        Default: 2.0 (baseline at half the period)
+
+    Returns
+    -------
+    float
+        Calculated baseline time, or 60.0 if period not found
+    """
+    if "Laser ON+OFF period" not in df.columns:
+        print("[warn] Could not auto-detect LED period (column missing), using baseline_t=60.0")
+        return 60.0
+
+    periods = []
+    for row in df.iter_rows(named=True):
+        try:
+            period = float(row["Laser ON+OFF period"])
+            if np.isfinite(period) and period > 0:
+                periods.append(period)
+        except Exception:
+            pass
+
+    if periods:
+        median_period = float(np.median(periods))
+        baseline = median_period / divisor
+        print(f"[info] Auto baseline: {baseline:.1f}s (median period {median_period:.1f}s / {divisor})")
+        return baseline
+
+    print("[warn] Could not auto-detect LED period (no valid values), using baseline_t=60.0")
+    return 60.0
+
+
+def _check_duration_mismatch(
+    durations: list[float],
+    tolerance: float = 0.10
+) -> tuple[bool, str | None]:
+    """
+    Check if experiment durations vary beyond tolerance.
+
+    Parameters
+    ----------
+    durations : list[float]
+        List of experiment durations in seconds
+    tolerance : float
+        Maximum allowed variation as fraction (0.10 = 10%)
+
+    Returns
+    -------
+    has_mismatch : bool
+        True if durations vary > tolerance
+    warning_msg : str or None
+        Warning message with details, or None if OK
+    """
+    if not durations or len(durations) < 2:
+        return False, None
+
+    min_dur = min(durations)
+    max_dur = max(durations)
+    median_dur = np.median(durations)
+
+    # Calculate variation from median
+    variations = [(abs(d - median_dur) / median_dur) for d in durations]
+    max_variation = max(variations)
+
+    if max_variation > tolerance:
+        warning_msg = (
+            f"⚠ Duration mismatch detected!\n"
+            f"  Experiments have different durations: {min_dur:.1f}s - {max_dur:.1f}s\n"
+            f"  Variation: {max_variation*100:.1f}% (tolerance: {tolerance*100:.1f}%)\n"
+            f"  This may cause inconsistent x-axis scaling."
+        )
+        return True, warning_msg
+
+    return False, None
+
+
+def _get_experiment_durations(df: pl.DataFrame, base_dir: Path) -> list[float]:
+    """
+    Extract experiment durations from measurement data.
+
+    Parameters
+    ----------
+    df : pl.DataFrame
+        Metadata dataframe with ITS experiments
+    base_dir : Path
+        Base directory containing measurement files
+
+    Returns
+    -------
+    list[float]
+        List of experiment durations in seconds
+    """
+    durations = []
+    its = df.filter(pl.col("proc") == "ITS")
+
+    for row in its.iter_rows(named=True):
+        path = base_dir / row["source_file"]
+        if not path.exists():
+            continue
+
+        try:
+            d = _read_measurement(path)
+            if "t" in d.columns:
+                tt = np.asarray(d["t"])
+                if tt.size > 0:
+                    durations.append(float(tt[-1]))
+        except Exception:
+            pass
+
+    return durations
+
+
 def plot_its_overlay(
     df: pl.DataFrame,
     base_dir: Path,
     tag: str,
-    baseline_t: float = 60.0,
+    baseline_t: float | None = 60.0,
     *,
+    baseline_mode: str = "fixed",  # "fixed", "auto", or "none"
+    baseline_auto_divisor: float = 2.0,  # Used when baseline_mode="auto"
+    plot_start_time: float = PLOT_START_TIME,  # Configurable start time
     legend_by: str = "wavelength",  # "wavelength" (default), "vg", or "led_voltage"
     padding: float = 0.02,  # fraction of data range to add as padding (0.02 = 2%)
+    check_duration_mismatch: bool = False,  # Enable duration check
+    duration_tolerance: float = 0.10,  # Tolerance for duration warnings (10%)
 ):
     """
-    Overlay ITS traces baseline-corrected at `baseline_t`.
+    Overlay ITS traces with flexible baseline and preset support.
 
     Parameters
     ----------
@@ -37,8 +163,20 @@ def plot_its_overlay(
         Base directory containing measurement files
     tag : str
         Tag for output filename
-    baseline_t : float
-        Time point for baseline correction (default: 60.0 seconds)
+    baseline_t : float or None, optional
+        Time point for baseline correction (used if baseline_mode="fixed").
+        Default: 60.0 seconds
+    baseline_mode : {"fixed", "auto", "none"}
+        Baseline correction mode:
+        - "fixed": Use baseline_t value
+        - "auto": Calculate from LED ON+OFF period / baseline_auto_divisor
+        - "none": No baseline correction (for dark experiments)
+        Default: "fixed"
+    baseline_auto_divisor : float
+        Divisor for auto baseline calculation (period / divisor).
+        Default: 2.0 (baseline at half the period)
+    plot_start_time : float
+        Start time for x-axis in seconds. Default: PLOT_START_TIME constant (20.0s)
     legend_by : {"wavelength","vg","led_voltage"}
         Use wavelength labels like "365 nm" (default), gate voltage labels like "3 V",
         or LED/laser voltage labels like "2.5 V".
@@ -47,11 +185,50 @@ def plot_its_overlay(
     padding : float, optional
         Fraction of data range to add as padding on y-axis (default: 0.02 = 2%).
         Set to 0 for no padding, or increase for more whitespace around data.
-        X-axis uses PLOT_START_TIME constant to avoid noisy data at the start.
+    check_duration_mismatch : bool
+        If True, check for duration mismatches and print warnings.
+        Default: False
+    duration_tolerance : float
+        Maximum allowed variation in durations as fraction (0.10 = 10%).
+        Only used if check_duration_mismatch=True.
+
+    Examples
+    --------
+    >>> # Dark experiments (no baseline)
+    >>> plot_its_overlay(df, Path("raw_data"), "dark", baseline_mode="none",
+    ...                  plot_start_time=1.0, legend_by="vg")
+
+    >>> # Auto baseline from LED period
+    >>> plot_its_overlay(df, Path("raw_data"), "power_sweep", baseline_mode="auto",
+    ...                  legend_by="led_voltage", check_duration_mismatch=True)
     """
     # Apply plot style (lazy initialization for thread-safety)
     from src.plotting.styles import set_plot_style
     set_plot_style("prism_rain")
+
+    # --- Handle baseline mode ---
+    if baseline_mode == "auto":
+        # Calculate baseline from LED ON+OFF period
+        baseline_t = _calculate_auto_baseline(df, baseline_auto_divisor)
+        apply_baseline = True
+    elif baseline_mode == "none":
+        # No baseline correction for dark experiments
+        baseline_t = None
+        apply_baseline = False
+        print("[info] Baseline correction disabled (dark experiment mode)")
+    else:  # baseline_mode == "fixed"
+        # Use provided baseline_t value
+        if baseline_t is None:
+            baseline_t = 60.0
+            print("[warn] baseline_mode='fixed' but baseline_t=None, using 60.0")
+        apply_baseline = True
+
+    # --- Check duration mismatch if requested ---
+    if check_duration_mismatch:
+        durations = _get_experiment_durations(df, base_dir)
+        has_mismatch, warning = _check_duration_mismatch(durations, duration_tolerance)
+        if has_mismatch:
+            print(warning)
 
     # --- normalize legend_by to a canonical value ---
     lb = legend_by.strip().lower()
@@ -206,9 +383,13 @@ def plot_its_overlay(
             idx = np.argsort(tt)
             tt = tt[idx]; yy = yy[idx]
 
-        # baseline @ baseline_t
-        I0 = interpolate_baseline(tt, yy, baseline_t, warn_extrapolation=True)
-        yy_corr = yy - I0
+        # baseline correction (if enabled)
+        if apply_baseline:
+            I0 = interpolate_baseline(tt, yy, baseline_t, warn_extrapolation=True)
+            yy_corr = yy - I0
+        else:
+            # No baseline correction for dark experiments
+            yy_corr = yy
 
         # --- label based on legend_by ---
         if lb == "wavelength":
@@ -239,9 +420,9 @@ def plot_its_overlay(
                 lbl = f"#{int(row['file_idx'])}"
                 legend_title = "Trace"
 
-        # Store y-values ONLY for the visible time window (t >= PLOT_START_TIME)
+        # Store y-values ONLY for the visible time window (t >= plot_start_time)
         # This ensures padding is calculated from data actually shown in the plot
-        visible_mask = tt >= PLOT_START_TIME
+        visible_mask = tt >= plot_start_time
         all_y_values.extend((yy_corr * 1e6)[visible_mask])
 
         plt.plot(tt, yy_corr * 1e6, label=lbl)
@@ -276,7 +457,12 @@ def plot_its_overlay(
     if t_totals:
         T_total = float(np.median(t_totals))
         if np.isfinite(T_total) and T_total > 0:
-            plt.xlim(PLOT_START_TIME, T_total)
+            plt.xlim(plot_start_time, T_total)
+
+            # Enable scientific notation for long-duration measurements (> 1000s)
+            if T_total > 1000:
+                ax = plt.gca()
+                ax.ticklabel_format(style='scientific', axis='x', scilimits=(0,0))
 
     # Calculate light window shading
     t0 = t1 = None
@@ -498,9 +684,13 @@ def plot_its_dark(
             idx = np.argsort(tt)
             tt = tt[idx]; yy = yy[idx]
 
-        # baseline @ baseline_t
-        I0 = interpolate_baseline(tt, yy, baseline_t, warn_extrapolation=True)
-        yy_corr = yy - I0
+        # baseline correction (if enabled)
+        if apply_baseline:
+            I0 = interpolate_baseline(tt, yy, baseline_t, warn_extrapolation=True)
+            yy_corr = yy - I0
+        else:
+            # No baseline correction for dark experiments
+            yy_corr = yy
 
         # --- label based on legend_by ---
         if lb == "wavelength":
@@ -528,8 +718,8 @@ def plot_its_dark(
                 lbl = f"#{int(row['file_idx'])}"
                 legend_title = "Trace"
 
-        # Store y-values ONLY for the visible time window (t >= PLOT_START_TIME)
-        visible_mask = tt >= PLOT_START_TIME
+        # Store y-values ONLY for the visible time window (t >= plot_start_time)
+        visible_mask = tt >= plot_start_time
         all_y_values.extend((yy_corr * 1e6)[visible_mask])
 
         plt.plot(tt, yy_corr * 1e6, label=lbl)
@@ -548,7 +738,12 @@ def plot_its_dark(
     if t_totals:
         T_total = float(np.median(t_totals))
         if np.isfinite(T_total) and T_total > 0:
-            plt.xlim(PLOT_START_TIME, T_total)
+            plt.xlim(plot_start_time, T_total)
+
+            # Enable scientific notation for long-duration measurements (> 1000s)
+            if T_total > 1000:
+                ax = plt.gca()
+                ax.ticklabel_format(style='scientific', axis='x', scilimits=(0,0))
 
     plt.xlabel(r"$t\ (\mathrm{s})$")
     plt.ylabel(r"$\Delta I_{ds}\ (\mu\mathrm{A})$")

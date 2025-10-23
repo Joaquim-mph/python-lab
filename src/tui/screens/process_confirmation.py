@@ -109,14 +109,14 @@ class ProcessConfirmationScreen(Screen):
                 "This will run the full processing pipeline:\n\n"
                 "• Parse all metadata from raw CSV files\n"
                 "• Rebuild chip histories\n"
-                "• Process all chips (~40 MB)\n"
+                "• Process all chips\n"
                 "• Overwrite existing metadata and history files",
                 id="description"
             )
 
             yield Static("Running full pipeline directly", id="command")
 
-            yield Static("⚠ This may take a few minutes", id="warning")
+            yield Static("⚠ This may take a while", id="warning")
 
             yield Static("", id="status")
 

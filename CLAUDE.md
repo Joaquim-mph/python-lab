@@ -126,7 +126,7 @@ plot_ivg_transconductance(meta_ivg, Path("."), "cross_day_gm")
 
 ### TUI Architecture (Textual Framework)
 
-The TUI is built with [Textual 0.60.0](https://textual.textualize.io/), a modern Python framework for terminal user interfaces.
+The TUI is built with [Textual 6.3.0](https://textual.textualize.io/), a modern Python framework for terminal user interfaces.
 
 **Main Components:**
 
@@ -137,14 +137,17 @@ The TUI is built with [Textual 0.60.0](https://textual.textualize.io/), a modern
    - Shared state via `plot_config` dictionary
 
 2. **Screens (`src/tui/screens/`)**
-   - `MainMenuScreen` - Entry point with main actions
+   - `MainMenuScreen` - Entry point with main actions (New Plot, Recent Configs, Process Data)
    - `ChipSelectorScreen` - Auto-discover chips from metadata
    - `PlotTypeSelectorScreen` - Choose ITS/IVg/Transconductance
+   - `ConfigModeSelectorScreen` - Choose Quick (defaults) vs Custom (full config)
+   - `RecentConfigsScreen` - Load, view, export, import, delete saved configurations
    - `ExperimentSelectorScreen` - Interactive multi-select from chip history
+   - `ITSConfigScreen` / `IVgConfigScreen` / `TransconductanceConfigScreen` - Custom configuration screens
    - `PreviewScreen` - Review config before generation
    - `PlotGenerationScreen` - Real-time progress with background threading
-   - `PlotSuccessScreen` / `PlotErrorScreen` - Results and error handling
-   - `ProcessConfirmationScreen` - Metadata generation dialog
+   - `PlotSuccessScreen` / `PlotErrorScreen` - Results and error handling with retry/edit options
+   - `ProcessConfirmationScreen` / `ProcessLoadingScreen` / `ProcessSuccessScreen` / `ProcessErrorScreen` - Metadata generation workflow
 
 3. **Key Patterns**
    - **Screen Navigation**: Stack-based with `push_screen()` / `pop_screen()`
@@ -152,6 +155,15 @@ The TUI is built with [Textual 0.60.0](https://textual.textualize.io/), a modern
    - **Background Threading**: Plot generation runs in daemon thread with `call_from_thread()` for UI updates
    - **State Passing**: Constructor params + global `plot_config` dict
    - **Visual Feedback**: Arrow indicators (→), color changes, bold text on focus
+
+3. **Supporting Modules**
+   - `ConfigManager` (`src/tui/config_manager.py`) - Configuration persistence
+     - Save/load plot configurations
+     - Auto-generate descriptions
+     - Export/import configs as JSON
+     - Search and statistics
+   - `src/tui/utils.py` - TUI utility functions
+   - `src/tui/widgets/` - Custom widgets (if any)
 
 **Critical TUI Implementation Details:**
 
@@ -163,12 +175,42 @@ The TUI is built with [Textual 0.60.0](https://textual.textualize.io/), a modern
 - **Focus Styling**: Use CSS `:focus` pseudo-class + `on_button_focus()` for arrows
 - **Arrow Navigation**: Implement `on_key()` handler with `event.prevent_default()`
 - **Button Variants**: Use `variant="default"` for uniform styling (not "primary")
+- **Config Persistence**: Automatically save successful plot configs via `ConfigManager`
+  - Saved after successful plot generation in `PlotSuccessScreen`
+  - Config includes all parameters: chip, plot type, filters, legend settings
+  - Stored in `~/.lab_plotter_configs.json`
 
 **Entry Point:** `tui_app.py` - Launches PlotterApp with default paths
 
+**Configuration Persistence:**
+- **`ConfigManager`** (`src/tui/config_manager.py`) - Manages saved plot configurations
+  - Stores configurations as JSON in `~/.lab_plotter_configs.json`
+  - Auto-generates descriptions from config parameters
+  - Supports export/import of individual configs
+  - Maximum 20 recent configs (configurable)
+  - Search by description or parameters
+- **Recent Configurations** - Load and reuse previous plot settings
+  - Access via Main Menu → "Recent Configurations"
+  - View all saved configs in sortable table
+  - Load config directly to preview screen
+  - Export/import configs as JSON files
+  - Delete unwanted configs
+
+**Configuration Modes:**
+- **Quick Plot** - Smart defaults, just select experiments interactively
+  - Goes directly to experiment selector with multi-select table
+  - Uses sensible defaults for all parameters
+  - Best for routine plotting
+- **Custom Plot** - Full parameter control
+  - ITS: baseline, padding, filters, legend style
+  - IVg: VDS filter, date filter, selection mode
+  - Transconductance: method (gradient/savgol), savgol parameters, filters
+  - All validations with user-friendly error messages
+
 See **`TUI_GUIDE.md`** for complete TUI documentation including:
-- Wizard workflow (7 steps)
+- Wizard workflow (now 8 steps with config mode selection)
 - Keyboard navigation reference
+- Configuration persistence guide
 - Focus management patterns
 - Background threading guide
 - Troubleshooting common issues
@@ -328,15 +370,20 @@ Metadata CSV columns (sample):
 **Core Analysis:**
 - `polars>=0.19.0` - Fast dataframe operations with lazy evaluation
 - `numpy>=1.24.0` - Numerical computing
-- `scipy` - Signal processing (Savitzky-Golay filtering for transconductance)
+- `scipy>=1.11.0` - Signal processing (Savitzky-Golay filtering for transconductance)
 - `matplotlib>=3.7.0` + `scienceplots>=2.0.0` - Plotting with publication-ready styles
 - `imageio>=2.28.0` + `Pillow>=10.0.0` - GIF animation generation
 
+**CLI:**
+- `typer>=0.9.0` - Command-line interface framework
+- `rich>=13.0.0` - Rich terminal output (tables, progress bars, styling)
+
 **TUI:**
-- `textual==0.60.0` - Terminal user interface framework
+- `textual==6.3.0` - Terminal user interface framework
 - `rich>=13.0.0` - Rich text and formatting (used by Textual)
 
 **Optional:**
+- `ipython>=8.0.0` - Enhanced Python shell
 - `jupyter>=1.0.0` - Interactive notebooks for exploratory analysis
 
 ### Common Issues

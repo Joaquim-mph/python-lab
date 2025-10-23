@@ -233,11 +233,11 @@ class ConfigModeSelectorScreen(Screen):
         else:
             # Go to custom config screen for the plot type
             if self.plot_type == "ITS":
-                from src.tui.screens.its_config import ITSConfigScreen
-                self.app.push_screen(ITSConfigScreen(
+                # For ITS, go to preset selector first
+                from src.tui.screens.its_preset_selector import ITSPresetSelectorScreen
+                self.app.push_screen(ITSPresetSelectorScreen(
                     chip_number=self.chip_number,
                     chip_group=self.chip_group,
-                    plot_type=self.plot_type,
                 ))
             elif self.plot_type == "IVg":
                 from src.tui.screens.ivg_config import IVgConfigScreen

@@ -122,6 +122,8 @@ class ExperimentSelectorScreen(Screen):
                 plot_type=self.plot_type,
                 seq_numbers=result,
                 config=config,
+                metadata_dir=self.metadata_dir,
+                raw_dir=self.raw_dir,
             ))
 
     def action_cancel(self) -> None:

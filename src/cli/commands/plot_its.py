@@ -5,8 +5,10 @@ from pathlib import Path
 from typing import Optional
 from rich.console import Console
 from rich.panel import Panel
+from rich.table import Table
 
 from src.plotting import its, plot_utils
+from src.plotting.its_presets import PRESETS, get_preset, preset_summary
 from src.cli.helpers import (
     parse_seq_list,
     generate_plot_tag,
@@ -21,6 +23,46 @@ from src.cli.helpers import (
 import polars as pl
 
 console = Console()
+
+
+def list_presets_command():
+    """List all available ITS plot presets with descriptions."""
+    console.print()
+    console.print(Panel.fit(
+        "[bold cyan]Available ITS Plot Presets[/bold cyan]",
+        border_style="cyan"
+    ))
+    console.print()
+
+    table = Table(show_header=True, header_style="bold cyan", show_lines=True)
+    table.add_column("Preset Name", style="yellow", width=20)
+    table.add_column("Description", style="white", width=40)
+    table.add_column("Configuration", style="dim", width=50)
+
+    for name, preset in PRESETS.items():
+        # Build config summary
+        config_lines = []
+        if preset.baseline_mode == "none":
+            config_lines.append("• No baseline correction")
+        elif preset.baseline_mode == "auto":
+            config_lines.append(f"• Auto baseline (period / {preset.baseline_auto_divisor})")
+        else:
+            config_lines.append(f"• Fixed baseline: {preset.baseline_value}s")
+
+        config_lines.append(f"• Plot start: {preset.plot_start_time}s")
+        config_lines.append(f"• Legend by: {preset.legend_by}")
+        if preset.check_duration_mismatch:
+            config_lines.append(f"• Duration check: ±{preset.duration_tolerance*100:.0f}%")
+
+        config_str = "\n".join(config_lines)
+
+        table.add_row(name, preset.description, config_str)
+
+    console.print(table)
+    console.print()
+    console.print("[dim]Usage: [cyan]plot-its --preset <preset_name>[/cyan][/dim]")
+    console.print("[dim]Example: [cyan]plot-its 67 --seq 52,57,58 --preset dark[/cyan][/dim]")
+    console.print()
 
 
 def _all_its_are_dark(meta: pl.DataFrame) -> bool:
@@ -119,10 +161,16 @@ def plot_its_command(
         "--padding",
         help="Y-axis padding (fraction of data range, e.g., 0.05 = 5%)"
     ),
-    baseline_t: float = typer.Option(
-        60.0,
+    preset: Optional[str] = typer.Option(
+        None,
+        "--preset",
+        "-p",
+        help="Use preset configuration: dark, light_power_sweep, light_spectral, custom"
+    ),
+    baseline_t: Optional[float] = typer.Option(
+        None,
         "--baseline",
-        help="Baseline time in seconds for current correction"
+        help="Baseline time in seconds (overrides preset). Use --preset for smart defaults."
     ),
     vg: Optional[float] = typer.Option(
         None,
@@ -329,18 +377,77 @@ def plot_its_command(
 
         console.print(f"[green]✓[/green] Filtered: {original_count} → {meta.height} experiment(s)")
 
-    # Step 5: Display selected experiments
+    # Step 5: Apply preset configuration (if specified)
+    baseline_mode = "fixed"
+    baseline_auto_divisor = 2.0
+    plot_start_time = 20.0
+    check_duration_mismatch = False
+    duration_tolerance = 0.10
+
+    if preset:
+        # Validate preset name
+        if preset not in PRESETS:
+            console.print(f"[red]Error:[/red] Unknown preset '{preset}'")
+            console.print(f"[yellow]Available presets:[/yellow] {', '.join(PRESETS.keys())}")
+            console.print("[dim]Use 'plot-its-presets' to see detailed preset information[/dim]")
+            raise typer.Exit(1)
+
+        preset_config = PRESETS[preset]
+        console.print(f"\n[green]✓[/green] Using preset: [bold]{preset_config.name}[/bold]")
+        console.print(f"[dim]  {preset_config.description}[/dim]\n")
+
+        # Apply preset settings (can be overridden by CLI flags)
+        baseline_mode = preset_config.baseline_mode
+        baseline_auto_divisor = preset_config.baseline_auto_divisor
+        plot_start_time = preset_config.plot_start_time
+        check_duration_mismatch = preset_config.check_duration_mismatch
+        duration_tolerance = preset_config.duration_tolerance
+
+        # Apply baseline if not overridden
+        if baseline_t is None:
+            if baseline_mode == "fixed":
+                baseline_t = preset_config.baseline_value
+        else:
+            # CLI override: force fixed mode
+            baseline_mode = "fixed"
+            console.print(f"[dim]  Baseline overridden: {baseline_t}s (preset default ignored)[/dim]")
+
+        # Apply legend_by if not explicitly set (check if it's still the default)
+        # Note: We can't directly check if user set it, but we can use the preset's recommendation
+        if legend_by == "led_voltage":  # Default from argument
+            legend_by = preset_config.legend_by
+            console.print(f"[dim]  Legend by: {legend_by} (from preset)[/dim]")
+
+    # Fallback: If no preset and no baseline specified, use default
+    if baseline_t is None:
+        baseline_t = 60.0
+
+    # Step 6: Display selected experiments
     console.print()
     display_experiment_list(meta, title="ITS Experiments to Plot")
 
-    # Step 6: Display plot settings
+    # Step 7: Display plot settings
     console.print()
-    display_plot_settings({
+    settings = {
         "Legend by": legend_by,
-        "Baseline time": f"{baseline_t} s",
         "Padding": f"{padding:.2%}",
         "Output directory": str(output_dir)
-    })
+    }
+
+    if baseline_mode == "none":
+        settings["Baseline"] = "None (dark mode)"
+    elif baseline_mode == "auto":
+        settings["Baseline"] = f"Auto (LED period / {baseline_auto_divisor})"
+    else:
+        settings["Baseline"] = f"Fixed at {baseline_t} s"
+
+    if check_duration_mismatch:
+        settings["Duration check"] = f"Enabled (±{duration_tolerance*100:.0f}% tolerance)"
+
+    if plot_start_time != 20.0:
+        settings["Plot start time"] = f"{plot_start_time} s"
+
+    display_plot_settings(settings)
 
     # Step 7: Setup output directory and generate plot tag
     output_dir = setup_output_dir(output_dir, chip_number, chip_group)
@@ -388,8 +495,13 @@ def plot_its_command(
                 raw_dir,
                 plot_tag,
                 baseline_t=baseline_t,
+                baseline_mode=baseline_mode,
+                baseline_auto_divisor=baseline_auto_divisor,
+                plot_start_time=plot_start_time,
                 legend_by=legend_by,
-                padding=padding
+                padding=padding,
+                check_duration_mismatch=check_duration_mismatch,
+                duration_tolerance=duration_tolerance
             )
         else:
             its.plot_its_overlay(
@@ -397,8 +509,13 @@ def plot_its_command(
                 raw_dir,
                 plot_tag,
                 baseline_t=baseline_t,
+                baseline_mode=baseline_mode,
+                baseline_auto_divisor=baseline_auto_divisor,
+                plot_start_time=plot_start_time,
                 legend_by=legend_by,
-                padding=padding
+                padding=padding,
+                check_duration_mismatch=check_duration_mismatch,
+                duration_tolerance=duration_tolerance
             )
     except Exception as e:
         console.print(f"[red]Error generating plot:[/red] {e}")

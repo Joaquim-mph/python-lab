@@ -16,7 +16,7 @@ from src.cli.commands.data_pipeline import (
     quick_stats_command
 )
 from src.cli.commands.history import show_history_command
-from src.cli.commands.plot_its import plot_its_command
+from src.cli.commands.plot_its import plot_its_command, list_presets_command
 from src.cli.commands.plot_ivg import plot_ivg_command
 from src.cli.commands.plot_transconductance import plot_transconductance_command
 
@@ -38,6 +38,7 @@ app.command(name="show-history")(show_history_command)
 
 # Register plotting commands
 app.command(name="plot-its")(plot_its_command)
+app.command(name="plot-its-presets")(list_presets_command)
 app.command(name="plot-ivg")(plot_ivg_command)
 app.command(name="plot-transconductance")(plot_transconductance_command)
 

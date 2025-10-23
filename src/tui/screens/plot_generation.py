@@ -177,7 +177,7 @@ class PlotGenerationScreen(Screen):
                 its.FIG_DIR = output_dir
 
                 # Get ITS-specific config
-                legend_by = self.config.get("legend_by", "led_voltage")
+                legend_by = self.config.get("legend_by", "vg")  # Default to vg for ITS plots
                 baseline_t = self.config.get("baseline", 60.0)
                 padding = self.config.get("padding", 0.05)
 
@@ -206,13 +206,14 @@ class PlotGenerationScreen(Screen):
                             pass
 
                 # Call appropriate ITS plotting function
+                # For dark plots, always use vg legend (no LED/wavelength data)
                 if all_dark:
                     its.plot_its_dark(
                         meta,
                         raw_dir,
                         plot_tag,
                         baseline_t=baseline_t,
-                        legend_by=legend_by,
+                        legend_by="vg",  # Force vg for dark plots
                         padding=padding
                     )
                 else:
@@ -324,6 +325,23 @@ class PlotGenerationScreen(Screen):
 
     def _on_success(self, elapsed: float, output_path: Path, file_size: float) -> None:
         """Handle successful plot generation."""
+        # Save configuration for reuse
+        try:
+            # Prepare config for saving (include seq_numbers and plot settings)
+            save_config = {
+                **self.config,
+                "chip_number": self.chip_number,
+                "chip_group": self.chip_group,
+                "plot_type": self.plot_type,
+                "seq_numbers": self.seq_numbers,
+            }
+
+            # Save to ConfigManager
+            self.app.config_manager.save_config(save_config)
+        except Exception as e:
+            # Don't fail the success screen if config save fails
+            print(f"Warning: Failed to save configuration: {e}")
+
         # Replace current screen with success screen
         self.app.pop_screen()
 

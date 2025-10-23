@@ -22,13 +22,16 @@ python tui_app.py
 
 ### Basic Workflow
 
-1. **Main Menu** → Select "New Plot"
+1. **Main Menu** → Select "New Plot" or "Recent Configurations"
 2. **Select Chip** → Choose from auto-discovered chips
 3. **Select Plot Type** → ITS, IVg, or Transconductance
-4. **Select Experiments** → Interactive multi-select interface
-5. **Preview & Configure** → Review settings before generating
-6. **Generate Plot** → Watch progress in real-time
-7. **Success Screen** → View results and generate more plots
+4. **Choose Mode** → Quick (defaults) or Custom (full config)
+5. **Configure** → Select experiments or customize parameters
+6. **Preview** → Review all settings before generating
+7. **Generate Plot** → Watch progress in real-time
+8. **Success Screen** → View results, plot another, or return to menu
+
+**New!** Load saved configurations from "Recent Configurations" to skip steps 2-5.
 
 ## Keyboard Navigation
 
@@ -77,12 +80,36 @@ python tui_app.py
 
 **Options:**
 - **New Plot** - Start the plotting wizard
-- **Process New Data** - Generate metadata from raw files
-- **Recent Configurations** - (Coming soon)
+- **Process New Data** - Generate metadata from raw CSV files
+- **Recent Configurations** - Load previously saved plot configurations
 - **Batch Mode** - (Coming soon)
 - **Settings** - (Coming soon)
 - **Help** - Show keyboard shortcuts
 - **Quit** - Exit application
+
+### Step 1b: Recent Configurations (Optional Shortcut)
+
+**Screen:** RecentConfigsScreen
+**Purpose:** Load and reuse previously saved plot configurations
+
+**Features:**
+- View all saved configurations in sortable table (Date, Time, Description, Type)
+- Load config to skip wizard steps 2-5 (goes directly to Preview)
+- Export individual configs as JSON files
+- Import configs from JSON files
+- Delete unwanted configurations
+- Statistics showing total configs and breakdown by plot type
+
+**Navigation:**
+- Arrow keys to navigate table
+- Enter to load selected configuration
+- Delete key to remove configuration
+- Buttons for Export/Import/Delete/Back
+
+**Storage:**
+- Configurations saved to `~/.lab_plotter_configs.json`
+- Maximum 20 recent configs (oldest auto-deleted)
+- Auto-generated descriptions (e.g., "Alisson67 - ITS (Vg=3V, λ=455nm)")
 
 ### Step 2: Chip Selection
 
@@ -119,7 +146,30 @@ python tui_app.py
   - Two methods: gradient or Savitzky-Golay
   - Shows device gain characteristics
 
-### Step 4: Experiment Selection
+### Step 4: Configuration Mode Selection
+
+**Screen:** ConfigModeSelectorScreen
+**Purpose:** Choose between Quick (smart defaults) or Custom (full control) configuration
+
+**Options:**
+
+**Quick Plot:**
+- Use smart defaults for all parameters
+- Goes directly to experiment selector
+- Best for routine plotting
+- Minimal configuration needed
+
+**Custom Plot:**
+- Configure all parameters manually
+- Access to advanced options
+- Plot-type specific settings
+- For specialized analysis
+
+**Navigation:**
+- Arrow keys / Space to toggle selection
+- Enter to confirm and proceed
+
+### Step 5a: Experiment Selection (Quick Mode)
 
 **Screen:** ExperimentSelectorScreen
 **Purpose:** Interactively select which experiments to include
@@ -146,7 +196,77 @@ python tui_app.py
 - `λ` - Laser wavelength (if applicable)
 - `file` - Source filename
 
-### Step 5: Preview & Configuration
+### Step 5b: Custom Configuration (Custom Mode)
+
+**Screens:** `ITSConfigScreen` / `IVgConfigScreen` / `TransconductanceConfigScreen`
+**Purpose:** Detailed parameter configuration for each plot type
+
+#### ITS Custom Configuration
+
+**Parameters:**
+- **Selection Mode:**
+  - Interactive: Select experiments from table (like Quick mode)
+  - Auto: Automatically select all matching experiments
+  - Manual: Enter seq numbers directly (comma-separated)
+- **Baseline Time:** Time point for delta calculation (default: 60s)
+- **Y-axis Padding:** Extra space above/below data (0-1, default: 0.2)
+- **Legend By:** Group traces by (led_voltage, wavelength, vg, vds)
+- **Filters:**
+  - VG filter: Only experiments with specific gate voltage
+  - Wavelength filter: Only experiments with specific wavelength
+  - VDS filter: Only experiments with specific source-drain voltage
+  - Date filter: Only experiments from specific date (YYYY-MM-DD)
+- **Output Directory:** Where to save the plot
+
+**Validation:**
+- Baseline must be > 0
+- Padding must be 0-1
+- Wavelength must be 200-2000 nm
+- Date must be YYYY-MM-DD format
+- Manual mode requires at least one seq number
+
+#### IVg Custom Configuration
+
+**Parameters:**
+- **Selection Mode:** Interactive / Auto / Manual
+- **VDS Filter:** Only experiments with specific drain-source voltage
+- **Date Filter:** Only experiments from specific date
+- **Output Directory:** Where to save the plot
+
+**Validation:**
+- Date must be YYYY-MM-DD format
+- Manual mode requires at least one seq number
+
+#### Transconductance Custom Configuration
+
+**Parameters:**
+- **Method:**
+  - Gradient: Standard numpy gradient (fast, simple)
+  - Savgol: Savitzky-Golay filtering (smooth, reduces noise)
+- **Savgol Parameters** (only if method = savgol):
+  - Window Length: Points in smoothing window (must be odd, ≥3)
+  - Polynomial Order: Polynomial degree (must be < window_length, ≥1)
+  - Min Segment Length: Minimum points in voltage sweep segment (≥1)
+- **Selection Mode:** Interactive / Auto / Manual
+- **VDS Filter:** Only experiments with specific drain-source voltage
+- **Date Filter:** Only experiments from specific date
+- **Output Directory:** Where to save the plot
+
+**Validation:**
+- Window length must be odd and ≥3
+- Polynomial order must be < window_length and ≥1
+- Min segment length must be ≥1
+- Date must be YYYY-MM-DD format
+- Manual mode requires at least one seq number
+
+**Navigation (All Custom Config Screens):**
+- Tab / Shift+Tab to move between fields
+- Arrow keys for button navigation
+- Enter to proceed to next screen
+- Escape to go back
+- All validations show user-friendly error messages
+
+### Step 6: Preview & Configuration
 
 **Screen:** PreviewScreen
 **Purpose:** Review configuration before generating plot
@@ -173,7 +293,7 @@ python tui_app.py
 - Focused button highlighted with primary color + arrow (→)
 - All buttons start with neutral color
 
-### Step 6: Plot Generation
+### Step 7: Plot Generation
 
 **Screen:** PlotGenerationScreen
 **Purpose:** Show real-time progress during plot creation
@@ -198,7 +318,7 @@ python tui_app.py
 - Thread-safe progress updates via `app.call_from_thread()`
 - Automatic error handling with detailed messages
 
-### Step 7: Success/Error Screens
+### Step 8: Success/Error Screens
 
 **Success Screen (PlotSuccessScreen):**
 
@@ -208,6 +328,11 @@ python tui_app.py
 - File size (MB)
 - Number of experiments plotted
 - Generation time (seconds)
+
+**Actions Performed Automatically:**
+- **Configuration saved** to `~/.lab_plotter_configs.json`
+- Auto-generated description added
+- Accessible from "Recent Configurations" in main menu
 
 **Buttons:**
 - **Open File** - Open plot in default viewer (coming soon)
@@ -228,6 +353,30 @@ python tui_app.py
 - **Main Menu** - Return to main menu
 
 ## Advanced Features
+
+### Configuration Persistence
+
+**Automatic Saving:**
+- Every successful plot automatically saves its configuration
+- Stored in `~/.lab_plotter_configs.json`
+- Maximum 20 recent configs (oldest auto-deleted)
+- Auto-generated descriptions (e.g., "Alisson67 - ITS (Vg=3V, λ=455nm)")
+
+**Loading Saved Configs:**
+1. Main Menu → "Recent Configurations"
+2. Browse table of saved configs (sorted by date/time)
+3. Select and press Enter
+4. Skips directly to Preview screen
+5. Modify if needed or generate immediately
+
+**Export/Import:**
+- **Export:** Save single config to JSON file (`plot_config_YYYYMMDD_HHMMSS.json`)
+- **Import:** Load config from JSON file
+- Share configs between users or backup important settings
+
+**Searching:**
+- Stats show total configs and breakdown by plot type
+- Search by chip number, plot type, or parameters (via ConfigManager API)
 
 ### "Plot Another" Quick Workflow
 

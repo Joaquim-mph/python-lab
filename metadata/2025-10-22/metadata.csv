@@ -1,0 +1,3 @@
+Irange,NPLC,Burn-in time,Chip group name,Chip number,Information,Laser voltage,Laser wavelength,Procedure version,Sample,Step time,VDS,VG end,VG start,VG step,Laser toggle,has_light,source_file,start_time,time_hms,T step start time,Initial (current) T,Laser ON+OFF period,Sampling time (excluding Keithley),Target T,VG
+0.001,1.0,60.0,Alisson,81.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-22/IVg2025-10-22_1.csv,1761135584.9948347,09:19:44,,,,,,
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,0.0,455.0,2.2.0,other,,0.1,,,,false,false,raw_data/2025-10-22/It2025-10-22_1.csv,1761136346.8089535,09:32:26,120.0,0.0,27000.0,0.0,25.0,-0.3

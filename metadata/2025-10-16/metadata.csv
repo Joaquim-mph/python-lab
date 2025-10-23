@@ -1,18 +1,18 @@
-Irange,NPLC,Burn-in time,Chip group name,Chip number,Information,Laser voltage,Laser wavelength,Procedure version,Sample,Step time,VDS,VG end,VG start,VG step,Laser toggle,source_file,start_time,time_hms,T step start time,Initial (current) T,Laser ON+OFF period,Sampling time (excluding Keithley),Target T,VG
-0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/2025-10-16/IVg2025-10-16_1.csv,1760626859.7485747,12:00:59,,,,,,
-0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/2025-10-16/IVg2025-10-16_10.csv,1760669864.602082,23:57:44,,,,,,
-0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.01,false,raw_data/2025-10-16/IVg2025-10-16_11.csv,1760669939.1217337,23:58:59,,,,,,
-0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/2025-10-16/IVg2025-10-16_2.csv,1760626938.7282374,12:02:18,,,,,,
-0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/2025-10-16/IVg2025-10-16_3.csv,1760627804.4491167,12:16:44,,,,,,
-0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/2025-10-16/IVg2025-10-16_4.csv,1760628361.4252045,12:26:01,,,,,,
-0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/2025-10-16/IVg2025-10-16_5.csv,1760629672.850226,12:47:52,,,,,,
-0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/2025-10-16/IVg2025-10-16_6.csv,1760636632.1252725,14:43:52,,,,,,
-0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/2025-10-16/IVg2025-10-16_7.csv,1760640093.9525058,15:41:33,,,,,,
-0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/2025-10-16/IVg2025-10-16_8.csv,1760641830.873989,16:10:30,,,,,,
-0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,raw_data/2025-10-16/IVg2025-10-16_9.csv,1760647069.82681,17:37:49,,,,,,
-0.0001,1.0,,Alisson,67.0,Light testing - hbn,1.05,365.0,2.2.0,other,,0.1,,,,true,raw_data/2025-10-16/It2025-10-16_1.csv,1760627003.8860064,12:03:23,120.0,0.0,120.0,0.0,25.0,-0.4
-0.0001,1.0,,Alisson,67.0,Light testing - hbn,2.15,365.0,2.2.0,other,,0.1,,,,true,raw_data/2025-10-16/It2025-10-16_2.csv,1760627239.0781224,12:07:19,120.0,0.0,120.0,0.0,25.0,-0.4
-0.0001,1.0,,Alisson,67.0,Light testing - hbn,3.34,365.0,2.2.0,other,,0.1,,,,true,raw_data/2025-10-16/It2025-10-16_3.csv,1760627421.685254,12:10:21,120.0,0.0,120.0,0.0,25.0,-0.4
-0.0001,1.0,,Alisson,67.0,Light testing - hbn,4.6,365.0,2.2.0,other,,0.1,,,,true,raw_data/2025-10-16/It2025-10-16_4.csv,1760627604.2779555,12:13:24,120.0,0.0,120.0,0.0,25.0,-0.4
-0.0001,1.0,,Alisson,67.0,Light testing - hbn,1.05,365.0,2.2.0,other,,0.1,,,,true,raw_data/2025-10-16/It2025-10-16_5.csv,1760636725.8616135,14:45:25,120.0,0.0,120.0,0.0,25.0,-0.4
-0.0001,1.0,,Alisson,67.0,Light testing - hbn,0.0,365.0,2.2.0,other,,0.1,,,,false,raw_data/2025-10-16/It2025-10-16_6.csv,1760636908.366651,14:48:28,120.0,0.0,2000.0,0.0,25.0,-0.4
+Irange,NPLC,Burn-in time,Chip group name,Chip number,Information,Laser voltage,Laser wavelength,Procedure version,Sample,Step time,VDS,VG end,VG start,VG step,Laser toggle,has_light,source_file,start_time,time_hms,T step start time,Initial (current) T,Laser ON+OFF period,Sampling time (excluding Keithley),Target T,VG
+0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-16/IVg2025-10-16_1.csv,1760626859.7485747,12:00:59,,,,,,
+0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-16/IVg2025-10-16_10.csv,1760669864.602082,23:57:44,,,,,,
+0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.01,false,false,raw_data/2025-10-16/IVg2025-10-16_11.csv,1760669939.1217337,23:58:59,,,,,,
+0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-16/IVg2025-10-16_2.csv,1760626938.7282374,12:02:18,,,,,,
+0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-16/IVg2025-10-16_3.csv,1760627804.4491167,12:16:44,,,,,,
+0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-16/IVg2025-10-16_4.csv,1760628361.4252045,12:26:01,,,,,,
+0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-16/IVg2025-10-16_5.csv,1760629672.850226,12:47:52,,,,,,
+0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-16/IVg2025-10-16_6.csv,1760636632.1252725,14:43:52,,,,,,
+0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-16/IVg2025-10-16_7.csv,1760640093.9525058,15:41:33,,,,,,
+0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-16/IVg2025-10-16_8.csv,1760641830.873989,16:10:30,,,,,,
+0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-16/IVg2025-10-16_9.csv,1760647069.82681,17:37:49,,,,,,
+0.0001,1.0,,Alisson,67.0,Light testing - hbn,1.05,365.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-16/It2025-10-16_1.csv,1760627003.8860064,12:03:23,120.0,0.0,120.0,0.0,25.0,-0.4
+0.0001,1.0,,Alisson,67.0,Light testing - hbn,2.15,365.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-16/It2025-10-16_2.csv,1760627239.0781224,12:07:19,120.0,0.0,120.0,0.0,25.0,-0.4
+0.0001,1.0,,Alisson,67.0,Light testing - hbn,3.34,365.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-16/It2025-10-16_3.csv,1760627421.685254,12:10:21,120.0,0.0,120.0,0.0,25.0,-0.4
+0.0001,1.0,,Alisson,67.0,Light testing - hbn,4.6,365.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-16/It2025-10-16_4.csv,1760627604.2779555,12:13:24,120.0,0.0,120.0,0.0,25.0,-0.4
+0.0001,1.0,,Alisson,67.0,Light testing - hbn,1.05,365.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-16/It2025-10-16_5.csv,1760636725.8616135,14:45:25,120.0,0.0,120.0,0.0,25.0,-0.4
+0.0001,1.0,,Alisson,67.0,Light testing - hbn,0.0,365.0,2.2.0,other,,0.1,,,,false,false,raw_data/2025-10-16/It2025-10-16_6.csv,1760636908.366651,14:48:28,120.0,0.0,2000.0,0.0,25.0,-0.4

@@ -187,6 +187,7 @@ class TransconductanceConfigScreen(Screen):
 
         # Buttons
         with Horizontal(id="button-container"):
+            yield Button("Save Config", id="save-button", variant="default", classes="nav-button")
             yield Button("← Back", variant="default", id="back-button", classes="nav-button")
             yield Button("Next →", variant="default", id="next-button", classes="nav-button")
 
@@ -280,6 +281,41 @@ class TransconductanceConfigScreen(Screen):
             self.action_back()
         elif event.button.id == "next-button":
             self.action_next()
+        elif event.button.id == "save-button":
+            self.action_save_config()
+
+    def action_save_config(self) -> None:
+        """Save configuration for later reuse."""
+        config = self._collect_config()
+
+        # Validate configuration first
+        validation_error = self._validate_config(config)
+        if validation_error:
+            self.notify(validation_error, severity="error", timeout=5)
+            return
+
+        # Add chip info to config
+        config_to_save = {
+            **config,
+            "chip_number": self.chip_number,
+            "chip_group": self.chip_group,
+            "plot_type": self.plot_type,
+        }
+
+        # Save to ConfigManager
+        try:
+            config_id = self.app.config_manager.save_config(config_to_save)
+            self.notify(
+                f"✓ Configuration saved (ID: {config_id})",
+                severity="information",
+                timeout=3
+            )
+        except Exception as e:
+            self.notify(
+                f"Failed to save configuration: {e}",
+                severity="error",
+                timeout=5
+            )
 
     def action_back(self) -> None:
         """Go back to config mode selector."""
@@ -320,9 +356,10 @@ class TransconductanceConfigScreen(Screen):
                     chip_number=self.chip_number,
                     chip_group=self.chip_group,
                     plot_type=self.plot_type,
+                    seq_numbers=[],  # TODO: Auto-select based on filters
+                    config=config,
                     metadata_dir=self.metadata_dir,
                     raw_dir=self.raw_dir,
-                    config=config,
                 )
             )
 

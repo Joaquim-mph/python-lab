@@ -85,6 +85,21 @@ class ExperimentSelectorScreen(Screen):
         width: 1fr;
     }
 
+    #light-filter-bar {
+        height: auto;
+        padding: 0 2;
+        margin-bottom: 1;
+    }
+
+    #light-filter-label {
+        width: 16;
+    }
+
+    .light-filter-button {
+        margin-right: 1;
+        min-width: 14;
+    }
+
     #table-container {
         height: 1fr;
         border: solid $primary;
@@ -118,6 +133,7 @@ class ExperimentSelectorScreen(Screen):
         self.title_text = title
         self.selected_rows: set[int] = set()  # Track selected row indices
         self.row_to_seq: dict[int, int] = {}  # Map table row to seq number
+        self.light_filter: Optional[str] = None  # Track light filter: None, "light", "dark"
 
     def compose(self) -> ComposeResult:
         """Create child widgets."""
@@ -141,6 +157,14 @@ class ExperimentSelectorScreen(Screen):
             with Horizontal(id="search-bar"):
                 yield Label("Filter:", id="search-label")
                 yield Input(placeholder="Type to filter...", id="search-input")
+
+            # Light filter buttons (only show for ITS experiments with has_light column)
+            if self.proc_filter == "ITS" and "has_light" in self.history_df.columns:
+                with Horizontal(id="light-filter-bar"):
+                    yield Label("Light Filter:", id="light-filter-label")
+                    yield Button("All", id="light-filter-all", classes="light-filter-button", variant="primary")
+                    yield Button("💡 Light Only", id="light-filter-light", classes="light-filter-button")
+                    yield Button("🌙 Dark Only", id="light-filter-dark", classes="light-filter-button")
 
             # Main data table wrapped in scroll container
             with VerticalScroll(id="table-container"):
@@ -173,8 +197,55 @@ class ExperimentSelectorScreen(Screen):
         except Exception:
             pass
 
+        # Filter data first to check available columns
+        df = self.history_df
+
+        # Apply procedure filter if specified
+        if self.proc_filter:
+            # Handle both "ITS" and "It" for current vs time measurements
+            # Note: chip history uses "It" but plotting commands use "ITS"
+            if self.proc_filter == "ITS":
+                df = df.filter(pl.col("proc").is_in(["ITS", "It"]))
+            else:
+                df = df.filter(pl.col("proc") == self.proc_filter)
+
+        # Apply light filter (for ITS experiments with has_light column)
+        if self.light_filter and "has_light" in df.columns:
+            if self.light_filter == "light":
+                # Filter for light experiments (has_light == True)
+                # Handle both boolean and string representations
+                df = df.filter(
+                    (pl.col("has_light") == True) |
+                    (pl.col("has_light").cast(pl.Utf8).str.to_lowercase() == "true")
+                )
+            elif self.light_filter == "dark":
+                # Filter for dark experiments (has_light == False)
+                df = df.filter(
+                    (pl.col("has_light") == False) |
+                    (pl.col("has_light").cast(pl.Utf8).str.to_lowercase() == "false")
+                )
+
+        # Apply text filter
+        if filter_text:
+            filter_lower = filter_text.lower()
+            # Filter by multiple columns
+            mask = (
+                pl.col("summary").cast(pl.Utf8).str.to_lowercase().str.contains(filter_lower) |
+                pl.col("proc").cast(pl.Utf8).str.to_lowercase().str.contains(filter_lower) |
+                pl.col("date").cast(pl.Utf8).str.contains(filter_lower)
+            )
+            df = df.filter(mask)
+
+        # Sort by seq
+        df = df.sort("seq")
+
         # Add columns (different based on procedure type)
         table.add_column("✓", width=3)
+
+        # Add light indicator column for ITS experiments (if has_light exists)
+        if self.proc_filter == "ITS" and "has_light" in df.columns:
+            table.add_column("💡", width=3)
+
         table.add_column("Seq", width=5)
         table.add_column("Date", width=12)
         table.add_column("Time", width=10)
@@ -192,32 +263,6 @@ class ExperimentSelectorScreen(Screen):
         # Add Duration column for ITS experiments
         if self.proc_filter == "ITS":
             table.add_column("Duration", width=10)
-
-        # Filter data
-        df = self.history_df
-
-        # Apply procedure filter if specified
-        if self.proc_filter:
-            # Handle both "ITS" and "It" for current vs time measurements
-            # Note: chip history uses "It" but plotting commands use "ITS"
-            if self.proc_filter == "ITS":
-                df = df.filter(pl.col("proc").is_in(["ITS", "It"]))
-            else:
-                df = df.filter(pl.col("proc") == self.proc_filter)
-
-        # Apply text filter
-        if filter_text:
-            filter_lower = filter_text.lower()
-            # Filter by multiple columns
-            mask = (
-                pl.col("summary").cast(pl.Utf8).str.to_lowercase().str.contains(filter_lower) |
-                pl.col("proc").cast(pl.Utf8).str.to_lowercase().str.contains(filter_lower) |
-                pl.col("date").cast(pl.Utf8).str.contains(filter_lower)
-            )
-            df = df.filter(mask)
-
-        # Sort by seq
-        df = df.sort("seq")
 
         # Clear row mappings
         self.row_to_seq.clear()
@@ -252,16 +297,42 @@ class ExperimentSelectorScreen(Screen):
             # Check mark if selected
             check = "✓" if idx in self.selected_rows else " "
 
+            # Get light indicator if column exists (for ITS experiments)
+            has_light_col = self.proc_filter == "ITS" and "has_light" in df.columns
+            if has_light_col:
+                has_light = row.get("has_light")
+                # Convert string representation back to boolean for comparison
+                if isinstance(has_light, str):
+                    if has_light.lower() == "true":
+                        has_light = True
+                    elif has_light.lower() == "false":
+                        has_light = False
+                    else:
+                        has_light = None
+
+                if has_light is True:
+                    light_icon = "💡"
+                elif has_light is False:
+                    light_icon = "🌙"
+                else:
+                    light_icon = "[red]❗[/red]"
+
             # Build row data based on procedure type
-            row_data = [
-                check,
+            row_data = [check]
+
+            # Add light indicator for ITS if column exists
+            if has_light_col:
+                row_data.append(light_icon)
+
+            # Add common columns
+            row_data.extend([
                 str(seq),
                 date_str,
                 time_str,
                 voltage_str,
                 wl_str,
                 led_str,
-            ]
+            ])
 
             # Add Duration for ITS experiments
             if self.proc_filter == "ITS":
@@ -511,6 +582,50 @@ class ExperimentSelectorScreen(Screen):
 
             # Repopulate table with filter
             self._populate_table(filter_text=event.value)
+
+            # Restore selections
+            self.selected_rows.clear()
+            for idx, seq in self.row_to_seq.items():
+                if seq in selected_seqs:
+                    self.selected_rows.add(idx)
+
+            self._refresh_table_checkmarks()
+            self._update_selection_count()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle light filter button presses."""
+        button_id = event.button.id
+
+        if button_id in ["light-filter-all", "light-filter-light", "light-filter-dark"]:
+            # Save current selections
+            selected_seqs = {self.row_to_seq[idx] for idx in self.selected_rows}
+
+            # Update filter state
+            if button_id == "light-filter-all":
+                self.light_filter = None
+            elif button_id == "light-filter-light":
+                self.light_filter = "light"
+            elif button_id == "light-filter-dark":
+                self.light_filter = "dark"
+
+            # Update button variants to show active state
+            try:
+                all_btn = self.query_one("#light-filter-all", Button)
+                light_btn = self.query_one("#light-filter-light", Button)
+                dark_btn = self.query_one("#light-filter-dark", Button)
+
+                all_btn.variant = "primary" if self.light_filter is None else "default"
+                light_btn.variant = "primary" if self.light_filter == "light" else "default"
+                dark_btn.variant = "primary" if self.light_filter == "dark" else "default"
+            except Exception:
+                pass  # Buttons might not exist if not ITS procedure
+
+            # Get current search text
+            search_input = self.query_one("#search-input", Input)
+            filter_text = search_input.value
+
+            # Repopulate table with filters
+            self._populate_table(filter_text=filter_text)
 
             # Restore selections
             self.selected_rows.clear()

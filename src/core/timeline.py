@@ -36,6 +36,27 @@ def _proc_short(proc_str: str | None) -> str:
     p = proc_str.split(".")
     return p[-1] if p else proc_str
 
+def _light_indicator(has_light: bool | None) -> str:
+    """
+    Get emoji indicator for light status.
+
+    Parameters
+    ----------
+    has_light : bool or None
+        True=light, False=dark, None=unknown
+
+    Returns
+    -------
+    str
+        Emoji indicator: 💡 (light), 🌙 (dark), or ❗ (unknown/warning)
+    """
+    if has_light is True:
+        return "💡"
+    elif has_light is False:
+        return "🌙"
+    else:
+        return "❗"  # Unknown - requires manual review
+
 
 
 
@@ -107,6 +128,12 @@ def build_day_timeline(meta_csv: str, base_dir: Path, chip_group_name: str = "Ch
         m = file_idx_re.search(str(src))
         file_idx = int(m.group(1)) if m else None
 
+        # Get has_light from metadata (will be None if not present - old metadata)
+        has_light = row.get("has_light")
+        # Convert string "True"/"False" to boolean if needed (from CSV)
+        if isinstance(has_light, str):
+            has_light = has_light.lower() == "true" if has_light.lower() in ("true", "false") else None
+
         rows.append({
             "start_time": start_time,
             "start_dt": start_dt,
@@ -128,6 +155,7 @@ def build_day_timeline(meta_csv: str, base_dir: Path, chip_group_name: str = "Ch
             "VG_step": row.get("VG step"),
             "source_file": src,
             "file_idx": file_idx,
+            "has_light": has_light,  # NEW: light status
         })
 
     if not rows:
@@ -140,8 +168,14 @@ def build_day_timeline(meta_csv: str, base_dir: Path, chip_group_name: str = "Ch
         p = r.get("proc")
         chip_num = (int(r["chip"]) if r.get("chip") is not None and str(r.get("chip")).strip() != "" else "?")
         chip = f"{chip_group_name}{chip_num}"
+
+        # Get light indicator for ITS experiments
+        light_icon = ""
         if p == "It":
-            return (f"It  {chip}  "
+            light_icon = _light_indicator(r.get("has_light")) + " "
+
+        if p == "It":
+            return (f"{light_icon}It  {chip}  "
                     f"VG={r.get('VG','?')} V  VDS={r.get('VDS','?')} V  "
                     f"VL={r.get('VL','?')} V  λ={r.get('wl','?')} nm  "
                     f"period={r.get('period','?')} s  "
@@ -162,9 +196,12 @@ def build_day_timeline(meta_csv: str, base_dir: Path, chip_group_name: str = "Ch
     df = df.with_columns(pl.Series("summary", summaries))
     df = df.with_columns(pl.arange(1, df.height + 1).alias("seq"))
 
-    return df.select(
-        "seq","time_hms","proc","chip","summary","source_file","file_idx","start_time"
-    )
+    # Select columns to return - include has_light if present
+    base_cols = ["seq","time_hms","proc","chip","summary","source_file","file_idx","start_time"]
+    if "has_light" in df.columns:
+        base_cols.append("has_light")
+
+    return df.select(base_cols)
 
 
 
@@ -348,10 +385,17 @@ def build_chip_history(
     # Renumber sequence globally
     combined = combined.with_columns(pl.arange(1, combined.height + 1).alias("seq"))
 
-    return combined.select(
+    # Select columns to return - include has_light if present
+    base_columns = [
         "seq", "date", "time_hms", "proc", "summary",
         "source_file", "file_idx", "start_time", "day_folder"
-    )
+    ]
+
+    # Add has_light if it exists in the dataframe
+    if "has_light" in combined.columns:
+        base_columns.append("has_light")
+
+    return combined.select(base_columns)
 
 
 def print_chip_history(

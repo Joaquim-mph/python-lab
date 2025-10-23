@@ -1,3 +1,18 @@
-Irange,NPLC,T step start time,Chip group name,Chip number,Information,Initial (current) T,Laser ON+OFF period,Laser voltage,Laser wavelength,Procedure version,Sample,Sampling time (excluding Keithley),Target T,VDS,VG,Laser toggle,source_file,start_time,time_hms
-0.0001,1.0,120.0,Alisson,67.0,Light testing - hbn,0.0,120.0,4.6,365.0,2.2.0,other,0.0,25.0,0.1,-0.4,true,raw_data/2025-10-21/It2025-10-21_1.csv,1761019935.8614628,01:12:15
-0.0001,1.0,120.0,Alisson,67.0,Light testing - hbn,0.0,27000.0,0.0,365.0,2.2.0,other,0.0,25.0,0.1,-0.4,false,raw_data/2025-10-21/It2025-10-21_2.csv,1761020204.2898772,01:16:44
+Irange,NPLC,Burn-in time,Chip group name,Chip number,Information,Laser voltage,Laser wavelength,Procedure version,Sample,Step time,VDS,VG end,VG start,VG step,Laser toggle,has_light,source_file,start_time,time_hms,T step start time,Initial (current) T,Laser ON+OFF period,Sampling time (excluding Keithley),Target T,VG,N_avg,Optical fiber,Laser voltage end,Laser voltage start,Laser voltage step
+0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-21/IVg2025-10-21_1.csv,1761063396.417156,13:16:36,,,,,,,,,,,
+0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-21/IVg2025-10-21_2.csv,1761063559.884542,13:19:19,,,,,,,,,,,
+0.001,1.0,60.0,Alisson,67.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-21/IVg2025-10-21_3.csv,1761071766.8622036,15:36:06,,,,,,,,,,,
+0.001,1.0,60.0,Alisson,81.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-21/IVg2025-10-21_4.csv,1761076117.883448,16:48:37,,,,,,,,,,,
+0.001,1.0,60.0,Alisson,81.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-21/IVg2025-10-21_5.csv,1761077029.4431612,17:03:49,,,,,,,,,,,
+0.001,1.0,60.0,Alisson,81.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-21/IVg2025-10-21_6.csv,1761078614.032633,17:30:14,,,,,,,,,,,
+0.001,1.0,60.0,Alisson,81.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-21/IVg2025-10-21_7.csv,1761078871.7614777,17:34:31,,,,,,,,,,,
+0.001,1.0,60.0,Alisson,81.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-21/IVg2025-10-21_8.csv,1761079224.575237,17:40:24,,,,,,,,,,,
+0.0001,1.0,,Alisson,67.0,Light testing - hbn,4.6,365.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-21/It2025-10-21_1.csv,1761019935.8614628,01:12:15,120.0,0.0,120.0,0.0,25.0,-0.4,,,,,
+0.0001,1.0,,Alisson,67.0,Light testing - hbn,0.0,365.0,2.2.0,other,,0.1,,,,false,false,raw_data/2025-10-21/It2025-10-21_2.csv,1761020204.2898772,01:16:44,120.0,0.0,27000.0,0.0,25.0,-0.4,,,,,
+0.0001,1.0,,Alisson,67.0,Light testing - hbn,4.6,365.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-21/It2025-10-21_3.csv,1761063110.348436,13:11:50,120.0,0.0,120.0,0.0,25.0,-0.4,,,,,
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,1.25,455.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-21/It2025-10-21_4.csv,1761077366.9049156,17:09:26,120.0,0.0,120.0,0.0,25.0,-0.3,,,,,
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,2.39,455.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-21/It2025-10-21_5.csv,1761077547.2335052,17:12:27,120.0,0.0,120.0,0.0,25.0,-0.3,,,,,
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,3.59,455.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-21/It2025-10-21_6.csv,1761077727.3889132,17:15:27,120.0,0.0,120.0,0.0,25.0,-0.3,,,,,
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,4.83,455.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-21/It2025-10-21_7.csv,1761077907.5466573,17:18:27,120.0,0.0,120.0,0.0,25.0,-0.3,,,,,
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,0.0,455.0,2.2.0,other,,0.1,,,,false,false,raw_data/2025-10-21/It2025-10-21_8.csv,1761079431.2234757,17:43:51,120.0,0.0,27000.0,0.0,25.0,-0.3,,,,,
+,,,,,None,,455.0,1.1.1,,0.5,,,,,,true,raw_data/2025-10-21/LaserCalibration2025-10-21_1.csv,1761076887.564127,17:01:27,,,,,,,2.0,F1 (M92L02),5.0,0.0,0.1

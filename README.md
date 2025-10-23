@@ -104,23 +104,59 @@ pip install -r requirements.txt
 python tui_app.py
 ```
 
-**7-Step Wizard:**
-1. **Main Menu** - Choose action (New Plot / Process Data)
+**8-Step Wizard:**
+1. **Main Menu** - Choose action (New Plot / Recent Configs / Process Data)
 2. **Chip Selection** - Auto-discover chips from metadata
 3. **Plot Type** - ITS / IVg / Transconductance
-4. **Experiment Selection** - Interactive multi-select table
-5. **Preview** - Review config before generating
-6. **Generation** - Real-time progress tracking
-7. **Success** - View results, plot another, or exit
+4. **Config Mode** - Quick (defaults) or Custom (full control)
+5. **Configuration** - Select experiments or customize parameters
+6. **Preview** - Review all settings before generating
+7. **Generation** - Real-time progress tracking
+8. **Success** - View results, plot another, or exit
 
-📘 **Full guide:** See `TUI_GUIDE.md` for keyboard shortcuts, troubleshooting, and advanced features.
+**New Features:**
+- 💾 **Configuration Persistence** - Auto-save successful plots, load from Recent Configs
+- ⚡ **Quick Mode** - Smart defaults for fast plotting
+- 🎛️ **Custom Mode** - Full parameter control (filters, baseline, legend, savgol params)
+- 📤 **Export/Import** - Share configurations as JSON files
 
-### CLI Workflow (Scripting)
+📘 **Full guide:** See `TUI_GUIDE.md` for keyboard shortcuts, config persistence, and troubleshooting.
 
+### CLI Workflow (Command Line)
+
+**Complete Pipeline (Recommended):**
+```bash
+# Parse all raw data + generate chip histories in one command
+python process_and_analyze.py full-pipeline
+```
+
+**Individual Commands:**
+```bash
+# Parse metadata from raw CSVs
+python process_and_analyze.py parse-all --raw raw_data --meta metadata
+
+# Generate chip timeline histories
+python process_and_analyze.py chip-histories --meta metadata --group Alisson
+
+# View specific chip history
+python process_and_analyze.py show-history 67 --meta metadata --group Alisson
+
+# Generate plots
+python process_and_analyze.py plot-its 67 --seq 52,57,58
+python process_and_analyze.py plot-ivg 67 --seq 2,8,14
+python process_and_analyze.py plot-transconductance 67 --seq 2,8,14 --method savgol
+
+# Quick statistics
+python process_and_analyze.py quick-stats --meta metadata
+```
+
+📘 **Full CLI reference:** See `CLI_GUIDE.md` for all commands and options.
+
+**Data Pipeline:**
 ```
 Raw CSVs → Metadata Extraction → Session Grouping → Figure Generation
    ↓              ↓                      ↓                  ↓
-raw_data/    metadata.csv           load_and_prepare   figs/ChipXX/
+raw_data/    metadata.csv           load_and_prepare   figs/
 ```
 
 ### 1. Generate Metadata

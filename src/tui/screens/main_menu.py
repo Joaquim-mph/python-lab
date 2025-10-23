@@ -111,8 +111,18 @@ class MainMenuScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
-        """Focus the first button when mounted."""
+        """Focus the first button when mounted and update config count."""
         self.query_one("#new-plot", Button).focus()
+        self._update_recent_count()
+
+    def _update_recent_count(self) -> None:
+        """Update the recent configurations button with count."""
+        try:
+            count = self.app.config_manager.get_stats()["total_count"]
+            button = self.query_one("#recent", Button)
+            button.label = f"Recent Configurations ({count})"
+        except Exception:
+            pass  # Silently fail if config manager not available
 
     def on_button_focus(self, event: Button.Focus) -> None:
         """Update button labels to show arrow on focused button."""
@@ -170,8 +180,9 @@ class MainMenuScreen(Screen):
 
     def action_recent(self) -> None:
         """Show recent configurations."""
-        # TODO: Navigate to Recent Configs (Phase 5)
-        self.app.notify("Recent Configurations - Coming in Phase 5!")
+        from src.tui.screens.recent_configs import RecentConfigsScreen
+
+        self.app.push_screen(RecentConfigsScreen())
 
     def action_batch(self) -> None:
         """Show batch mode."""

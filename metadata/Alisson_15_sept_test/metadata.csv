@@ -1,0 +1,63 @@
+Irange,NPLC,Burn-in time,Chip group name,Chip number,Information,Laser voltage,Laser wavelength,Procedure version,Sample,Step time,VDS,VG end,VG start,VG step,Laser toggle,has_light,source_file,start_time,time_hms,N_avg,Optical fiber,Laser voltage end,Laser voltage start,Laser voltage step,T step start time,Initial (current) T,Laser ON+OFF period,Sampling time (excluding Keithley),Target T,VG
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_17.csv,1757958436.745772,14:47:16,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_6.csv,1757954058.594838,13:34:18,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_7.csv,1757954233.8515642,13:37:13,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_16.csv,1757958136.2084782,14:42:16,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_5.csv,1757952801.6121247,13:13:21,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_14.csv,1757957369.3596709,14:29:29,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,75.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_28.csv,1757962487.8643982,15:54:47,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,75.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_29.csv,1757962544.5664575,15:55:44,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_15.csv,1757957971.1545193,14:39:31,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_4.csv,1757949605.8868084,12:20:05,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_11.csv,1757956481.476865,14:14:41,,,,,,,,,,,
+,,,,,max current,,405.0,1.1.1,,2.0,,,,,,,raw_data/Alisson_15_sept/LaserCalibration2025-09-15_10.csv,1757959362.2753851,15:02:42,2.0,F1 (M92L02),5.0,0.0,0.1,,,,,,
+,,,,,max current,,385.0,1.1.1,,2.0,,,,,,,raw_data/Alisson_15_sept/LaserCalibration2025-09-15_11.csv,1757960090.4217587,15:14:50,2.0,F1 (M92L02),5.0,0.0,0.1,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_10.csv,1757955696.969313,14:01:36,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_1.csv,1757947090.3839564,11:38:10,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_12.csv,1757956905.998305,14:21:45,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_3.csv,1757947221.1129608,11:40:21,,,,,,,,,,,
+,,,,,pa la otra muestra,,365.0,1.1.1,,2.0,,,,,,,raw_data/Alisson_15_sept/LaserCalibration2025-09-15_13.csv,1757963256.2235758,16:07:36,2.0,F1 (M92L02),5.0,0.0,0.1,,,,,,
+,,,,,max current,,365.0,1.1.1,,2.0,,,,,,,raw_data/Alisson_15_sept/LaserCalibration2025-09-15_12.csv,1757960999.583164,15:29:59,2.0,F1 (M92L02),5.0,0.0,0.1,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_2.csv,1757947153.8131576,11:39:13,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_13.csv,1757957218.0216484,14:26:58,,,,,,,,,,,
+0.001,1.0,,Alisson,68.0,Light testing 850 mn,2.86,680.0,2.2.0,other,,0.1,,,,true,true,raw_data/Alisson_15_sept/It2025-09-15_2.csv,1757954324.3573768,13:38:44,,,,,,120.0,0.0,120.0,0.0,25.0,-4.81
+,,,,,max current,,680.0,1.1.1,,2.0,,,,,,,raw_data/Alisson_15_sept/LaserCalibration2025-09-15_4.csv,1757952989.2989554,13:16:29,2.0,F1 (M92L02),5.0,0.0,0.1,,,,,,
+,,,,,max current,,625.0,1.1.1,,2.0,,,,,,,raw_data/Alisson_15_sept/LaserCalibration2025-09-15_5.csv,1757954860.1961498,13:47:40,2.0,F1 (M92L02),5.0,0.0,0.1,,,,,,
+0.001,1.0,,Alisson,68.0,Light testing 850 mn,1.39,625.0,2.2.0,other,,0.1,,,,true,true,raw_data/Alisson_15_sept/It2025-09-15_3.csv,1757955300.2463036,13:55:00,,,,,,120.0,0.0,120.0,0.0,25.0,-4.7
+0.001,1.0,,Alisson,68.0,Light testing 850 mn,1.93,850.0,2.2.0,other,,0.1,,,,true,true,raw_data/Alisson_15_sept/It2025-09-15_1.csv,1757950455.4362183,12:34:15,,,,,,120.0,0.0,120.0,0.0,25.0,-5.04
+,,,,,max current,,565.0,1.1.1,,2.0,,,,,,,raw_data/Alisson_15_sept/LaserCalibration2025-09-15_7.csv,1757956676.2436721,14:17:56,2.0,F1 (M92L02),5.0,0.0,0.1,,,,,,
+,,,,,max current,,590.0,1.1.1,,2.0,,,,,,,raw_data/Alisson_15_sept/LaserCalibration2025-09-15_6.csv,1757955961.603112,14:06:01,2.0,F1 (M92L02),5.0,0.0,0.1,,,,,,
+0.001,1.0,,Alisson,68.0,Light testing 850 mn,1.39,625.0,2.2.0,other,,0.1,,,,true,true,raw_data/Alisson_15_sept/It2025-09-15_4.csv,1757955492.854784,13:58:12,,,,,,120.0,0.0,120.0,0.0,25.0,-4.7
+,,,,,max current,,850.0,1.1.1,,2.0,,,,,,,raw_data/Alisson_15_sept/LaserCalibration2025-09-15_2.csv,1757948397.5672348,11:59:57,2.0,F1 (M92L02),5.0,0.0,0.1,,,,,,
+,,,,,max current,,850.0,1.1.1,,2.0,,,,,,,raw_data/Alisson_15_sept/LaserCalibration2025-09-15_3.csv,1757949361.1438391,12:16:01,2.0,F1 (M92L02),5.0,0.0,0.1,,,,,,
+0.001,1.0,,Alisson,68.0,Light testing 850 mn,3.76,590.0,2.2.0,other,,0.1,,,,true,true,raw_data/Alisson_15_sept/It2025-09-15_5.csv,1757956250.487168,14:10:50,,,,,,120.0,0.0,120.0,0.0,25.0,-4.41
+0.001,1.0,,Alisson,68.0,Light testing 850 mn,1.18,505.0,2.2.0,other,,0.1,,,,true,true,raw_data/Alisson_15_sept/It2025-09-15_7.csv,1757958201.047669,14:43:21,,,,,,120.0,0.0,120.0,0.0,25.0,-5.77
+,,,,,max current,,850.0,1.1.1,,2.0,,,,,,,raw_data/Alisson_15_sept/LaserCalibration2025-09-15_1.csv,1757947764.5884311,11:49:24,2.0,F1 (M92L02),5.0,0.0,0.1,,,,,,
+0.001,1.0,,Alisson,68.0,Light testing 850 mn,1.53,565.0,2.2.0,other,,0.1,,,,true,true,raw_data/Alisson_15_sept/It2025-09-15_6.csv,1757957025.8528507,14:23:45,,,,,,120.0,0.0,120.0,0.0,25.0,-5.7
+0.001,1.0,,Alisson,68.0,Light testing 850 mn,1.29,455.0,2.2.0,other,,0.1,,,,true,true,raw_data/Alisson_15_sept/It2025-09-15_8.csv,1757958991.0223148,14:56:31,,,,,,120.0,0.0,120.0,0.0,25.0,-4.85
+0.001,1.0,,Alisson,68.0,Light testing 850 mn,2.92,405.0,2.2.0,other,,0.1,,,,true,true,raw_data/Alisson_15_sept/It2025-09-15_9.csv,1757959719.9738104,15:08:39,,,,,,120.0,0.0,120.0,0.0,25.0,-4.02
+,,,,,max current,,505.0,1.1.1,,2.0,,,,,,,raw_data/Alisson_15_sept/LaserCalibration2025-09-15_8.csv,1757957630.3230805,14:33:50,2.0,F1 (M92L02),5.0,0.0,0.1,,,,,,
+,,,,,max current,,455.0,1.1.1,,2.0,,,,,,,raw_data/Alisson_15_sept/LaserCalibration2025-09-15_9.csv,1757958722.5841124,14:52:02,2.0,F1 (M92L02),5.0,0.0,0.1,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_22.csv,1757960740.6311085,15:25:40,,,,,,,,,,,
+0.001,1.0,,Alisson,68.0,Light testing 850 mn,3.52,365.0,2.2.0,other,,0.1,,,,true,true,raw_data/Alisson_15_sept/It2025-09-15_11.csv,1757961600.7136936,15:40:00,,,,,,120.0,0.0,120.0,0.0,25.0,-5.81
+0.001,1.0,,Alisson,68.0,Light testing 850 mn,2.21,385.0,2.2.0,other,,0.1,,,,true,true,raw_data/Alisson_15_sept/It2025-09-15_10.csv,1757960408.6895308,15:20:08,,,,,,120.0,0.0,120.0,0.0,25.0,-6.02
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_23.csv,1757961231.3276796,15:33:51,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_21.csv,1757960666.3245084,15:24:26,,,,,,,,,,,
+0.001,1.0,,Alisson,75.0,Light testing 365 mn,0.86,365.0,2.2.0,other,,0.1,,,,true,true,raw_data/Alisson_15_sept/It2025-09-15_12.csv,1757963764.9523258,16:16:04,,,,,,120.0,0.0,120.0,0.0,25.0,-3.87
+0.001,1.0,,Alisson,75.0,Light testing 365 mn,1.74,365.0,2.2.0,other,,0.1,,,,true,true,raw_data/Alisson_15_sept/It2025-09-15_13.csv,1757963947.0672176,16:19:07,,,,,,120.0,0.0,120.0,0.0,25.0,-3.87
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_20.csv,1757960326.9357219,15:18:46,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_18.csv,1757958915.3701465,14:55:15,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_9.csv,1757955094.9742436,13:51:34,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_24.csv,1757961324.360304,15:35:24,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,75.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_30.csv,1757963592.6023374,16:13:12,,,,,,,,,,,
+0.001,1.0,,Alisson,75.0,Light testing 365 mn,4.61,365.0,2.2.0,other,,0.1,,,,true,true,raw_data/Alisson_15_sept/It2025-09-15_16.csv,1757964487.7145894,16:28:07,,,,,,120.0,0.0,120.0,0.0,25.0,-3.87
+0.001,1.0,0.0,Alisson,75.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_31.csv,1757964697.5940256,16:31:37,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_25.csv,1757961456.7296672,15:37:36,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_8.csv,1757954583.3371472,13:43:03,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_19.csv,1757959578.2541063,15:06:18,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,75.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_33.csv,1757965004.2608135,16:36:44,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_27.csv,1757961943.8743017,15:45:43,,,,,,,,,,,
+0.001,1.0,,Alisson,75.0,Light testing 365 mn,2.68,365.0,2.2.0,other,,0.1,,,,true,true,raw_data/Alisson_15_sept/It2025-09-15_14.csv,1757964127.2804635,16:22:07,,,,,,120.0,0.0,120.0,0.0,25.0,-3.87
+0.001,1.0,,Alisson,75.0,Light testing 365 mn,3.63,365.0,2.2.0,other,,0.1,,,,true,true,raw_data/Alisson_15_sept/It2025-09-15_15.csv,1757964307.496363,16:25:07,,,,,,120.0,0.0,120.0,0.0,25.0,-3.87
+0.001,1.0,0.0,Alisson,68.0,monitoring,0.0,565.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_26.csv,1757961808.0605562,15:43:28,,,,,,,,,,,
+0.001,1.0,0.0,Alisson,75.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/Alisson_15_sept/IVg2025-09-15_32.csv,1757964882.0416515,16:34:42,,,,,,,,,,,

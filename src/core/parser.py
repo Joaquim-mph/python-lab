@@ -28,6 +28,65 @@ NUMERIC_FULL = re.compile(
     re.VERBOSE,
 )
 NUMERIC_PART = re.compile(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?")
+
+def _detect_has_light(params: Dict[str, object], csv_path: Path) -> bool | None:
+    """
+    Detect if experiment has light illumination.
+
+    Detection strategy (in order of reliability):
+    1. Laser voltage (LED voltage): V_LED < 0.1V = dark, V_LED >= 0.1V = light
+    2. VL column in measurement data (fallback if voltage not in metadata)
+    3. Unknown if both methods fail (requires manual review)
+
+    Parameters
+    ----------
+    params : dict
+        Parameters dictionary from CSV header
+    csv_path : Path
+        Path to CSV file (for reading VL data if needed)
+
+    Returns
+    -------
+    bool or None
+        True if light detected, False if dark, None if unknown
+    """
+    import numpy as np
+
+    # Method 1: Laser voltage / LED voltage (PRIMARY - most reliable)
+    # This is the DEFINITIVE indicator per user requirement
+    laser_voltage = params.get("Laser voltage")
+    if isinstance(laser_voltage, (int, float)):
+        if laser_voltage < 0.1:
+            return False  # DARK: V_LED < 0.1V
+        else:
+            return True   # LIGHT: V_LED >= 0.1V
+
+    # Method 2: Check VL column in measurement data (FALLBACK)
+    # Only use if laser voltage not in metadata
+    try:
+        # Import here to avoid circular dependency
+        from src.core.utils import _read_measurement
+
+        df = _read_measurement(csv_path)
+        if "VL" in df.columns and len(df) > 0:
+            vl_values = df["VL"].to_numpy()
+            # Remove NaN values
+            vl_clean = vl_values[~np.isnan(vl_values)]
+
+            if len(vl_clean) > 0:
+                # Apply same 0.1V threshold as metadata
+                if np.any(vl_clean >= 0.1):
+                    return True   # LIGHT: measured VL >= 0.1V
+                else:
+                    return False  # DARK: all measured VL < 0.1V
+    except Exception as e:
+        # If data read fails, continue to unknown
+        pass
+
+    # UNKNOWN: No reliable indicator found
+    # This should trigger a warning (red !) in the UI
+    return None
+
 def parse_iv_metadata(csv_path: Path) -> Dict[str, object]:
     """
     Read the '#Parameters' and '#Metadata' header blocks of a .csv and return a flat dict.
@@ -82,6 +141,9 @@ def parse_iv_metadata(csv_path: Path) -> Dict[str, object]:
     lv = params.get("Laser voltage")
     if isinstance(lv, (int, float)):
         params["Laser toggle"] = (lv != 0.0)
+
+    # NEW: Detect has_light (True=light, False=dark, None=unknown)
+    params["has_light"] = _detect_has_light(params, csv_path)
 
     # Add file path always
     params["source_file"] = str(csv_path)

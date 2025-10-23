@@ -36,6 +36,12 @@ def show_history_command(
         "-p",
         help="Filter by procedure type (IVg, ITS, IV, etc.)"
     ),
+    light_filter: Optional[str] = typer.Option(
+        None,
+        "--light",
+        "-l",
+        help="Filter by light status: 'light', 'dark', or 'unknown'"
+    ),
     limit: Optional[int] = typer.Option(
         None,
         "--limit",
@@ -80,6 +86,26 @@ def show_history_command(
         history = history.filter(pl.col("proc") == proc_filter)
         if history.height == 0:
             console.print(f"[yellow]No experiments found with procedure '{proc_filter}'[/yellow]")
+            raise typer.Exit(0)
+
+    # Apply light filter
+    if light_filter:
+        lf = light_filter.lower()
+        if lf in ("light", "l", "💡"):
+            history = history.filter(pl.col("has_light") == True)
+            filter_desc = "light experiments"
+        elif lf in ("dark", "d", "🌙"):
+            history = history.filter(pl.col("has_light") == False)
+            filter_desc = "dark experiments"
+        elif lf in ("unknown", "u", "?", "❗"):
+            history = history.filter(pl.col("has_light").is_null())
+            filter_desc = "unknown light status"
+        else:
+            console.print(f"[red]Error:[/red] Invalid light filter '{light_filter}'. Use: light, dark, or unknown")
+            raise typer.Exit(1)
+
+        if history.height == 0:
+            console.print(f"[yellow]No {filter_desc} found[/yellow]")
             raise typer.Exit(0)
 
     if limit:
@@ -127,6 +153,25 @@ def show_history_command(
         proc_table.add_row(f"{row['proc']}:", str(row['count']))
     summary_items.append(Panel(proc_table, title="[magenta]Procedures[/magenta]", border_style="magenta"))
 
+    # Light status breakdown card (if has_light column exists)
+    if "has_light" in history.columns:
+        light_table = Table.grid(padding=(0, 2))
+        light_table.add_column(style="green", justify="right")
+        light_table.add_column(style="yellow")
+
+        light_count = history.filter(pl.col("has_light") == True).height
+        dark_count = history.filter(pl.col("has_light") == False).height
+        unknown_count = history.filter(pl.col("has_light").is_null()).height
+
+        if light_count > 0:
+            light_table.add_row("💡 Light:", str(light_count))
+        if dark_count > 0:
+            light_table.add_row("🌙 Dark:", str(dark_count))
+        if unknown_count > 0:
+            light_table.add_row("❗ Unknown:", str(unknown_count))
+
+        summary_items.append(Panel(light_table, title="[green]Light Status[/green]", border_style="green"))
+
     console.print(Columns(summary_items, equal=True, expand=True))
     console.print()
 
@@ -137,6 +182,12 @@ def show_history_command(
         show_lines=False,
         expand=False
     )
+
+    # Add light indicator column if has_light exists
+    has_light_col = "has_light" in history.columns
+
+    if has_light_col:
+        table.add_column("💡", style="bold", width=3, justify="center")
 
     table.add_column("Seq", style="dim", width=5, justify="right")
     table.add_column("Date", style="cyan", width=12)
@@ -170,13 +221,32 @@ def show_history_command(
         if len(desc) > 80:
             desc = desc[:77] + "..."
 
-        table.add_row(
-            str(row.get("seq", "?")),
-            date,
-            row.get("time_hms", "?"),
-            proc,
-            desc
-        )
+        # Get light indicator if column exists
+        if has_light_col:
+            has_light = row.get("has_light")
+            if has_light is True:
+                light_icon = "💡"
+            elif has_light is False:
+                light_icon = "🌙"
+            else:
+                light_icon = "[red]❗[/red]"  # Red for unknown/warning
+
+            table.add_row(
+                light_icon,
+                str(row.get("seq", "?")),
+                date,
+                row.get("time_hms", "?"),
+                proc,
+                desc
+            )
+        else:
+            table.add_row(
+                str(row.get("seq", "?")),
+                date,
+                row.get("time_hms", "?"),
+                proc,
+                desc
+            )
 
     console.print(table)
     console.print()
@@ -184,8 +254,15 @@ def show_history_command(
     # Footer with file info
     console.print(f"[dim]Data source: {history_file}[/dim]")
 
+    # Show active filters
+    active_filters = []
     if proc_filter:
-        console.print(f"[dim]Filtered by: proc={proc_filter}[/dim]")
+        active_filters.append(f"proc={proc_filter}")
+    if light_filter:
+        active_filters.append(f"light={light_filter}")
+
+    if active_filters:
+        console.print(f"[dim]Filters: {', '.join(active_filters)}[/dim]")
 
     if limit:
         console.print(f"[yellow]Note:[/yellow] Showing only last {limit} experiments. Remove --limit to see all.")

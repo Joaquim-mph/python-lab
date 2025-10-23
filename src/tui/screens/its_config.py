@@ -15,13 +15,14 @@ from textual.binding import Binding
 
 
 class ITSConfigScreen(Screen):
-    """ITS configuration screen (Step 4b - Custom mode)."""
+    """ITS configuration screen (Step 4b - Custom mode or Step 5 - Preset mode)."""
 
-    def __init__(self, chip_number: int, chip_group: str, plot_type: str):
+    def __init__(self, chip_number: int, chip_group: str, plot_type: str = "ITS", preset_mode: bool = False):
         super().__init__()
         self.chip_number = chip_number
         self.chip_group = chip_group
         self.plot_type = plot_type
+        self.preset_mode = preset_mode  # True if using a preset (show read-only summary)
 
     BINDINGS = [
         Binding("escape", "back", "Back", priority=True),
@@ -130,12 +131,51 @@ class ITSConfigScreen(Screen):
 
         with Container(id="main-container"):
             with Vertical(id="header-container"):
-                yield Static("Custom Configuration - ITS", id="title")
-                yield Static(
-                    f"[bold]{self.chip_group}{self.chip_number}[/bold] - {self.plot_type}",
-                    id="chip-info"
-                )
-                yield Static("[Step 4/6]", id="step-indicator")
+                if self.preset_mode:
+                    # Get preset from app config
+                    preset_name = self.app.plot_config.get("preset", "custom")
+                    from src.plotting.its_presets import get_preset
+                    preset = get_preset(preset_name)
+
+                    yield Static(f"Preset Configuration - {preset.name if preset else 'ITS'}", id="title")
+                    yield Static(
+                        f"[bold]{self.chip_group}{self.chip_number}[/bold] - {self.plot_type}",
+                        id="chip-info"
+                    )
+                    yield Static("[Step 5/8]", id="step-indicator")
+
+                    # Show preset summary
+                    if preset:
+                        yield Static("✓ Preset Applied:", classes="section-title")
+                        config_lines = []
+                        config_lines.append(f"[bold]{preset.name}[/bold] - {preset.description}")
+                        config_lines.append("")
+                        config_lines.append("Configuration:")
+
+                        if preset.baseline_mode == "none":
+                            config_lines.append("  • Baseline: None (no correction)")
+                        elif preset.baseline_mode == "auto":
+                            config_lines.append(f"  • Baseline: Auto (LED period / {preset.baseline_auto_divisor})")
+                        else:
+                            config_lines.append(f"  • Baseline: Fixed at {preset.baseline_value}s")
+
+                        config_lines.append(f"  • Plot start: {preset.plot_start_time}s")
+                        config_lines.append(f"  • Legend by: {preset.legend_by}")
+                        config_lines.append(f"  • Y-axis padding: {preset.padding*100:.0f}%")
+
+                        if preset.check_duration_mismatch:
+                            config_lines.append(f"  • Duration check: Enabled (±{preset.duration_tolerance*100:.0f}% tolerance)")
+
+                        yield Static("\n".join(config_lines), classes="section-title")
+                        yield Static("")
+                        yield Static("You can still apply filters:", classes="section-title")
+                else:
+                    yield Static("Custom Configuration - ITS", id="title")
+                    yield Static(
+                        f"[bold]{self.chip_group}{self.chip_number}[/bold] - {self.plot_type}",
+                        id="chip-info"
+                    )
+                    yield Static("[Step 4/6]", id="step-indicator")
 
             # Selection Mode
             yield Static("Selection Mode:", classes="section-title")
@@ -162,48 +202,52 @@ class ITSConfigScreen(Screen):
                 yield Input(placeholder="YYYY-MM-DD", id="date-filter", classes="form-input")
                 yield Static("YYYY-MM-DD format", classes="form-help")
 
-            # Plot Options Section
-            yield Static("─── Plot Options ──────────────────────", classes="section-title")
+            # Plot Options Section (only show in custom mode)
+            if not self.preset_mode:
+                yield Static("─── Plot Options ──────────────────────", classes="section-title")
 
-            with Horizontal(classes="form-row"):
-                yield Label("Legend by:", classes="form-label")
-                yield Select(
-                    [
-                        ("LED Voltage", "led_voltage"),
-                        ("Wavelength", "wavelength"),
-                        ("Gate Voltage", "vg"),
-                    ],
-                    value="led_voltage",
-                    id="legend-by-select",
-                    classes="form-input"
-                )
-                yield Static("Legend grouping", classes="form-help")
+                with Horizontal(classes="form-row"):
+                    yield Label("Legend by:", classes="form-label")
+                    yield Select(
+                        [
+                            ("Gate Voltage (Vg)", "vg"),
+                            ("LED Voltage", "led_voltage"),
+                            ("Wavelength", "wavelength"),
+                        ],
+                        value="vg",
+                        id="legend-by-select",
+                        classes="form-input"
+                    )
+                    yield Static("Legend grouping", classes="form-help")
 
-            with Horizontal(classes="form-row"):
-                yield Label("Baseline (s):", classes="form-label")
-                yield Input(value="60.0", id="baseline-input", classes="form-input")
-                yield Static("Baseline time", classes="form-help")
+                with Horizontal(classes="form-row"):
+                    yield Label("Baseline (s):", classes="form-label")
+                    yield Input(value="60.0", id="baseline-input", classes="form-input")
+                    yield Static("Baseline time", classes="form-help")
 
-            with Horizontal(classes="form-row"):
-                yield Label("Padding:", classes="form-label")
-                yield Input(value="0.05", id="padding-input", classes="form-input")
-                yield Static("Y-axis padding", classes="form-help")
+                with Horizontal(classes="form-row"):
+                    yield Label("Padding:", classes="form-label")
+                    yield Input(value="0.05", id="padding-input", classes="form-input")
+                    yield Static("Y-axis padding", classes="form-help")
 
-            with Horizontal(classes="form-row"):
-                yield Label("Output dir:", classes="form-label")
-                yield Input(
-                    value="figs",
-                    placeholder="figs",
-                    id="output-dir-input",
-                    classes="form-input"
-                )
-                yield Static(f"→ figs/{self.chip_group}{self.chip_number}/", classes="form-help")
+                with Horizontal(classes="form-row"):
+                    yield Label("Output dir:", classes="form-label")
+                    yield Input(
+                        value="figs",
+                        placeholder="figs",
+                        id="output-dir-input",
+                        classes="form-input"
+                    )
+                    yield Static(f"→ figs/{self.chip_group}{self.chip_number}/", classes="form-help")
 
             # Buttons
             with Horizontal(id="button-container"):
-                yield Button("Save Config", id="save-button", variant="default", classes="nav-button")
+                if not self.preset_mode:
+                    yield Button("Save Config", id="save-button", variant="default", classes="nav-button")
                 yield Button("← Back", id="back-button", variant="default", classes="nav-button")
-                yield Button("Next →", id="next-button", variant="primary", classes="nav-button")
+                if self.preset_mode:
+                    yield Button("Change Preset", id="change-preset-button", variant="default", classes="nav-button")
+                yield Button("Next: Select Experiments →", id="next-button", variant="primary", classes="nav-button")
 
         yield Footer()
 
@@ -220,6 +264,9 @@ class ITSConfigScreen(Screen):
             self.action_next()
         elif event.button.id == "save-button":
             self.action_save_config()
+        elif event.button.id == "change-preset-button":
+            # Go back to preset selector
+            self.app.pop_screen()
 
     def action_back(self) -> None:
         """Go back to config mode selector."""
@@ -264,18 +311,42 @@ class ITSConfigScreen(Screen):
                 plot_type=self.plot_type,
                 seq_numbers=[],  # TODO: Auto-select based on filters
                 config=config,
+                metadata_dir=self.app.metadata_dir,
+                raw_dir=self.app.raw_dir,
             ))
 
     def action_save_config(self) -> None:
         """Save configuration to JSON file."""
         config = self._collect_config()
 
-        # TODO: Implement JSON export
-        self.app.notify(
-            f"Config saved (feature coming soon): {len(config)} parameters",
-            severity="information",
-            timeout=3
-        )
+        # Validate configuration first
+        validation_error = self._validate_config(config)
+        if validation_error:
+            self.notify(validation_error, severity="error", timeout=5)
+            return
+
+        # Add chip info to config
+        config_to_save = {
+            **config,
+            "chip_number": self.chip_number,
+            "chip_group": self.chip_group,
+            "plot_type": self.plot_type,
+        }
+
+        # Save to ConfigManager
+        try:
+            config_id = self.app.config_manager.save_config(config_to_save)
+            self.notify(
+                f"✓ Configuration saved (ID: {config_id})",
+                severity="information",
+                timeout=3
+            )
+        except Exception as e:
+            self.notify(
+                f"Failed to save configuration: {e}",
+                severity="error",
+                timeout=5
+            )
 
     def _validate_config(self, config: dict) -> str | None:
         """Validate configuration values.
@@ -324,11 +395,49 @@ class ITSConfigScreen(Screen):
         wavelength_filter = self.query_one("#wavelength-filter", Input).value.strip()
         date_filter = self.query_one("#date-filter", Input).value.strip()
 
-        # Get plot options
-        legend_by = self.query_one("#legend-by-select", Select).value
-        baseline = self.query_one("#baseline-input", Input).value.strip()
-        padding = self.query_one("#padding-input", Input).value.strip()
-        output_dir = self.query_one("#output-dir-input", Input).value.strip()
+        # Get plot options (from preset or from form)
+        if self.preset_mode:
+            # Apply preset configuration
+            preset_name = self.app.plot_config.get("preset", "custom")
+            from src.plotting.its_presets import get_preset
+            preset = get_preset(preset_name)
+
+            if preset:
+                legend_by = preset.legend_by
+                baseline = preset.baseline_value if preset.baseline_mode == "fixed" else None
+                padding = preset.padding
+                output_dir = "figs"  # Default
+
+                # Store preset-specific parameters
+                baseline_mode = preset.baseline_mode
+                baseline_auto_divisor = preset.baseline_auto_divisor
+                plot_start_time = preset.plot_start_time
+                check_duration_mismatch = preset.check_duration_mismatch
+                duration_tolerance = preset.duration_tolerance
+            else:
+                # Fallback to defaults
+                legend_by = "wavelength"
+                baseline = 60.0
+                padding = 0.05
+                output_dir = "figs"
+                baseline_mode = "fixed"
+                baseline_auto_divisor = 2.0
+                plot_start_time = 20.0
+                check_duration_mismatch = False
+                duration_tolerance = 0.10
+        else:
+            # Get from form inputs
+            legend_by = self.query_one("#legend-by-select", Select).value
+            baseline = self.query_one("#baseline-input", Input).value.strip()
+            padding = self.query_one("#padding-input", Input).value.strip()
+            output_dir = self.query_one("#output-dir-input", Input).value.strip()
+
+            # Use fixed baseline mode for custom config
+            baseline_mode = "fixed"
+            baseline_auto_divisor = 2.0
+            plot_start_time = 20.0
+            check_duration_mismatch = False
+            duration_tolerance = 0.10
 
         # Build config dict with type conversion and error handling
         config = {
@@ -359,5 +468,12 @@ class ITSConfigScreen(Screen):
             config["padding"] = float(padding) if padding else 0.05
         except ValueError:
             config["padding"] = 0.05
+
+        # Add preset-specific parameters
+        config["baseline_mode"] = baseline_mode
+        config["baseline_auto_divisor"] = baseline_auto_divisor
+        config["plot_start_time"] = plot_start_time
+        config["check_duration_mismatch"] = check_duration_mismatch
+        config["duration_tolerance"] = duration_tolerance
 
         return config
