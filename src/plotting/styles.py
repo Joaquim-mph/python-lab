@@ -141,7 +141,7 @@ THEMES = {
             "grid.alpha": 0.6,
             
             # Lines and markers
-            "lines.linewidth": 6,         # ← REDUCED from 6
+            "lines.linewidth": 4,         # ← REDUCED from 6
             "lines.markersize": 22,       # ← REDUCED from 22
             "lines.antialiased": True,
             

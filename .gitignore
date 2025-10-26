@@ -9,6 +9,8 @@ __pycache__/
 # C extensions
 *.so
 *.png
+*.ipynb
+notebooks/
 figs/
 figs_/
 figs__/

@@ -239,11 +239,13 @@ class RecentConfigsScreen(Screen):
             self.notify("Please select a configuration", severity="warning")
             return
 
-        row_key = table.get_row_key_at(table.cursor_row)
-        if row_key is None:
+        # Get the row key using the coordinate property
+        row_key = table.coordinate_to_cell_key(table.cursor_coordinate).row_key
+        if row_key is None or row_key.value is None:
+            self.notify("No configurations available. Start plotting to save configurations!", severity="warning")
             return
 
-        config_id = str(row_key)
+        config_id = str(row_key.value)
 
         # Load config
         config = app.config_manager.load_config(config_id)
@@ -289,11 +291,13 @@ class RecentConfigsScreen(Screen):
             self.notify("Please select a configuration to delete", severity="warning")
             return
 
-        row_key = table.get_row_key_at(table.cursor_row)
-        if row_key is None:
+        # Get the row key using the coordinate property
+        row_key = table.coordinate_to_cell_key(table.cursor_coordinate).row_key
+        if row_key is None or row_key.value is None:
+            self.notify("No configurations available to delete", severity="warning")
             return
 
-        config_id = str(row_key)
+        config_id = str(row_key.value)
 
         # Delete config
         if app.config_manager.delete_config(config_id):

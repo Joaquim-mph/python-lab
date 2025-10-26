@@ -10,7 +10,7 @@ from pathlib import Path
 from textual.app import ComposeResult
 from textual.containers import Container, Vertical, Horizontal
 from textual.screen import Screen
-from textual.widgets import Header, Footer, Static, Button, Input, Select, RadioButton, RadioSet, Label
+from textual.widgets import Header, Footer, Static, Button, Input, Select, Label, Checkbox
 from textual.binding import Binding
 
 
@@ -95,12 +95,21 @@ class ITSConfigScreen(Screen):
         width: 30;
     }
 
+    .form-input:disabled {
+        opacity: 0.5;
+        color: $text-muted;
+    }
+
     .form-help {
         width: 1fr;
         padding-top: 1;
         padding-left: 2;
         color: $text-muted;
         text-style: dim;
+    }
+
+    Checkbox {
+        margin-bottom: 0;
     }
 
     RadioSet {
@@ -144,31 +153,12 @@ class ITSConfigScreen(Screen):
                     )
                     yield Static("[Step 5/8]", id="step-indicator")
 
-                    # Show preset summary
+                    # Show compact preset summary
                     if preset:
-                        yield Static("✓ Preset Applied:", classes="section-title")
-                        config_lines = []
-                        config_lines.append(f"[bold]{preset.name}[/bold] - {preset.description}")
-                        config_lines.append("")
-                        config_lines.append("Configuration:")
-
-                        if preset.baseline_mode == "none":
-                            config_lines.append("  • Baseline: None (no correction)")
-                        elif preset.baseline_mode == "auto":
-                            config_lines.append(f"  • Baseline: Auto (LED period / {preset.baseline_auto_divisor})")
-                        else:
-                            config_lines.append(f"  • Baseline: Fixed at {preset.baseline_value}s")
-
-                        config_lines.append(f"  • Plot start: {preset.plot_start_time}s")
-                        config_lines.append(f"  • Legend by: {preset.legend_by}")
-                        config_lines.append(f"  • Y-axis padding: {preset.padding*100:.0f}%")
-
-                        if preset.check_duration_mismatch:
-                            config_lines.append(f"  • Duration check: Enabled (±{preset.duration_tolerance*100:.0f}% tolerance)")
-
-                        yield Static("\n".join(config_lines), classes="section-title")
-                        yield Static("")
-                        yield Static("You can still apply filters:", classes="section-title")
+                        yield Static(
+                            f"✓ [bold]{preset.name}[/bold] - {preset.description}",
+                            classes="section-title"
+                        )
                 else:
                     yield Static("Custom Configuration - ITS", id="title")
                     yield Static(
@@ -177,68 +167,75 @@ class ITSConfigScreen(Screen):
                     )
                     yield Static("[Step 4/6]", id="step-indicator")
 
-            # Selection Mode
-            yield Static("Selection Mode:", classes="section-title")
-            with RadioSet(id="selection-mode-radio"):
-                yield RadioButton("Interactive", id="interactive-radio", value=True)
-                yield RadioButton("Auto", id="auto-radio")
-                yield RadioButton("Manual", id="manual-radio")
+            # Plot Options Section (show for both preset and custom mode)
+            yield Static("─── Plot Options ──────────────────────", classes="section-title")
 
-            # Filters Section
-            yield Static("─── Filters (Optional) ───────────────", classes="section-title")
+            # Get preset values if in preset mode to use as defaults
+            if self.preset_mode:
+                preset_name = self.app.plot_config.get("preset", "custom")
+                from src.plotting.its_presets import get_preset
+                preset = get_preset(preset_name)
+                # Use preset values as defaults
+                default_legend = preset.legend_by if preset else "wavelength"
+                # For baseline: if none mode, show 0; if auto, show empty (will be calculated); if fixed, show value
+                if preset:
+                    if preset.baseline_mode == "none":
+                        default_baseline = "0"
+                    elif preset.baseline_mode == "auto":
+                        default_baseline = ""  # Empty means auto-calculate
+                    else:  # fixed
+                        default_baseline = str(preset.baseline_value) if preset.baseline_value else "60.0"
+                else:
+                    default_baseline = "60.0"
+                default_padding = str(preset.padding) if preset else "0.05"
+            else:
+                # Use standard defaults for custom mode
+                default_legend = "vg"
+                default_baseline = "60.0"
+                default_padding = "0.05"
 
             with Horizontal(classes="form-row"):
-                yield Label("VG (V):", classes="form-label")
-                yield Input(placeholder="Gate voltage filter", id="vg-filter", classes="form-input")
-                yield Static("Gate voltage filter", classes="form-help")
+                yield Label("Legend by:", classes="form-label")
+                yield Select(
+                    [
+                        ("Gate Voltage (Vg)", "vg"),
+                        ("LED Voltage", "led_voltage"),
+                        ("Wavelength", "wavelength"),
+                    ],
+                    value=default_legend,
+                    id="legend-by-select",
+                    classes="form-input"
+                )
+                yield Static("Legend grouping", classes="form-help")
+
+            # Baseline correction checkbox and input
+            with Horizontal(classes="form-row"):
+                yield Checkbox("Apply baseline correction", id="baseline-enabled", value=True)
 
             with Horizontal(classes="form-row"):
-                yield Label("Wavelength (nm):", classes="form-label")
-                yield Input(placeholder="Laser wavelength", id="wavelength-filter", classes="form-input")
-                yield Static("Laser wavelength", classes="form-help")
+                yield Label("Baseline (s):", classes="form-label")
+                yield Input(
+                    value=default_baseline,
+                    placeholder="Empty = auto, 0 = none",
+                    id="baseline-input",
+                    classes="form-input"
+                )
+                yield Static("Empty=auto, 0=none, or value in seconds", classes="form-help")
 
             with Horizontal(classes="form-row"):
-                yield Label("Date:", classes="form-label")
-                yield Input(placeholder="YYYY-MM-DD", id="date-filter", classes="form-input")
-                yield Static("YYYY-MM-DD format", classes="form-help")
+                yield Label("Padding:", classes="form-label")
+                yield Input(value=default_padding, id="padding-input", classes="form-input")
+                yield Static("Y-axis padding", classes="form-help")
 
-            # Plot Options Section (only show in custom mode)
-            if not self.preset_mode:
-                yield Static("─── Plot Options ──────────────────────", classes="section-title")
-
-                with Horizontal(classes="form-row"):
-                    yield Label("Legend by:", classes="form-label")
-                    yield Select(
-                        [
-                            ("Gate Voltage (Vg)", "vg"),
-                            ("LED Voltage", "led_voltage"),
-                            ("Wavelength", "wavelength"),
-                        ],
-                        value="vg",
-                        id="legend-by-select",
-                        classes="form-input"
-                    )
-                    yield Static("Legend grouping", classes="form-help")
-
-                with Horizontal(classes="form-row"):
-                    yield Label("Baseline (s):", classes="form-label")
-                    yield Input(value="60.0", id="baseline-input", classes="form-input")
-                    yield Static("Baseline time", classes="form-help")
-
-                with Horizontal(classes="form-row"):
-                    yield Label("Padding:", classes="form-label")
-                    yield Input(value="0.05", id="padding-input", classes="form-input")
-                    yield Static("Y-axis padding", classes="form-help")
-
-                with Horizontal(classes="form-row"):
-                    yield Label("Output dir:", classes="form-label")
-                    yield Input(
-                        value="figs",
-                        placeholder="figs",
-                        id="output-dir-input",
-                        classes="form-input"
-                    )
-                    yield Static(f"→ figs/{self.chip_group}{self.chip_number}/", classes="form-help")
+            with Horizontal(classes="form-row"):
+                yield Label("Output dir:", classes="form-label")
+                yield Input(
+                    value="figs",
+                    placeholder="figs",
+                    id="output-dir-input",
+                    classes="form-input"
+                )
+                yield Static(f"→ figs/{self.chip_group}{self.chip_number}/", classes="form-help")
 
             # Buttons
             with Horizontal(id="button-container"):
@@ -253,8 +250,15 @@ class ITSConfigScreen(Screen):
 
     def on_mount(self) -> None:
         """Initialize screen."""
-        # Focus the first radio button
-        self.query_one(RadioSet).focus()
+        # Focus the first input field (legend select)
+        self.query_one("#legend-by-select", Select).focus()
+
+    def on_checkbox_changed(self, event: Checkbox.Changed) -> None:
+        """Handle checkbox state changes."""
+        if event.checkbox.id == "baseline-enabled":
+            # Enable/disable baseline input based on checkbox state
+            baseline_input = self.query_one("#baseline-input", Input)
+            baseline_input.disabled = not event.value
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""
@@ -286,34 +290,16 @@ class ITSConfigScreen(Screen):
         # Save to app state
         self.app.update_config(**config)
 
-        # Navigate based on selection mode
-        if config["selection_mode"] == "interactive":
-            # Launch interactive selector
-            from src.tui.screens.experiment_selector import ExperimentSelectorScreen
+        # Always launch interactive experiment selector
+        from src.tui.screens.experiment_selector import ExperimentSelectorScreen
 
-            self.app.push_screen(ExperimentSelectorScreen(
-                chip_number=self.chip_number,
-                chip_group=self.chip_group,
-                plot_type=self.plot_type,
-                metadata_dir=self.app.metadata_dir,
-                raw_dir=self.app.raw_dir,
-            ))
-        else:
-            # Go directly to preview (auto/manual mode)
-            # For auto/manual, we need to determine seq_numbers automatically
-            # TODO: Implement auto-selection logic
-            # For now, use empty list as placeholder
-            from src.tui.screens.preview_screen import PreviewScreen
-
-            self.app.push_screen(PreviewScreen(
-                chip_number=self.chip_number,
-                chip_group=self.chip_group,
-                plot_type=self.plot_type,
-                seq_numbers=[],  # TODO: Auto-select based on filters
-                config=config,
-                metadata_dir=self.app.metadata_dir,
-                raw_dir=self.app.raw_dir,
-            ))
+        self.app.push_screen(ExperimentSelectorScreen(
+            chip_number=self.chip_number,
+            chip_group=self.chip_group,
+            plot_type=self.plot_type,
+            metadata_dir=self.app.metadata_dir,
+            raw_dir=self.app.raw_dir,
+        ))
 
     def action_save_config(self) -> None:
         """Save configuration to JSON file."""
@@ -353,86 +339,85 @@ class ITSConfigScreen(Screen):
 
         Returns error message if validation fails, None if OK.
         """
-        # Validate baseline (must be positive)
+        # Validate baseline (must be positive or zero for "none" mode)
         baseline = config.get("baseline")
-        if baseline is not None and baseline <= 0:
-            return "Baseline must be a positive number"
+        if baseline is not None and baseline < 0:
+            return "Baseline must be a positive number or zero"
 
         # Validate padding (must be between 0 and 1)
         padding = config.get("padding")
         if padding is not None and (padding < 0 or padding > 1):
             return "Padding must be between 0 and 1"
 
-        # Validate wavelength (typical range 200-2000 nm)
-        wavelength = config.get("wavelength_filter")
-        if wavelength is not None and (wavelength < 200 or wavelength > 2000):
-            return "Wavelength should be between 200 and 2000 nm"
-
-        # Validate date format (basic check)
-        date_filter = config.get("date_filter")
-        if date_filter:
-            import re
-            if not re.match(r"^\d{4}-\d{2}-\d{2}$", date_filter):
-                return "Date must be in YYYY-MM-DD format"
-
         return None
 
     def _collect_config(self) -> dict:
         """Collect all configuration values from the form."""
-        # Get selection mode
-        radio_set = self.query_one("#selection-mode-radio", RadioSet)
-        selected_radio = radio_set.pressed_button
+        # Get plot options from form (now shown for both preset and custom mode)
+        legend_by = self.query_one("#legend-by-select", Select).value
+        baseline_enabled = self.query_one("#baseline-enabled", Checkbox).value
+        baseline_input = self.query_one("#baseline-input", Input).value.strip()
+        padding = self.query_one("#padding-input", Input).value.strip()
+        output_dir = self.query_one("#output-dir-input", Input).value.strip()
 
-        mode_map = {
-            "interactive-radio": "interactive",
-            "auto-radio": "auto",
-            "manual-radio": "manual",
-        }
-        selection_mode = mode_map.get(selected_radio.id if selected_radio else "", "interactive")
-
-        # Get filter values
-        vg_filter = self.query_one("#vg-filter", Input).value.strip()
-        wavelength_filter = self.query_one("#wavelength-filter", Input).value.strip()
-        date_filter = self.query_one("#date-filter", Input).value.strip()
-
-        # Get plot options (from preset or from form)
-        if self.preset_mode:
-            # Apply preset configuration
+        # Check if baseline correction is disabled
+        if not baseline_enabled:
+            # Force baseline_mode to "none" when checkbox is unchecked
+            baseline_mode = "none"
+            baseline = None
+            # Get preset defaults for other parameters
+            if self.preset_mode:
+                preset_name = self.app.plot_config.get("preset", "custom")
+                from src.plotting.its_presets import get_preset
+                preset = get_preset(preset_name)
+                if preset:
+                    baseline_auto_divisor = preset.baseline_auto_divisor
+                    plot_start_time = preset.plot_start_time
+                    check_duration_mismatch = preset.check_duration_mismatch
+                    duration_tolerance = preset.duration_tolerance
+                else:
+                    baseline_auto_divisor = 2.0
+                    plot_start_time = 20.0
+                    check_duration_mismatch = False
+                    duration_tolerance = 0.10
+            else:
+                baseline_auto_divisor = 2.0
+                plot_start_time = 20.0
+                check_duration_mismatch = False
+                duration_tolerance = 0.10
+        # Get preset defaults if in preset mode
+        elif self.preset_mode:
             preset_name = self.app.plot_config.get("preset", "custom")
             from src.plotting.its_presets import get_preset
             preset = get_preset(preset_name)
 
             if preset:
-                legend_by = preset.legend_by
-                baseline = preset.baseline_value if preset.baseline_mode == "fixed" else None
-                padding = preset.padding
-                output_dir = "figs"  # Default
-
-                # Store preset-specific parameters
-                baseline_mode = preset.baseline_mode
+                # Inherit preset parameters (can be overridden by user edits)
                 baseline_auto_divisor = preset.baseline_auto_divisor
                 plot_start_time = preset.plot_start_time
                 check_duration_mismatch = preset.check_duration_mismatch
                 duration_tolerance = preset.duration_tolerance
+
+                # Determine baseline mode from user input
+                if baseline_input == "" or baseline_input is None:
+                    # Empty = auto mode
+                    baseline_mode = "auto"
+                    baseline = None
+                else:
+                    # Numeric value = fixed mode (including 0)
+                    baseline_mode = "fixed"
+                    baseline = baseline_input
             else:
-                # Fallback to defaults
-                legend_by = "wavelength"
-                baseline = 60.0
-                padding = 0.05
-                output_dir = "figs"
+                # Fallback defaults
+                baseline = baseline_input
                 baseline_mode = "fixed"
                 baseline_auto_divisor = 2.0
                 plot_start_time = 20.0
                 check_duration_mismatch = False
                 duration_tolerance = 0.10
         else:
-            # Get from form inputs
-            legend_by = self.query_one("#legend-by-select", Select).value
-            baseline = self.query_one("#baseline-input", Input).value.strip()
-            padding = self.query_one("#padding-input", Input).value.strip()
-            output_dir = self.query_one("#output-dir-input", Input).value.strip()
-
-            # Use fixed baseline mode for custom config
+            # Custom mode: always use fixed baseline
+            baseline = baseline_input
             baseline_mode = "fixed"
             baseline_auto_divisor = 2.0
             plot_start_time = 20.0
@@ -441,26 +426,18 @@ class ITSConfigScreen(Screen):
 
         # Build config dict with type conversion and error handling
         config = {
-            "selection_mode": selection_mode,
+            "selection_mode": "interactive",  # Always interactive (experiment selector handles this)
             "legend_by": legend_by,
             "output_dir": output_dir,
         }
 
         # Convert numeric values with error handling
         try:
-            config["vg_filter"] = float(vg_filter) if vg_filter else None
-        except ValueError:
-            config["vg_filter"] = None
-
-        try:
-            config["wavelength_filter"] = float(wavelength_filter) if wavelength_filter else None
-        except ValueError:
-            config["wavelength_filter"] = None
-
-        config["date_filter"] = date_filter if date_filter else None
-
-        try:
-            config["baseline"] = float(baseline) if baseline else 60.0
+            # Check for empty string specifically (not just falsy, since 0.0 is valid)
+            if baseline == "" or baseline is None:
+                config["baseline"] = None  # Will be auto-calculated
+            else:
+                config["baseline"] = float(baseline)
         except ValueError:
             config["baseline"] = 60.0
 

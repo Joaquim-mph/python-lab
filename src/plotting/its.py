@@ -58,6 +58,50 @@ def _calculate_auto_baseline(df: pl.DataFrame, divisor: float = 2.0) -> float:
     return 60.0
 
 
+def _apply_baseline_zero(tt: np.ndarray, yy: np.ndarray, plot_start_time: float = 0.0) -> np.ndarray:
+    """
+    Apply t=0 baseline correction (subtract first visible point).
+
+    Parameters
+    ----------
+    tt : np.ndarray
+        Time array
+    yy : np.ndarray
+        Current array
+    plot_start_time : float, optional
+        Start time for visible plot region. The baseline will be taken
+        at the first point >= plot_start_time. Default: 0.0 (use first point)
+
+    Returns
+    -------
+    np.ndarray
+        Baseline-corrected current (yy - I0), where I0 is the value
+        at the first visible point
+
+    Notes
+    -----
+    This avoids using artifacts in the first CSV point by using the
+    first point in the visible time window instead.
+    """
+    if len(yy) == 0:
+        return yy
+
+    # Find first point at or after plot_start_time
+    if plot_start_time > 0.0:
+        visible_mask = tt >= plot_start_time
+        if np.any(visible_mask):
+            first_visible_idx = np.where(visible_mask)[0][0]
+            I0 = yy[first_visible_idx]
+        else:
+            # Fallback: no data after plot_start_time, use first point
+            I0 = yy[0]
+    else:
+        # plot_start_time = 0, use first point
+        I0 = yy[0]
+
+    return yy - I0
+
+
 def _check_duration_mismatch(
     durations: list[float],
     tolerance: float = 0.10
@@ -210,18 +254,23 @@ def plot_its_overlay(
     if baseline_mode == "auto":
         # Calculate baseline from LED ON+OFF period
         baseline_t = _calculate_auto_baseline(df, baseline_auto_divisor)
-        apply_baseline = True
+        apply_baseline = "interpolate"
     elif baseline_mode == "none":
-        # No baseline correction for dark experiments
+        # No baseline correction (raw data mode)
         baseline_t = None
         apply_baseline = False
-        print("[info] Baseline correction disabled (dark experiment mode)")
+        print("[info] Baseline correction disabled (RAW DATA mode)")
     else:  # baseline_mode == "fixed"
         # Use provided baseline_t value
         if baseline_t is None:
             baseline_t = 60.0
             print("[warn] baseline_mode='fixed' but baseline_t=None, using 60.0")
-        apply_baseline = True
+        # Check if baseline is exactly 0.0 (special case)
+        if baseline_t == 0.0:
+            apply_baseline = "zero"
+            print("[info] Baseline at t=0: subtracting first point from each trace")
+        else:
+            apply_baseline = "interpolate"
 
     # --- Check duration mismatch if requested ---
     if check_duration_mismatch:
@@ -383,12 +432,16 @@ def plot_its_overlay(
             idx = np.argsort(tt)
             tt = tt[idx]; yy = yy[idx]
 
-        # baseline correction (if enabled)
-        if apply_baseline:
+        # baseline correction (three modes)
+        if apply_baseline == "interpolate":
+            # Standard interpolation at baseline_t
             I0 = interpolate_baseline(tt, yy, baseline_t, warn_extrapolation=True)
             yy_corr = yy - I0
-        else:
-            # No baseline correction for dark experiments
+        elif apply_baseline == "zero":
+            # Subtract first visible point (baseline at t=0)
+            yy_corr = _apply_baseline_zero(tt, yy, plot_start_time)
+        else:  # apply_baseline == False
+            # No baseline correction (raw data)
             yy_corr = yy
 
         # --- label based on legend_by ---
@@ -518,7 +571,9 @@ def plot_its_overlay(
                 y_pad = padding * y_range
                 plt.ylim(y_min - y_pad, y_max + y_pad)
 
-    out = FIG_DIR / f"encap{chipnum}_ITS_{tag}.png"
+    # Add _raw suffix if baseline_mode is "none"
+    raw_suffix = "_raw" if baseline_mode == "none" else ""
+    out = FIG_DIR / f"encap{chipnum}_ITS_{tag}{raw_suffix}.png"
     plt.savefig(out)
     print(f"saved {out}")
 
@@ -527,10 +582,15 @@ def plot_its_dark(
     df: pl.DataFrame,
     base_dir: Path,
     tag: str,
-    baseline_t: float = 60.0,
+    baseline_t: float | None = 60.0,
     *,
+    baseline_mode: str = "fixed",
+    baseline_auto_divisor: float = 2.0,
+    plot_start_time: float = PLOT_START_TIME,
     legend_by: str = "vg",  # "vg" (default for dark), "wavelength", or "led_voltage"
     padding: float = 0.02,  # fraction of data range to add as padding (0.02 = 2%)
+    check_duration_mismatch: bool = False,
+    duration_tolerance: float = 0.10,
 ):
     """
     Overlay ITS traces for dark measurements (no laser) with baseline correction.
@@ -546,12 +606,22 @@ def plot_its_dark(
         Base directory containing measurement files
     tag : str
         Tag for output filename
-    baseline_t : float
+    baseline_t : float or None
         Time point for baseline correction (default: 60.0 seconds)
+    baseline_mode : {"fixed", "auto", "none"}
+        Baseline correction mode (default: "fixed")
+    baseline_auto_divisor : float
+        Divisor for auto baseline calculation (default: 2.0)
+    plot_start_time : float
+        Start time for x-axis (default: PLOT_START_TIME)
     legend_by : {"vg", "wavelength", "led_voltage"}
         Legend grouping. Default is "vg" (gate voltage) for dark measurements.
     padding : float
         Fraction of data range to add as y-axis padding (default: 0.02 = 2%)
+    check_duration_mismatch : bool
+        Enable duration mismatch warning (default: False)
+    duration_tolerance : float
+        Maximum allowed variation in durations (default: 0.10 = 10%)
 
     Notes
     -----
@@ -562,6 +632,35 @@ def plot_its_dark(
     # Apply plot style (lazy initialization for thread-safety)
     from src.plotting.styles import set_plot_style
     set_plot_style("prism_rain")
+
+    # --- Handle baseline mode ---
+    if baseline_mode == "auto":
+        # Calculate baseline from LED ON+OFF period
+        baseline_t = _calculate_auto_baseline(df, baseline_auto_divisor)
+        apply_baseline = "interpolate"
+    elif baseline_mode == "none":
+        # No baseline correction (raw data mode)
+        baseline_t = None
+        apply_baseline = False
+        print("[info] Baseline correction disabled (RAW DATA mode)")
+    else:  # baseline_mode == "fixed"
+        # Use provided baseline_t value
+        if baseline_t is None:
+            baseline_t = 60.0
+            print("[warn] baseline_mode='fixed' but baseline_t=None, using 60.0")
+        # Check if baseline is exactly 0.0 (special case)
+        if baseline_t == 0.0:
+            apply_baseline = "zero"
+            print("[info] Baseline at t=0: subtracting first point from each trace")
+        else:
+            apply_baseline = "interpolate"
+
+    # --- Check duration mismatch if requested ---
+    if check_duration_mismatch:
+        durations = _get_experiment_durations(df, base_dir)
+        has_mismatch, warning = _check_duration_mismatch(durations, duration_tolerance)
+        if has_mismatch:
+            print(warning)
 
     # --- normalize legend_by to a canonical value ---
     lb = legend_by.strip().lower()
@@ -684,12 +783,16 @@ def plot_its_dark(
             idx = np.argsort(tt)
             tt = tt[idx]; yy = yy[idx]
 
-        # baseline correction (if enabled)
-        if apply_baseline:
+        # baseline correction (three modes)
+        if apply_baseline == "interpolate":
+            # Standard interpolation at baseline_t
             I0 = interpolate_baseline(tt, yy, baseline_t, warn_extrapolation=True)
             yy_corr = yy - I0
-        else:
-            # No baseline correction for dark experiments
+        elif apply_baseline == "zero":
+            # Subtract first visible point (baseline at t=0)
+            yy_corr = _apply_baseline_zero(tt, yy, plot_start_time)
+        else:  # apply_baseline == False
+            # No baseline correction (raw data)
             yy_corr = yy
 
         # --- label based on legend_by ---
@@ -781,6 +884,8 @@ def plot_its_dark(
                 y_pad = padding * y_range
                 plt.ylim(y_min - y_pad, y_max + y_pad)
 
-    out = FIG_DIR / f"encap{chipnum}_ITS_dark_{tag}.png"
+    # Add _raw suffix if baseline_mode is "none"
+    raw_suffix = "_raw" if baseline_mode == "none" else ""
+    out = FIG_DIR / f"encap{chipnum}_ITS_dark_{tag}{raw_suffix}.png"
     plt.savefig(out)
     print(f"saved {out}")

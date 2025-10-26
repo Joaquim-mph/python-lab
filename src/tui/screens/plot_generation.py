@@ -180,6 +180,11 @@ class PlotGenerationScreen(Screen):
                 legend_by = self.config.get("legend_by", "vg")  # Default to vg for ITS plots
                 baseline_t = self.config.get("baseline", 60.0)
                 padding = self.config.get("padding", 0.05)
+                baseline_mode = self.config.get("baseline_mode", "fixed")
+                baseline_auto_divisor = self.config.get("baseline_auto_divisor", 2.0)
+                plot_start_time = self.config.get("plot_start_time", 20.0)
+                check_duration_mismatch = self.config.get("check_duration_mismatch", False)
+                duration_tolerance = self.config.get("duration_tolerance", 0.10)
 
                 # Check if all ITS are dark (no laser)
                 import polars as pl
@@ -213,8 +218,13 @@ class PlotGenerationScreen(Screen):
                         raw_dir,
                         plot_tag,
                         baseline_t=baseline_t,
+                        baseline_mode=baseline_mode,
+                        baseline_auto_divisor=baseline_auto_divisor,
+                        plot_start_time=plot_start_time,
                         legend_by="vg",  # Force vg for dark plots
-                        padding=padding
+                        padding=padding,
+                        check_duration_mismatch=check_duration_mismatch,
+                        duration_tolerance=duration_tolerance
                     )
                 else:
                     its.plot_its_overlay(
@@ -222,8 +232,13 @@ class PlotGenerationScreen(Screen):
                         raw_dir,
                         plot_tag,
                         baseline_t=baseline_t,
+                        baseline_mode=baseline_mode,
+                        baseline_auto_divisor=baseline_auto_divisor,
+                        plot_start_time=plot_start_time,
                         legend_by=legend_by,
-                        padding=padding
+                        padding=padding,
+                        check_duration_mismatch=check_duration_mismatch,
+                        duration_tolerance=duration_tolerance
                     )
 
             elif self.plot_type == "IVg":
@@ -279,10 +294,14 @@ class PlotGenerationScreen(Screen):
                     except Exception:
                         pass
 
+                # Check if raw data mode (add _raw suffix)
+                baseline_mode = self.config.get("baseline_mode", "fixed")
+                raw_suffix = "_raw" if baseline_mode == "none" else ""
+
                 if all_dark:
-                    filename = f"encap{self.chip_number}_ITS_dark_{plot_tag}.png"
+                    filename = f"encap{self.chip_number}_ITS_dark_{plot_tag}{raw_suffix}.png"
                 else:
-                    filename = f"encap{self.chip_number}_ITS_{plot_tag}.png"
+                    filename = f"encap{self.chip_number}_ITS_{plot_tag}{raw_suffix}.png"
 
             elif self.plot_type == "IVg":
                 filename = f"encap{self.chip_number}_IVg_{plot_tag}.png"

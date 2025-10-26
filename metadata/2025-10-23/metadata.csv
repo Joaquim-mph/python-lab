@@ -1,0 +1,19 @@
+Irange,NPLC,Burn-in time,Chip group name,Chip number,Information,Laser voltage,Laser wavelength,Procedure version,Sample,Step time,VDS,VG end,VG start,VG step,Laser toggle,has_light,source_file,start_time,time_hms,T step start time,Initial (current) T,Laser ON+OFF period,Sampling time (excluding Keithley),Target T,VG
+0.001,1.0,60.0,Alisson,81.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-23/IVg2025-10-23_1.csv,1761227820.3577101,10:57:00,,,,,,
+0.001,1.0,60.0,Alisson,81.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-23/IVg2025-10-23_2.csv,1761250868.1294336,17:21:08,,,,,,
+0.001,1.0,60.0,Alisson,81.0,monitoring,0.0,455.0,2.1.0,other,0.0,0.1,5.0,-5.0,0.05,false,false,raw_data/2025-10-23/IVg2025-10-23_3.csv,1761266260.3290186,21:37:40,,,,,,
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,0.0,455.0,2.2.0,other,,0.1,,,,false,false,raw_data/2025-10-23/It2025-10-23_1.csv,1761228688.6023548,11:11:28,120.0,0.0,4500.0,0.0,25.0,-0.7
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,1.25,455.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-23/It2025-10-23_10.csv,1761266336.0294209,21:38:56,120.0,0.0,480.0,0.0,25.0,-0.7
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,0.0,455.0,2.2.0,other,,0.1,,,,false,false,raw_data/2025-10-23/It2025-10-23_11.csv,1761267060.0659132,21:51:00,120.0,0.0,4500.0,0.0,25.0,-0.7
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,1.25,455.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-23/It2025-10-23_12.csv,1761273814.3324823,23:43:34,120.0,0.0,480.0,0.0,25.0,-0.7
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,0.0,455.0,2.2.0,other,,0.1,,,,false,false,raw_data/2025-10-23/It2025-10-23_13.csv,1761274538.323195,23:55:38,120.0,0.0,4500.0,0.0,25.0,-0.7
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,1.25,455.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-23/It2025-10-23_14.csv,1761281292.8021827,01:48:12,120.0,0.0,480.0,0.0,25.0,-0.7
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,0.0,455.0,2.2.0,other,,0.1,,,,false,false,raw_data/2025-10-23/It2025-10-23_15.csv,1761282016.8430824,02:00:16,120.0,0.0,27000.0,0.0,25.0,-0.7
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,1.25,455.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-23/It2025-10-23_2.csv,1761235442.9594305,13:04:02,120.0,0.0,480.0,0.0,25.0,-0.7
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,0.0,455.0,2.2.0,other,,0.1,,,,false,false,raw_data/2025-10-23/It2025-10-23_3.csv,1761236166.9879744,13:16:06,120.0,0.0,4500.0,0.0,25.0,-0.7
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,1.25,455.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-23/It2025-10-23_4.csv,1761242921.3217363,15:08:41,120.0,0.0,480.0,0.0,25.0,-0.7
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,0.0,455.0,2.2.0,other,,0.1,,,,false,false,raw_data/2025-10-23/It2025-10-23_5.csv,1761243645.3664584,15:20:45,120.0,0.0,4500.0,0.0,25.0,-0.7
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,1.25,455.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-23/It2025-10-23_6.csv,1761250932.7906919,17:22:12,120.0,0.0,480.0,0.0,25.0,-0.7
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,0.0,455.0,2.2.0,other,,0.1,,,,false,false,raw_data/2025-10-23/It2025-10-23_7.csv,1761251707.4762187,17:35:07,120.0,0.0,4500.0,0.0,25.0,-0.7
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,1.25,455.0,2.2.0,other,,0.1,,,,true,true,raw_data/2025-10-23/It2025-10-23_8.csv,1761258461.711411,19:27:41,120.0,0.0,480.0,0.0,25.0,-0.7
+0.0001,1.0,,Alisson,81.0,Light testing - biotite,0.0,455.0,2.2.0,other,,0.1,,,,false,false,raw_data/2025-10-23/It2025-10-23_9.csv,1761259185.7333524,19:39:45,120.0,0.0,4500.0,0.0,25.0,-0.7

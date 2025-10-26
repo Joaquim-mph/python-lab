@@ -1,87 +1,87 @@
-seq,date,time_hms,proc,summary,source_file,file_idx,start_time,day_folder
-1,2025-09-08,12:30:15,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #2,raw_data/Alisson_08_sept/IVg2025-09-08_2.csv,2,1757345415.6467748,Alisson_08_sept
-2,2025-09-22,16:51:19,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #12,raw_data/Alisson_22_sept/IVg2025-09-22_12.csv,12,1758570679.4699981,Alisson_22_sept
-3,2025-09-22,17:12:56,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #13,raw_data/Alisson_22_sept/IVg2025-09-22_13.csv,13,1758571976.7727933,Alisson_22_sept
-4,2025-09-22,17:14:43,It,💡 It  Alisson72  VG=-5.12 V  VDS=0.1 V  VL=1.33 V  λ=850.0 nm  period=120.0 s  #19,raw_data/Alisson_22_sept/It2025-09-22_19.csv,19,1758572083.7175047,Alisson_22_sept
-5,2025-09-22,17:17:52,It,💡 It  Alisson72  VG=-5.12 V  VDS=0.1 V  VL=2.64 V  λ=850.0 nm  period=120.0 s  #20,raw_data/Alisson_22_sept/It2025-09-22_20.csv,20,1758572272.0956964,Alisson_22_sept
-6,2025-09-22,17:21:00,It,💡 It  Alisson72  VG=-5.12 V  VDS=0.1 V  VL=3.98 V  λ=850.0 nm  period=120.0 s  #21,raw_data/Alisson_22_sept/It2025-09-22_21.csv,21,1758572460.6696181,Alisson_22_sept
-7,2025-09-22,19:50:38,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #14,raw_data/Alisson_22_sept/IVg2025-09-22_14.csv,14,1758581438.7875533,Alisson_22_sept
-8,2025-09-23,09:34:02,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #1,raw_data/Alisson_23_sept/IVg2025-09-23_1.csv,1,1758630842.2394657,Alisson_23_sept
-9,2025-09-23,09:54:47,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #2,raw_data/Alisson_23_sept/IVg2025-09-23_2.csv,2,1758632087.7965221,Alisson_23_sept
-10,2025-09-23,09:55:55,It,💡 It  Alisson72  VG=-5.19 V  VDS=0.1 V  VL=1.4 V  λ=850.0 nm  period=120.0 s  #1,raw_data/Alisson_23_sept/It2025-09-23_1.csv,1,1758632155.2821116,Alisson_23_sept
-11,2025-09-23,09:59:30,It,💡 It  Alisson72  VG=-2.62 V  VDS=0.1 V  VL=1.4 V  λ=850.0 nm  period=120.0 s  #2,raw_data/Alisson_23_sept/It2025-09-23_2.csv,2,1758632370.7227604,Alisson_23_sept
-12,2025-09-23,10:02:37,It,💡 It  Alisson72  VG=-0.62 V  VDS=0.1 V  VL=1.4 V  λ=850.0 nm  period=120.0 s  #3,raw_data/Alisson_23_sept/It2025-09-23_3.csv,3,1758632557.6580405,Alisson_23_sept
-13,2025-09-23,10:06:11,It,💡 It  Alisson72  VG=1.38 V  VDS=0.1 V  VL=1.4 V  λ=850.0 nm  period=120.0 s  #4,raw_data/Alisson_23_sept/It2025-09-23_4.csv,4,1758632771.9842806,Alisson_23_sept
-14,2025-09-23,10:10:24,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #3,raw_data/Alisson_23_sept/IVg2025-09-23_3.csv,3,1758633024.1524997,Alisson_23_sept
-15,2025-09-23,10:22:17,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #4,raw_data/Alisson_23_sept/IVg2025-09-23_4.csv,4,1758633737.1495233,Alisson_23_sept
-16,2025-09-23,10:23:23,It,💡 It  Alisson72  VG=-2.62 V  VDS=0.1 V  VL=4.53 V  λ=680.0 nm  period=120.0 s  #5,raw_data/Alisson_23_sept/It2025-09-23_5.csv,5,1758633803.1951244,Alisson_23_sept
-17,2025-09-23,10:29:35,It,💡 It  Alisson72  VG=1.38 V  VDS=0.1 V  VL=4.53 V  λ=680.0 nm  period=120.0 s  #7,raw_data/Alisson_23_sept/It2025-09-23_7.csv,7,1758634175.9112415,Alisson_23_sept
-18,2025-09-23,10:32:41,It,💡 It  Alisson72  VG=-0.62 V  VDS=0.1 V  VL=4.53 V  λ=680.0 nm  period=120.0 s  #6,raw_data/Alisson_23_sept/It2025-09-23_6.csv,6,1758634361.890278,Alisson_23_sept
-19,2025-09-23,10:36:37,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #5,raw_data/Alisson_23_sept/IVg2025-09-23_5.csv,5,1758634597.3001387,Alisson_23_sept
-20,2025-09-23,10:41:50,It,💡 It  Alisson72  VG=-2.62 V  VDS=0.1 V  VL=2.31 V  λ=625.0 nm  period=120.0 s  #8,raw_data/Alisson_23_sept/It2025-09-23_8.csv,8,1758634910.2777004,Alisson_23_sept
-21,2025-09-23,10:44:57,It,💡 It  Alisson72  VG=-0.62 V  VDS=0.1 V  VL=2.31 V  λ=625.0 nm  period=120.0 s  #9,raw_data/Alisson_23_sept/It2025-09-23_9.csv,9,1758635097.2233062,Alisson_23_sept
-22,2025-09-23,10:48:03,It,💡 It  Alisson72  VG=1.38 V  VDS=0.1 V  VL=2.31 V  λ=625.0 nm  period=120.0 s  #10,raw_data/Alisson_23_sept/It2025-09-23_10.csv,10,1758635283.3475049,Alisson_23_sept
-23,2025-09-23,10:51:20,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #6,raw_data/Alisson_23_sept/IVg2025-09-23_6.csv,6,1758635480.308816,Alisson_23_sept
-24,2025-09-23,10:55:48,It,💡 It  Alisson72  VG=-2.62 V  VDS=0.1 V  VL=3.23 V  λ=590.0 nm  period=120.0 s  #11,raw_data/Alisson_23_sept/It2025-09-23_11.csv,11,1758635748.3815773,Alisson_23_sept
-25,2025-09-23,10:59:08,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #7,raw_data/Alisson_23_sept/IVg2025-09-23_7.csv,7,1758635948.9125323,Alisson_23_sept
-26,2025-09-23,11:02:21,It,💡 It  Alisson72  VG=-2.62 V  VDS=0.1 V  VL=0.77 V  λ=565.0 nm  period=120.0 s  #12,raw_data/Alisson_23_sept/It2025-09-23_12.csv,12,1758636141.8027709,Alisson_23_sept
-27,2025-09-23,11:05:44,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #8,raw_data/Alisson_23_sept/IVg2025-09-23_8.csv,8,1758636344.2496617,Alisson_23_sept
-28,2025-09-23,11:09:33,It,💡 It  Alisson72  VG=-2.62 V  VDS=0.1 V  VL=1.7 V  λ=505.0 nm  period=120.0 s  #13,raw_data/Alisson_23_sept/It2025-09-23_13.csv,13,1758636573.0749269,Alisson_23_sept
-29,2025-09-23,11:13:05,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #9,raw_data/Alisson_23_sept/IVg2025-09-23_9.csv,9,1758636785.8015227,Alisson_23_sept
-30,2025-09-23,11:17:06,It,💡 It  Alisson72  VG=-2.68 V  VDS=0.1 V  VL=1.31 V  λ=455.0 nm  period=120.0 s  #14,raw_data/Alisson_23_sept/It2025-09-23_14.csv,14,1758637026.6893125,Alisson_23_sept
-31,2025-09-23,11:20:25,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #10,raw_data/Alisson_23_sept/IVg2025-09-23_10.csv,10,1758637225.5248919,Alisson_23_sept
-32,2025-09-23,11:24:15,It,💡 It  Alisson72  VG=-2.68 V  VDS=0.1 V  VL=3.12 V  λ=405.0 nm  period=120.0 s  #15,raw_data/Alisson_23_sept/It2025-09-23_15.csv,15,1758637455.5872724,Alisson_23_sept
-33,2025-09-23,11:28:00,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #11,raw_data/Alisson_23_sept/IVg2025-09-23_11.csv,11,1758637680.3593848,Alisson_23_sept
-34,2025-09-23,11:31:35,It,💡 It  Alisson72  VG=-2.68 V  VDS=0.1 V  VL=2.11 V  λ=385.0 nm  period=120.0 s  #16,raw_data/Alisson_23_sept/It2025-09-23_16.csv,16,1758637895.2135174,Alisson_23_sept
-35,2025-09-23,11:35:34,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #12,raw_data/Alisson_23_sept/IVg2025-09-23_12.csv,12,1758638134.4927194,Alisson_23_sept
-36,2025-09-23,11:39:30,It,💡 It  Alisson72  VG=-2.8 V  VDS=0.1 V  VL=4.53 V  λ=365.0 nm  period=120.0 s  #17,raw_data/Alisson_23_sept/It2025-09-23_17.csv,17,1758638370.5704868,Alisson_23_sept
-37,2025-09-23,11:42:41,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #13,raw_data/Alisson_23_sept/IVg2025-09-23_13.csv,13,1758638561.9401402,Alisson_23_sept
-38,2025-09-23,11:44:13,It,💡 It  Alisson72  VG=0.75 V  VDS=0.1 V  VL=4.53 V  λ=365.0 nm  period=120.0 s  #20,raw_data/Alisson_23_sept/It2025-09-23_20.csv,20,1758638653.480549,Alisson_23_sept
-39,2025-09-23,11:47:19,It,💡 It  Alisson72  VG=1.15 V  VDS=0.1 V  VL=4.53 V  λ=365.0 nm  period=120.0 s  #21,raw_data/Alisson_23_sept/It2025-09-23_21.csv,21,1758638839.2243443,Alisson_23_sept
-40,2025-09-23,11:50:25,It,💡 It  Alisson72  VG=3.15 V  VDS=0.1 V  VL=4.53 V  λ=365.0 nm  period=120.0 s  #22,raw_data/Alisson_23_sept/It2025-09-23_22.csv,22,1758639025.325793,Alisson_23_sept
-41,2025-09-23,11:53:38,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #14,raw_data/Alisson_23_sept/IVg2025-09-23_14.csv,14,1758639218.4206645,Alisson_23_sept
-42,2025-09-23,12:16:55,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #15,raw_data/Alisson_23_sept/IVg2025-09-23_15.csv,15,1758640615.9293547,Alisson_23_sept
-43,2025-09-23,12:23:05,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #16,raw_data/Alisson_23_sept/IVg2025-09-23_16.csv,16,1758640985.930548,Alisson_23_sept
-44,2025-09-23,12:26:16,It,💡 It  Alisson72  VG=-3.0 V  VDS=0.1 V  VL=0.88 V  λ=365.0 nm  period=120.0 s  #23,raw_data/Alisson_23_sept/It2025-09-23_23.csv,23,1758641176.0489867,Alisson_23_sept
-45,2025-09-23,12:29:17,It,💡 It  Alisson72  VG=-3.0 V  VDS=0.1 V  VL=1.79 V  λ=365.0 nm  period=120.0 s  #24,raw_data/Alisson_23_sept/It2025-09-23_24.csv,24,1758641357.7241628,Alisson_23_sept
-46,2025-09-23,12:40:21,It,💡 It  Alisson72  VG=-3.0 V  VDS=0.1 V  VL=2.78 V  λ=365.0 nm  period=120.0 s  #25,raw_data/Alisson_23_sept/It2025-09-23_25.csv,25,1758642021.5992167,Alisson_23_sept
-47,2025-09-23,12:43:21,It,💡 It  Alisson72  VG=-3.0 V  VDS=0.1 V  VL=3.81 V  λ=365.0 nm  period=120.0 s  #26,raw_data/Alisson_23_sept/It2025-09-23_26.csv,26,1758642201.7585938,Alisson_23_sept
-48,2025-09-23,12:46:21,It,💡 It  Alisson72  VG=-3.0 V  VDS=0.1 V  VL=4.89 V  λ=365.0 nm  period=120.0 s  #27,raw_data/Alisson_23_sept/It2025-09-23_27.csv,27,1758642381.9670985,Alisson_23_sept
-49,2025-09-23,13:13:35,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #17,raw_data/Alisson_23_sept/IVg2025-09-23_17.csv,17,1758644015.942695,Alisson_23_sept
-50,2025-09-23,13:15:10,It,💡 It  Alisson72  VG=3.0 V  VDS=0.1 V  VL=0.88 V  λ=365.0 nm  period=120.0 s  #28,raw_data/Alisson_23_sept/It2025-09-23_28.csv,28,1758644110.8948119,Alisson_23_sept
-51,2025-09-23,13:18:12,It,💡 It  Alisson72  VG=3.0 V  VDS=0.1 V  VL=1.79 V  λ=365.0 nm  period=120.0 s  #29,raw_data/Alisson_23_sept/It2025-09-23_29.csv,29,1758644292.5491433,Alisson_23_sept
-52,2025-09-23,13:21:12,It,💡 It  Alisson72  VG=3.0 V  VDS=0.1 V  VL=2.78 V  λ=365.0 nm  period=120.0 s  #30,raw_data/Alisson_23_sept/It2025-09-23_30.csv,30,1758644472.7474208,Alisson_23_sept
-53,2025-09-23,13:24:12,It,💡 It  Alisson72  VG=3.0 V  VDS=0.1 V  VL=3.81 V  λ=365.0 nm  period=120.0 s  #31,raw_data/Alisson_23_sept/It2025-09-23_31.csv,31,1758644652.961474,Alisson_23_sept
-54,2025-09-23,13:27:13,It,💡 It  Alisson72  VG=3.0 V  VDS=0.1 V  VL=4.89 V  λ=365.0 nm  period=120.0 s  #32,raw_data/Alisson_23_sept/It2025-09-23_32.csv,32,1758644833.1371498,Alisson_23_sept
-55,2025-09-23,13:30:27,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #18,raw_data/Alisson_23_sept/IVg2025-09-23_18.csv,18,1758645027.4332147,Alisson_23_sept
-56,2025-09-23,14:10:58,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #19,raw_data/Alisson_23_sept/IVg2025-09-23_19.csv,19,1758647458.8890622,Alisson_23_sept
-57,2025-09-23,14:17:06,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #20,raw_data/Alisson_23_sept/IVg2025-09-23_20.csv,20,1758647826.2767909,Alisson_23_sept
-58,2025-09-23,15:23:28,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #21,raw_data/Alisson_23_sept/IVg2025-09-23_21.csv,21,1758651808.5129638,Alisson_23_sept
-59,2025-09-23,15:27:09,It,💡 It  Alisson72  VG=-0.3 V  VDS=0.1 V  VL=0.88 V  λ=365.0 nm  period=120.0 s  #33,raw_data/Alisson_23_sept/It2025-09-23_33.csv,33,1758652029.264806,Alisson_23_sept
-60,2025-09-23,15:30:09,It,💡 It  Alisson72  VG=0.3 V  VDS=0.1 V  VL=0.88 V  λ=365.0 nm  period=120.0 s  #34,raw_data/Alisson_23_sept/It2025-09-23_34.csv,34,1758652209.5461047,Alisson_23_sept
-61,2025-09-23,15:33:20,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #22,raw_data/Alisson_23_sept/IVg2025-09-23_22.csv,22,1758652400.8353274,Alisson_23_sept
-62,2025-09-23,15:48:42,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #23,raw_data/Alisson_23_sept/IVg2025-09-23_23.csv,23,1758653322.348484,Alisson_23_sept
-63,2025-09-23,15:56:51,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #24,raw_data/Alisson_23_sept/IVg2025-09-23_24.csv,24,1758653811.2688138,Alisson_23_sept
-64,2025-09-23,15:58:09,It,💡 It  Alisson72  VG=-0.3 V  VDS=0.1 V  VL=2.12 V  λ=385.0 nm  period=120.0 s  #35,raw_data/Alisson_23_sept/It2025-09-23_35.csv,35,1758653889.3423672,Alisson_23_sept
-65,2025-09-23,16:01:11,It,💡 It  Alisson72  VG=0.3 V  VDS=0.1 V  VL=2.12 V  λ=385.0 nm  period=120.0 s  #36,raw_data/Alisson_23_sept/It2025-09-23_36.csv,36,1758654071.8091717,Alisson_23_sept
-66,2025-09-23,16:04:22,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #25,raw_data/Alisson_23_sept/IVg2025-09-23_25.csv,25,1758654262.2586806,Alisson_23_sept
-67,2025-09-23,16:09:28,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #26,raw_data/Alisson_23_sept/IVg2025-09-23_26.csv,26,1758654568.1407356,Alisson_23_sept
-68,2025-09-23,16:11:09,It,💡 It  Alisson72  VG=-0.3 V  VDS=0.1 V  VL=3.0 V  λ=405.0 nm  period=120.0 s  #37,raw_data/Alisson_23_sept/It2025-09-23_37.csv,37,1758654669.2107105,Alisson_23_sept
-69,2025-09-23,16:14:09,It,💡 It  Alisson72  VG=0.3 V  VDS=0.1 V  VL=3.0 V  λ=405.0 nm  period=120.0 s  #38,raw_data/Alisson_23_sept/It2025-09-23_38.csv,38,1758654849.5928066,Alisson_23_sept
-70,2025-09-23,16:18:16,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #27,raw_data/Alisson_23_sept/IVg2025-09-23_27.csv,27,1758655096.5710568,Alisson_23_sept
-71,2025-09-23,16:26:28,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #28,raw_data/Alisson_23_sept/IVg2025-09-23_28.csv,28,1758655588.8781574,Alisson_23_sept
-72,2025-09-23,16:31:01,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #29,raw_data/Alisson_23_sept/IVg2025-09-23_29.csv,29,1758655861.8494108,Alisson_23_sept
-73,2025-09-23,16:32:47,It,💡 It  Alisson72  VG=-0.3 V  VDS=0.1 V  VL=1.35 V  λ=455.0 nm  period=120.0 s  #39,raw_data/Alisson_23_sept/It2025-09-23_39.csv,39,1758655967.601789,Alisson_23_sept
-74,2025-09-23,16:35:53,It,💡 It  Alisson72  VG=0.3 V  VDS=0.1 V  VL=1.35 V  λ=455.0 nm  period=120.0 s  #40,raw_data/Alisson_23_sept/It2025-09-23_40.csv,40,1758656153.2641077,Alisson_23_sept
-75,2025-09-23,16:43:11,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #30,raw_data/Alisson_23_sept/IVg2025-09-23_30.csv,30,1758656591.1026626,Alisson_23_sept
-76,2025-09-23,16:44:20,It,💡 It  Alisson72  VG=-0.3 V  VDS=0.1 V  VL=1.7 V  λ=505.0 nm  period=120.0 s  #41,raw_data/Alisson_23_sept/It2025-09-23_41.csv,41,1758656660.4579833,Alisson_23_sept
-77,2025-09-23,16:47:25,It,💡 It  Alisson72  VG=0.3 V  VDS=0.1 V  VL=1.7 V  λ=505.0 nm  period=120.0 s  #42,raw_data/Alisson_23_sept/It2025-09-23_42.csv,42,1758656845.888848,Alisson_23_sept
-78,2025-09-23,16:53:37,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #31,raw_data/Alisson_23_sept/IVg2025-09-23_31.csv,31,1758657217.7218604,Alisson_23_sept
-79,2025-09-23,16:58:19,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #32,raw_data/Alisson_23_sept/IVg2025-09-23_32.csv,32,1758657499.019645,Alisson_23_sept
-80,2025-09-23,16:59:48,It,💡 It  Alisson72  VG=-0.3 V  VDS=0.1 V  VL=1.57 V  λ=565.0 nm  period=120.0 s  #43,raw_data/Alisson_23_sept/It2025-09-23_43.csv,43,1758657588.931481,Alisson_23_sept
-81,2025-09-23,17:02:54,It,💡 It  Alisson72  VG=0.3 V  VDS=0.1 V  VL=1.57 V  λ=565.0 nm  period=120.0 s  #44,raw_data/Alisson_23_sept/It2025-09-23_44.csv,44,1758657774.2948163,Alisson_23_sept
-82,2025-09-23,17:17:16,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #33,raw_data/Alisson_23_sept/IVg2025-09-23_33.csv,33,1758658636.0761695,Alisson_23_sept
-83,2025-09-23,17:21:04,It,💡 It  Alisson72  VG=-0.3 V  VDS=0.1 V  VL=4.35 V  λ=590.0 nm  period=120.0 s  #45,raw_data/Alisson_23_sept/It2025-09-23_45.csv,45,1758658864.8508022,Alisson_23_sept
-84,2025-09-23,17:24:10,It,💡 It  Alisson72  VG=0.3 V  VDS=0.1 V  VL=4.35 V  λ=590.0 nm  period=120.0 s  #46,raw_data/Alisson_23_sept/It2025-09-23_46.csv,46,1758659050.516418,Alisson_23_sept
-85,2025-09-23,17:28:51,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #34,raw_data/Alisson_23_sept/IVg2025-09-23_34.csv,34,1758659331.217738,Alisson_23_sept
-86,2025-09-23,17:40:05,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #36,raw_data/Alisson_23_sept/IVg2025-09-23_36.csv,36,1758660005.354976,Alisson_23_sept
+seq,date,time_hms,proc,summary,source_file,file_idx,start_time,day_folder,has_light
+1,2025-09-08,12:30:15,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #2,raw_data/Alisson_08_sept/IVg2025-09-08_2.csv,2,1757345415.6467748,Alisson_08_sept,false
+2,2025-09-22,16:51:19,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #12,raw_data/Alisson_22_sept/IVg2025-09-22_12.csv,12,1758570679.4699981,Alisson_22_sept,false
+3,2025-09-22,17:12:56,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #13,raw_data/Alisson_22_sept/IVg2025-09-22_13.csv,13,1758571976.7727933,Alisson_22_sept,false
+4,2025-09-22,17:14:43,It,💡 It  Alisson72  VG=-5.12 V  VDS=0.1 V  VL=1.33 V  λ=850.0 nm  period=120.0 s  #19,raw_data/Alisson_22_sept/It2025-09-22_19.csv,19,1758572083.7175047,Alisson_22_sept,true
+5,2025-09-22,17:17:52,It,💡 It  Alisson72  VG=-5.12 V  VDS=0.1 V  VL=2.64 V  λ=850.0 nm  period=120.0 s  #20,raw_data/Alisson_22_sept/It2025-09-22_20.csv,20,1758572272.0956964,Alisson_22_sept,true
+6,2025-09-22,17:21:00,It,💡 It  Alisson72  VG=-5.12 V  VDS=0.1 V  VL=3.98 V  λ=850.0 nm  period=120.0 s  #21,raw_data/Alisson_22_sept/It2025-09-22_21.csv,21,1758572460.6696181,Alisson_22_sept,true
+7,2025-09-22,19:50:38,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #14,raw_data/Alisson_22_sept/IVg2025-09-22_14.csv,14,1758581438.7875533,Alisson_22_sept,false
+8,2025-09-23,09:34:02,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #1,raw_data/Alisson_23_sept/IVg2025-09-23_1.csv,1,1758630842.2394657,Alisson_23_sept,false
+9,2025-09-23,09:54:47,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #2,raw_data/Alisson_23_sept/IVg2025-09-23_2.csv,2,1758632087.7965221,Alisson_23_sept,false
+10,2025-09-23,09:55:55,It,💡 It  Alisson72  VG=-5.19 V  VDS=0.1 V  VL=1.4 V  λ=850.0 nm  period=120.0 s  #1,raw_data/Alisson_23_sept/It2025-09-23_1.csv,1,1758632155.2821116,Alisson_23_sept,true
+11,2025-09-23,09:59:30,It,💡 It  Alisson72  VG=-2.62 V  VDS=0.1 V  VL=1.4 V  λ=850.0 nm  period=120.0 s  #2,raw_data/Alisson_23_sept/It2025-09-23_2.csv,2,1758632370.7227604,Alisson_23_sept,true
+12,2025-09-23,10:02:37,It,💡 It  Alisson72  VG=-0.62 V  VDS=0.1 V  VL=1.4 V  λ=850.0 nm  period=120.0 s  #3,raw_data/Alisson_23_sept/It2025-09-23_3.csv,3,1758632557.6580405,Alisson_23_sept,true
+13,2025-09-23,10:06:11,It,💡 It  Alisson72  VG=1.38 V  VDS=0.1 V  VL=1.4 V  λ=850.0 nm  period=120.0 s  #4,raw_data/Alisson_23_sept/It2025-09-23_4.csv,4,1758632771.9842806,Alisson_23_sept,true
+14,2025-09-23,10:10:24,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #3,raw_data/Alisson_23_sept/IVg2025-09-23_3.csv,3,1758633024.1524997,Alisson_23_sept,false
+15,2025-09-23,10:22:17,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #4,raw_data/Alisson_23_sept/IVg2025-09-23_4.csv,4,1758633737.1495233,Alisson_23_sept,false
+16,2025-09-23,10:23:23,It,💡 It  Alisson72  VG=-2.62 V  VDS=0.1 V  VL=4.53 V  λ=680.0 nm  period=120.0 s  #5,raw_data/Alisson_23_sept/It2025-09-23_5.csv,5,1758633803.1951244,Alisson_23_sept,true
+17,2025-09-23,10:29:35,It,💡 It  Alisson72  VG=1.38 V  VDS=0.1 V  VL=4.53 V  λ=680.0 nm  period=120.0 s  #7,raw_data/Alisson_23_sept/It2025-09-23_7.csv,7,1758634175.9112415,Alisson_23_sept,true
+18,2025-09-23,10:32:41,It,💡 It  Alisson72  VG=-0.62 V  VDS=0.1 V  VL=4.53 V  λ=680.0 nm  period=120.0 s  #6,raw_data/Alisson_23_sept/It2025-09-23_6.csv,6,1758634361.890278,Alisson_23_sept,true
+19,2025-09-23,10:36:37,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #5,raw_data/Alisson_23_sept/IVg2025-09-23_5.csv,5,1758634597.3001387,Alisson_23_sept,false
+20,2025-09-23,10:41:50,It,💡 It  Alisson72  VG=-2.62 V  VDS=0.1 V  VL=2.31 V  λ=625.0 nm  period=120.0 s  #8,raw_data/Alisson_23_sept/It2025-09-23_8.csv,8,1758634910.2777004,Alisson_23_sept,true
+21,2025-09-23,10:44:57,It,💡 It  Alisson72  VG=-0.62 V  VDS=0.1 V  VL=2.31 V  λ=625.0 nm  period=120.0 s  #9,raw_data/Alisson_23_sept/It2025-09-23_9.csv,9,1758635097.2233062,Alisson_23_sept,true
+22,2025-09-23,10:48:03,It,💡 It  Alisson72  VG=1.38 V  VDS=0.1 V  VL=2.31 V  λ=625.0 nm  period=120.0 s  #10,raw_data/Alisson_23_sept/It2025-09-23_10.csv,10,1758635283.3475049,Alisson_23_sept,true
+23,2025-09-23,10:51:20,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #6,raw_data/Alisson_23_sept/IVg2025-09-23_6.csv,6,1758635480.308816,Alisson_23_sept,false
+24,2025-09-23,10:55:48,It,💡 It  Alisson72  VG=-2.62 V  VDS=0.1 V  VL=3.23 V  λ=590.0 nm  period=120.0 s  #11,raw_data/Alisson_23_sept/It2025-09-23_11.csv,11,1758635748.3815773,Alisson_23_sept,true
+25,2025-09-23,10:59:08,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #7,raw_data/Alisson_23_sept/IVg2025-09-23_7.csv,7,1758635948.9125323,Alisson_23_sept,false
+26,2025-09-23,11:02:21,It,💡 It  Alisson72  VG=-2.62 V  VDS=0.1 V  VL=0.77 V  λ=565.0 nm  period=120.0 s  #12,raw_data/Alisson_23_sept/It2025-09-23_12.csv,12,1758636141.8027709,Alisson_23_sept,true
+27,2025-09-23,11:05:44,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #8,raw_data/Alisson_23_sept/IVg2025-09-23_8.csv,8,1758636344.2496617,Alisson_23_sept,false
+28,2025-09-23,11:09:33,It,💡 It  Alisson72  VG=-2.62 V  VDS=0.1 V  VL=1.7 V  λ=505.0 nm  period=120.0 s  #13,raw_data/Alisson_23_sept/It2025-09-23_13.csv,13,1758636573.0749269,Alisson_23_sept,true
+29,2025-09-23,11:13:05,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #9,raw_data/Alisson_23_sept/IVg2025-09-23_9.csv,9,1758636785.8015227,Alisson_23_sept,false
+30,2025-09-23,11:17:06,It,💡 It  Alisson72  VG=-2.68 V  VDS=0.1 V  VL=1.31 V  λ=455.0 nm  period=120.0 s  #14,raw_data/Alisson_23_sept/It2025-09-23_14.csv,14,1758637026.6893125,Alisson_23_sept,true
+31,2025-09-23,11:20:25,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #10,raw_data/Alisson_23_sept/IVg2025-09-23_10.csv,10,1758637225.5248919,Alisson_23_sept,false
+32,2025-09-23,11:24:15,It,💡 It  Alisson72  VG=-2.68 V  VDS=0.1 V  VL=3.12 V  λ=405.0 nm  period=120.0 s  #15,raw_data/Alisson_23_sept/It2025-09-23_15.csv,15,1758637455.5872724,Alisson_23_sept,true
+33,2025-09-23,11:28:00,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #11,raw_data/Alisson_23_sept/IVg2025-09-23_11.csv,11,1758637680.3593848,Alisson_23_sept,false
+34,2025-09-23,11:31:35,It,💡 It  Alisson72  VG=-2.68 V  VDS=0.1 V  VL=2.11 V  λ=385.0 nm  period=120.0 s  #16,raw_data/Alisson_23_sept/It2025-09-23_16.csv,16,1758637895.2135174,Alisson_23_sept,true
+35,2025-09-23,11:35:34,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #12,raw_data/Alisson_23_sept/IVg2025-09-23_12.csv,12,1758638134.4927194,Alisson_23_sept,false
+36,2025-09-23,11:39:30,It,💡 It  Alisson72  VG=-2.8 V  VDS=0.1 V  VL=4.53 V  λ=365.0 nm  period=120.0 s  #17,raw_data/Alisson_23_sept/It2025-09-23_17.csv,17,1758638370.5704868,Alisson_23_sept,true
+37,2025-09-23,11:42:41,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #13,raw_data/Alisson_23_sept/IVg2025-09-23_13.csv,13,1758638561.9401402,Alisson_23_sept,false
+38,2025-09-23,11:44:13,It,💡 It  Alisson72  VG=0.75 V  VDS=0.1 V  VL=4.53 V  λ=365.0 nm  period=120.0 s  #20,raw_data/Alisson_23_sept/It2025-09-23_20.csv,20,1758638653.480549,Alisson_23_sept,true
+39,2025-09-23,11:47:19,It,💡 It  Alisson72  VG=1.15 V  VDS=0.1 V  VL=4.53 V  λ=365.0 nm  period=120.0 s  #21,raw_data/Alisson_23_sept/It2025-09-23_21.csv,21,1758638839.2243443,Alisson_23_sept,true
+40,2025-09-23,11:50:25,It,💡 It  Alisson72  VG=3.15 V  VDS=0.1 V  VL=4.53 V  λ=365.0 nm  period=120.0 s  #22,raw_data/Alisson_23_sept/It2025-09-23_22.csv,22,1758639025.325793,Alisson_23_sept,true
+41,2025-09-23,11:53:38,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #14,raw_data/Alisson_23_sept/IVg2025-09-23_14.csv,14,1758639218.4206645,Alisson_23_sept,false
+42,2025-09-23,12:16:55,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #15,raw_data/Alisson_23_sept/IVg2025-09-23_15.csv,15,1758640615.9293547,Alisson_23_sept,false
+43,2025-09-23,12:23:05,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #16,raw_data/Alisson_23_sept/IVg2025-09-23_16.csv,16,1758640985.930548,Alisson_23_sept,false
+44,2025-09-23,12:26:16,It,💡 It  Alisson72  VG=-3.0 V  VDS=0.1 V  VL=0.88 V  λ=365.0 nm  period=120.0 s  #23,raw_data/Alisson_23_sept/It2025-09-23_23.csv,23,1758641176.0489867,Alisson_23_sept,true
+45,2025-09-23,12:29:17,It,💡 It  Alisson72  VG=-3.0 V  VDS=0.1 V  VL=1.79 V  λ=365.0 nm  period=120.0 s  #24,raw_data/Alisson_23_sept/It2025-09-23_24.csv,24,1758641357.7241628,Alisson_23_sept,true
+46,2025-09-23,12:40:21,It,💡 It  Alisson72  VG=-3.0 V  VDS=0.1 V  VL=2.78 V  λ=365.0 nm  period=120.0 s  #25,raw_data/Alisson_23_sept/It2025-09-23_25.csv,25,1758642021.5992167,Alisson_23_sept,true
+47,2025-09-23,12:43:21,It,💡 It  Alisson72  VG=-3.0 V  VDS=0.1 V  VL=3.81 V  λ=365.0 nm  period=120.0 s  #26,raw_data/Alisson_23_sept/It2025-09-23_26.csv,26,1758642201.7585938,Alisson_23_sept,true
+48,2025-09-23,12:46:21,It,💡 It  Alisson72  VG=-3.0 V  VDS=0.1 V  VL=4.89 V  λ=365.0 nm  period=120.0 s  #27,raw_data/Alisson_23_sept/It2025-09-23_27.csv,27,1758642381.9670985,Alisson_23_sept,true
+49,2025-09-23,13:13:35,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #17,raw_data/Alisson_23_sept/IVg2025-09-23_17.csv,17,1758644015.942695,Alisson_23_sept,false
+50,2025-09-23,13:15:10,It,💡 It  Alisson72  VG=3.0 V  VDS=0.1 V  VL=0.88 V  λ=365.0 nm  period=120.0 s  #28,raw_data/Alisson_23_sept/It2025-09-23_28.csv,28,1758644110.8948119,Alisson_23_sept,true
+51,2025-09-23,13:18:12,It,💡 It  Alisson72  VG=3.0 V  VDS=0.1 V  VL=1.79 V  λ=365.0 nm  period=120.0 s  #29,raw_data/Alisson_23_sept/It2025-09-23_29.csv,29,1758644292.5491433,Alisson_23_sept,true
+52,2025-09-23,13:21:12,It,💡 It  Alisson72  VG=3.0 V  VDS=0.1 V  VL=2.78 V  λ=365.0 nm  period=120.0 s  #30,raw_data/Alisson_23_sept/It2025-09-23_30.csv,30,1758644472.7474208,Alisson_23_sept,true
+53,2025-09-23,13:24:12,It,💡 It  Alisson72  VG=3.0 V  VDS=0.1 V  VL=3.81 V  λ=365.0 nm  period=120.0 s  #31,raw_data/Alisson_23_sept/It2025-09-23_31.csv,31,1758644652.961474,Alisson_23_sept,true
+54,2025-09-23,13:27:13,It,💡 It  Alisson72  VG=3.0 V  VDS=0.1 V  VL=4.89 V  λ=365.0 nm  period=120.0 s  #32,raw_data/Alisson_23_sept/It2025-09-23_32.csv,32,1758644833.1371498,Alisson_23_sept,true
+55,2025-09-23,13:30:27,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #18,raw_data/Alisson_23_sept/IVg2025-09-23_18.csv,18,1758645027.4332147,Alisson_23_sept,false
+56,2025-09-23,14:10:58,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #19,raw_data/Alisson_23_sept/IVg2025-09-23_19.csv,19,1758647458.8890622,Alisson_23_sept,false
+57,2025-09-23,14:17:06,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #20,raw_data/Alisson_23_sept/IVg2025-09-23_20.csv,20,1758647826.2767909,Alisson_23_sept,false
+58,2025-09-23,15:23:28,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #21,raw_data/Alisson_23_sept/IVg2025-09-23_21.csv,21,1758651808.5129638,Alisson_23_sept,false
+59,2025-09-23,15:27:09,It,💡 It  Alisson72  VG=-0.3 V  VDS=0.1 V  VL=0.88 V  λ=365.0 nm  period=120.0 s  #33,raw_data/Alisson_23_sept/It2025-09-23_33.csv,33,1758652029.264806,Alisson_23_sept,true
+60,2025-09-23,15:30:09,It,💡 It  Alisson72  VG=0.3 V  VDS=0.1 V  VL=0.88 V  λ=365.0 nm  period=120.0 s  #34,raw_data/Alisson_23_sept/It2025-09-23_34.csv,34,1758652209.5461047,Alisson_23_sept,true
+61,2025-09-23,15:33:20,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #22,raw_data/Alisson_23_sept/IVg2025-09-23_22.csv,22,1758652400.8353274,Alisson_23_sept,false
+62,2025-09-23,15:48:42,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #23,raw_data/Alisson_23_sept/IVg2025-09-23_23.csv,23,1758653322.348484,Alisson_23_sept,false
+63,2025-09-23,15:56:51,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #24,raw_data/Alisson_23_sept/IVg2025-09-23_24.csv,24,1758653811.2688138,Alisson_23_sept,false
+64,2025-09-23,15:58:09,It,💡 It  Alisson72  VG=-0.3 V  VDS=0.1 V  VL=2.12 V  λ=385.0 nm  period=120.0 s  #35,raw_data/Alisson_23_sept/It2025-09-23_35.csv,35,1758653889.3423672,Alisson_23_sept,true
+65,2025-09-23,16:01:11,It,💡 It  Alisson72  VG=0.3 V  VDS=0.1 V  VL=2.12 V  λ=385.0 nm  period=120.0 s  #36,raw_data/Alisson_23_sept/It2025-09-23_36.csv,36,1758654071.8091717,Alisson_23_sept,true
+66,2025-09-23,16:04:22,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #25,raw_data/Alisson_23_sept/IVg2025-09-23_25.csv,25,1758654262.2586806,Alisson_23_sept,false
+67,2025-09-23,16:09:28,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #26,raw_data/Alisson_23_sept/IVg2025-09-23_26.csv,26,1758654568.1407356,Alisson_23_sept,false
+68,2025-09-23,16:11:09,It,💡 It  Alisson72  VG=-0.3 V  VDS=0.1 V  VL=3.0 V  λ=405.0 nm  period=120.0 s  #37,raw_data/Alisson_23_sept/It2025-09-23_37.csv,37,1758654669.2107105,Alisson_23_sept,true
+69,2025-09-23,16:14:09,It,💡 It  Alisson72  VG=0.3 V  VDS=0.1 V  VL=3.0 V  λ=405.0 nm  period=120.0 s  #38,raw_data/Alisson_23_sept/It2025-09-23_38.csv,38,1758654849.5928066,Alisson_23_sept,true
+70,2025-09-23,16:18:16,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #27,raw_data/Alisson_23_sept/IVg2025-09-23_27.csv,27,1758655096.5710568,Alisson_23_sept,false
+71,2025-09-23,16:26:28,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #28,raw_data/Alisson_23_sept/IVg2025-09-23_28.csv,28,1758655588.8781574,Alisson_23_sept,false
+72,2025-09-23,16:31:01,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #29,raw_data/Alisson_23_sept/IVg2025-09-23_29.csv,29,1758655861.8494108,Alisson_23_sept,false
+73,2025-09-23,16:32:47,It,💡 It  Alisson72  VG=-0.3 V  VDS=0.1 V  VL=1.35 V  λ=455.0 nm  period=120.0 s  #39,raw_data/Alisson_23_sept/It2025-09-23_39.csv,39,1758655967.601789,Alisson_23_sept,true
+74,2025-09-23,16:35:53,It,💡 It  Alisson72  VG=0.3 V  VDS=0.1 V  VL=1.35 V  λ=455.0 nm  period=120.0 s  #40,raw_data/Alisson_23_sept/It2025-09-23_40.csv,40,1758656153.2641077,Alisson_23_sept,true
+75,2025-09-23,16:43:11,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #30,raw_data/Alisson_23_sept/IVg2025-09-23_30.csv,30,1758656591.1026626,Alisson_23_sept,false
+76,2025-09-23,16:44:20,It,💡 It  Alisson72  VG=-0.3 V  VDS=0.1 V  VL=1.7 V  λ=505.0 nm  period=120.0 s  #41,raw_data/Alisson_23_sept/It2025-09-23_41.csv,41,1758656660.4579833,Alisson_23_sept,true
+77,2025-09-23,16:47:25,It,💡 It  Alisson72  VG=0.3 V  VDS=0.1 V  VL=1.7 V  λ=505.0 nm  period=120.0 s  #42,raw_data/Alisson_23_sept/It2025-09-23_42.csv,42,1758656845.888848,Alisson_23_sept,true
+78,2025-09-23,16:53:37,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #31,raw_data/Alisson_23_sept/IVg2025-09-23_31.csv,31,1758657217.7218604,Alisson_23_sept,false
+79,2025-09-23,16:58:19,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #32,raw_data/Alisson_23_sept/IVg2025-09-23_32.csv,32,1758657499.019645,Alisson_23_sept,false
+80,2025-09-23,16:59:48,It,💡 It  Alisson72  VG=-0.3 V  VDS=0.1 V  VL=1.57 V  λ=565.0 nm  period=120.0 s  #43,raw_data/Alisson_23_sept/It2025-09-23_43.csv,43,1758657588.931481,Alisson_23_sept,true
+81,2025-09-23,17:02:54,It,💡 It  Alisson72  VG=0.3 V  VDS=0.1 V  VL=1.57 V  λ=565.0 nm  period=120.0 s  #44,raw_data/Alisson_23_sept/It2025-09-23_44.csv,44,1758657774.2948163,Alisson_23_sept,true
+82,2025-09-23,17:17:16,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #33,raw_data/Alisson_23_sept/IVg2025-09-23_33.csv,33,1758658636.0761695,Alisson_23_sept,false
+83,2025-09-23,17:21:04,It,💡 It  Alisson72  VG=-0.3 V  VDS=0.1 V  VL=4.35 V  λ=590.0 nm  period=120.0 s  #45,raw_data/Alisson_23_sept/It2025-09-23_45.csv,45,1758658864.8508022,Alisson_23_sept,true
+84,2025-09-23,17:24:10,It,💡 It  Alisson72  VG=0.3 V  VDS=0.1 V  VL=4.35 V  λ=590.0 nm  period=120.0 s  #46,raw_data/Alisson_23_sept/It2025-09-23_46.csv,46,1758659050.516418,Alisson_23_sept,true
+85,2025-09-23,17:28:51,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #34,raw_data/Alisson_23_sept/IVg2025-09-23_34.csv,34,1758659331.217738,Alisson_23_sept,false
+86,2025-09-23,17:40:05,IVg,IVg Alisson72  VDS=0.1 V  VG:-5.0→5.0 (step 0.05)  #36,raw_data/Alisson_23_sept/IVg2025-09-23_36.csv,36,1758660005.354976,Alisson_23_sept,false

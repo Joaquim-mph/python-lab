@@ -7,6 +7,7 @@ from textual.screen import Screen
 from textual.binding import Binding
 
 from src.plotting.its_presets import PRESETS
+from src.tui.screens.its_config import ITSConfigScreen
 
 
 class ITSPresetSelectorScreen(Screen):
@@ -217,8 +218,6 @@ class ITSPresetSelectorScreen(Screen):
 
     def _push_full_config_screen(self) -> None:
         """Push full ITS config screen for custom preset."""
-        from src.tui.screens.its_config import ITSConfigScreen
-
         self.app.push_screen(
             ITSConfigScreen(
                 chip_number=self.chip_number,
@@ -229,8 +228,6 @@ class ITSPresetSelectorScreen(Screen):
 
     def _push_quick_config_screen(self) -> None:
         """Push quick config screen for preset (filters only)."""
-        from src.tui.screens.its_config import ITSConfigScreen
-
         self.app.push_screen(
             ITSConfigScreen(
                 chip_number=self.chip_number,

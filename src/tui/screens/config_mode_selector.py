@@ -15,6 +15,11 @@ from textual.screen import Screen
 from textual.widgets import Header, Footer, Static, Button, RadioButton, RadioSet
 from textual.binding import Binding
 
+from src.tui.screens.experiment_selector import ExperimentSelectorScreen
+from src.tui.screens.its_preset_selector import ITSPresetSelectorScreen
+from src.tui.screens.ivg_config import IVgConfigScreen
+from src.tui.screens.transconductance_config import TransconductanceConfigScreen
+
 
 class ConfigModeSelectorScreen(Screen):
     """Configuration mode selection screen (Step 3 of wizard)."""
@@ -221,8 +226,6 @@ class ConfigModeSelectorScreen(Screen):
         # Navigate to next screen
         if mode == "quick":
             # Go to experiment selector (interactive selection)
-            from src.tui.screens.experiment_selector import ExperimentSelectorScreen
-
             self.app.push_screen(ExperimentSelectorScreen(
                 chip_number=self.chip_number,
                 chip_group=self.chip_group,
@@ -234,13 +237,11 @@ class ConfigModeSelectorScreen(Screen):
             # Go to custom config screen for the plot type
             if self.plot_type == "ITS":
                 # For ITS, go to preset selector first
-                from src.tui.screens.its_preset_selector import ITSPresetSelectorScreen
                 self.app.push_screen(ITSPresetSelectorScreen(
                     chip_number=self.chip_number,
                     chip_group=self.chip_group,
                 ))
             elif self.plot_type == "IVg":
-                from src.tui.screens.ivg_config import IVgConfigScreen
                 self.app.push_screen(IVgConfigScreen(
                     chip_number=self.chip_number,
                     chip_group=self.chip_group,
@@ -249,7 +250,6 @@ class ConfigModeSelectorScreen(Screen):
                     raw_dir=self.app.raw_dir,
                 ))
             elif self.plot_type == "Transconductance":
-                from src.tui.screens.transconductance_config import TransconductanceConfigScreen
                 self.app.push_screen(TransconductanceConfigScreen(
                     chip_number=self.chip_number,
                     chip_group=self.chip_group,

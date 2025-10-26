@@ -345,13 +345,16 @@ class PreviewScreen(Screen):
             # Show baseline mode
             baseline_mode = self.config.get("baseline_mode", "fixed")
             if baseline_mode == "none":
-                lines.append("• Baseline: None (no correction)")
+                lines.append("• Baseline: None (RAW DATA - no correction)")
             elif baseline_mode == "auto":
                 divisor = self.config.get("baseline_auto_divisor", 2.0)
                 lines.append(f"• Baseline: Auto (LED period / {divisor})")
             else:  # fixed
                 baseline = self.config.get("baseline", 60.0)
-                lines.append(f"• Baseline time: {baseline} s")
+                if baseline == 0.0:
+                    lines.append("• Baseline: 0.0 s (subtract value at t=0)")
+                else:
+                    lines.append(f"• Baseline time: {baseline} s")
 
             padding = self.config.get("padding", 0.05)
             lines.append(f"• Y-axis padding: {padding * 100:.1f}%")
@@ -408,7 +411,12 @@ class PreviewScreen(Screen):
         if self.plot_type == "ITS":
             # Check if it's a dark measurement (same detection as plot_generation.py)
             # For preview, we can't easily check metadata, so assume regular ITS
-            filename = f"encap{self.chip_number}_ITS_{plot_tag}.png"
+
+            # Check if raw data mode (add _raw suffix)
+            baseline_mode = self.config.get("baseline_mode", "fixed")
+            raw_suffix = "_raw" if baseline_mode == "none" else ""
+
+            filename = f"encap{self.chip_number}_ITS_{plot_tag}{raw_suffix}.png"
         elif self.plot_type == "IVg":
             filename = f"encap{self.chip_number}_IVg_{plot_tag}.png"
         elif self.plot_type == "Transconductance":
