@@ -3,6 +3,10 @@ polars>=0.19.0
 numpy>=1.24.0
 scipy>=1.11.0  # For signal processing (Savitzky-Golay filtering in transconductance)
 
+# Staging layer (Phase 1)
+pydantic>=2.0.0  # Schema validation for manifest and configuration
+pyarrow>=14.0.0  # Parquet support for Polars
+
 # Plotting
 matplotlib>=3.7.0
 scienceplots>=2.0.0

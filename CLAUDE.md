@@ -244,7 +244,14 @@ See **`TUI_GUIDE.md`** for complete TUI documentation including:
      - `plot_ivg_transconductance_savgol()` - Savitzky-Golay filtered derivatives for smoother curves
      - `plot_ivg_with_transconductance()` - Side-by-side I-V and gm comparison
      - `segment_voltage_sweep()` - Helper that detects forward/reverse sweeps to avoid derivative artifacts
-   - **ITS plots**: `plot_its_by_vg()` overlays time series at specific gate voltages (figsize=(22, 14) for wide time axis)
+   - **ITS plots**: `plot_its_overlay()` and `plot_its_dark()` for time series analysis
+     - Four baseline correction modes:
+       - `baseline_mode="fixed"` with `baseline_t=60.0`: Standard interpolation at specific time
+       - `baseline_mode="fixed"` with `baseline_t=0.0`: Subtract first visible point (avoids CSV artifacts)
+       - `baseline_mode="auto"`: Calculate from LED ON+OFF period metadata
+       - `baseline_mode="none"`: Raw data (no correction), adds `_raw` suffix to filename
+     - `plot_start_time` parameter controls visible x-axis range (default 20s for light, 1s for dark)
+     - Baseline at t=0 uses first point ≥ `plot_start_time` to avoid measurement artifacts
    - **Delta plots**: `plot_its_by_vg_delta()` plots ΔI(t) = I(t) - I(baseline_t) for photoresponse analysis
    - **Wavelength overlays**: `plot_its_wavelength_overlay_delta_for_chip()` compares different laser wavelengths
    - **GIF animation**: `ivg_sequence_gif()` creates animated IVg sequences
@@ -443,6 +450,29 @@ Metadata CSV columns (sample):
 - **Key innovation**: Uses `seq` numbers from chip history (globally unique) instead of `file_idx` (repeats across days)
 - **Works with**: All plot types (ITS overlay, IVg sequence, transconductance, delta plots)
 - **Automatic handling**: Schema mismatches between days, metadata file discovery, chronological sorting
+
+### ITS Baseline System Overhaul (Oct 2025)
+- **Four baseline modes** for flexible data analysis:
+  - **Raw data mode** (`baseline_mode="none"`): Plots CSV data exactly as recorded
+    - Checkbox unchecked in TUI
+    - Adds `_raw` suffix to filename (e.g., `encap67_ITS_52_raw.png`)
+    - No correction applied - true raw data for noise/drift analysis
+  - **Baseline at t=0** (`baseline_t=0.0`): Subtract first visible point
+    - Checkbox checked + enter "0"
+    - Uses first point at `plot_start_time` to avoid CSV artifacts
+    - Each trace starts at y≈0 for comparative analysis
+  - **Fixed baseline** (`baseline_t=60.0`): Standard interpolation at specific time
+    - Checkbox checked + enter time value
+    - Traditional baseline correction method
+  - **Auto baseline** (`baseline_mode="auto"`): Calculate from LED period
+    - Checkbox checked + leave empty
+    - Smart baseline = (ON+OFF period) / 2
+- **Smart first-point handling**: `baseline_t=0` now uses first point ≥ `plot_start_time` instead of very first CSV row
+  - Avoids measurement artifacts in first ~1 second
+  - Dark preset uses plot_start_time=1.0s, Light presets use 20.0s
+- **Filename differentiation**: Raw plots automatically get `_raw` suffix to prevent overwriting
+- **TUI Integration**: Checkbox toggle for baseline enable/disable with input field
+- **Backward compatible**: All existing code continues to work with new defaults
 
 ### ITS Plot Improvements (Sep 2025)
 - **Figure size**: Changed from (40, 35) to (22, 14) for better aspect ratio

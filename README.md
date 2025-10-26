@@ -34,6 +34,7 @@ This repository provides end-to-end processing of raw measurement CSV files from
 ✅ **Timeline generation** for experiment chronology
 ✅ **Animated GIFs** for IVg sequences
 ✅ **Wavelength-dependent photoresponse** analysis
+✅ **Flexible baseline correction** (raw data, t=0, fixed time, or auto from LED period)
 ✅ **Baseline-corrected delta plots** (ΔI vs time)
 
 ---
@@ -330,6 +331,11 @@ t (s),I (A),VL (V),Plate T (degC),Ambient T (degC),Clock (ms)
 
 #### ITS Analysis
 - **VG-filtered overlays** - Time series at specific gate voltages
+- **Flexible baseline modes:**
+  - **Raw data** - No correction, `_raw` suffix on filename
+  - **t=0 baseline** - Subtract first visible point (avoids artifacts)
+  - **Fixed time** - Traditional interpolation at specific time
+  - **Auto** - Smart calculation from LED period metadata
 - **Delta plots** - Baseline-corrected ΔI(t) = I(t) - I(t₀)
 - **Wavelength comparison** - Multi-wavelength photoresponse
 - **UV/blue vs longer wavelengths** - Grouped spectral analysis

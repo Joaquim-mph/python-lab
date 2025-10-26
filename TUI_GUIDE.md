@@ -204,26 +204,35 @@ python tui_app.py
 #### ITS Custom Configuration
 
 **Parameters:**
-- **Selection Mode:**
-  - Interactive: Select experiments from table (like Quick mode)
-  - Auto: Automatically select all matching experiments
-  - Manual: Enter seq numbers directly (comma-separated)
-- **Baseline Time:** Time point for delta calculation (default: 60s)
-- **Y-axis Padding:** Extra space above/below data (0-1, default: 0.2)
-- **Legend By:** Group traces by (led_voltage, wavelength, vg, vds)
-- **Filters:**
-  - VG filter: Only experiments with specific gate voltage
-  - Wavelength filter: Only experiments with specific wavelength
-  - VDS filter: Only experiments with specific source-drain voltage
-  - Date filter: Only experiments from specific date (YYYY-MM-DD)
-- **Output Directory:** Where to save the plot
+- **Legend By:** Group traces by (led_voltage, wavelength, vg)
+- **Baseline Correction** (checkbox + input):
+  - **Unchecked** → Raw data mode (`baseline_mode="none"`)
+    - No baseline correction applied
+    - Plots CSV data exactly as recorded
+    - Filename gets `_raw` suffix (e.g., `encap67_ITS_52_raw.png`)
+    - Best for: Noise analysis, drift studies, comparing raw vs corrected
+  - **Checked + Empty** → Auto baseline (`baseline_mode="auto"`)
+    - Calculates baseline from LED ON+OFF period metadata
+    - Smart baseline = (period) / 2
+    - Best for: Consistent photoresponse measurements
+  - **Checked + "0"** → Baseline at t=0 (`baseline_t=0.0`)
+    - Subtracts first visible point (at `plot_start_time`)
+    - Each trace starts at y≈0
+    - Avoids CSV artifacts in first ~1 second
+    - Best for: Comparative drift analysis
+  - **Checked + number** → Fixed baseline (`baseline_t=60.0`)
+    - Standard interpolation at specific time
+    - Traditional method
+    - Best for: Consistent baseline across measurements
+- **Y-axis Padding:** Extra space above/below data (0-1, default: 0.05)
+- **Output Directory:** Where to save the plot (default: figs)
 
 **Validation:**
-- Baseline must be > 0
+- Baseline must be ≥ 0 (0 is valid!)
 - Padding must be 0-1
-- Wavelength must be 200-2000 nm
-- Date must be YYYY-MM-DD format
-- Manual mode requires at least one seq number
+- Output directory created automatically if needed
+
+**Note:** Filters (VG, wavelength, date) have been removed - use Ctrl+F in the Experiment Selector for filtering
 
 #### IVg Custom Configuration
 
